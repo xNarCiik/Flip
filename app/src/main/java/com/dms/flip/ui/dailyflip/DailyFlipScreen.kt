@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.community.component.CommunityAvatar
@@ -86,7 +87,9 @@ fun DailyFlipScreen(
                             animationSpec = tween(200),
                             targetOffsetY = { fullHeight -> -fullHeight / 6 }
                         ),
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .zIndex(-1f)
             ) {
                 HeaderMessage(message = uiState.headerMessage)
             }
@@ -96,6 +99,7 @@ fun DailyFlipScreen(
             val contentModifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .zIndex(1f)
 
             if (screenState is DailyFlipScreenState.Loading) {
                 LoadingState(modifier = contentModifier)

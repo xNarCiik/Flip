@@ -151,14 +151,9 @@ fun DailyFlipContent(
             }
         }
     }
-    LaunchedEffect(showConfettiAnimation) {
-        if (showConfettiAnimation) {
-            delay(2000)
-            showConfettiAnimation = false
-        }
-    }
     LaunchedEffect(confettiProgress) {
-        if (showConfettiAnimation && confettiProgress >= 1f) {
+        if (showConfettiAnimation && confettiProgress >= 0.99f) {
+            delay(250)
             showConfettiAnimation = false
         }
     }
