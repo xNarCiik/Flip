@@ -27,11 +27,18 @@ import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 
 data class TopBarIcon(
-    val icon: ImageVector,
+    val icon: ImageVector? = null,
     val contentDescription: String,
     val onClick: () -> Unit,
-    val badgeCount: Int? = null
-)
+    val badgeCount: Int? = null,
+    val customContent: (@Composable () -> Unit)? = null,
+) {
+    init {
+        require(icon != null || customContent != null) {
+            "TopBarIcon requires either an icon or customContent"
+        }
+    }
+}
 
 @Composable
 fun FlipTopBar(
@@ -62,11 +69,18 @@ fun FlipTopBar(
                         .size(48.dp)
                         .align(Alignment.CenterStart)
                 ) {
-                    Icon(
-                        imageVector = icon.icon,
-                        contentDescription = icon.contentDescription,
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                    val customContent = icon.customContent
+                    if (customContent != null) {
+                        customContent()
+                    } else {
+                        icon.icon?.let { imageVector ->
+                            Icon(
+                                imageVector = imageVector,
+                                contentDescription = icon.contentDescription,
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
                 }
             } ?: @Composable {
                 Spacer(modifier = Modifier.size(48.dp))
@@ -92,27 +106,33 @@ fun FlipTopBar(
                             onClick = icon.onClick,
                             modifier = Modifier.size(48.dp)
                         ) {
-                            val badgeCount = icon.badgeCount ?: 0
-                            if (badgeCount > 0) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge {
-                                            Text(text = badgeCount.toString())
+                            val customContent = icon.customContent
+                            if (customContent != null) {
+                                customContent()
+                            } else {
+                                val badgeCount = icon.badgeCount ?: 0
+                                val imageVector = icon.icon
+                                if (badgeCount > 0 && imageVector != null) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge {
+                                                Text(text = badgeCount.toString())
+                                            }
                                         }
+                                    ) {
+                                        Icon(
+                                            imageVector = imageVector,
+                                            contentDescription = icon.contentDescription,
+                                            tint = MaterialTheme.colorScheme.onBackground
+                                        )
                                     }
-                                ) {
+                                } else if (imageVector != null) {
                                     Icon(
-                                        imageVector = icon.icon,
+                                        imageVector = imageVector,
                                         contentDescription = icon.contentDescription,
                                         tint = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
-                            } else {
-                                Icon(
-                                    imageVector = icon.icon,
-                                    contentDescription = icon.contentDescription,
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
                             }
                         }
                     }

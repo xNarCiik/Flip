@@ -2,10 +2,12 @@ package com.dms.flip.ui.dailyflip
 
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.UserInfo
 
 data class DailyFlipUiState(
     val screenState: DailyFlipScreenState = DailyFlipScreenState.Loading,
     val headerMessage: String = "",
+    val userInfo: UserInfo? = null,
 )
 
 sealed interface DailyFlipScreenState {
