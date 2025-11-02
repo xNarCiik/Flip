@@ -30,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.domain.model.Theme
+import com.dms.flip.ui.community.CommunityBadgeViewModel
 import com.dms.flip.ui.component.BottomNavBar
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.navigation.DailyPleasureRoute
@@ -108,6 +109,8 @@ class MainActivity : ComponentActivity() {
                     }
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route
+                    val communityBadgeViewModel: CommunityBadgeViewModel = hiltViewModel()
+                    val pendingRequestsCount by communityBadgeViewModel.pendingRequestsCount.collectAsState()
 
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -119,7 +122,10 @@ class MainActivity : ComponentActivity() {
                             )
 
                             if (visible) {
-                                BottomNavBar(navController = navController)
+                                BottomNavBar(
+                                    navController = navController,
+                                    communityBadgeCount = pendingRequestsCount
+                                )
                             }
                         }
                     ) { innerPadding ->

@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,13 +50,15 @@ import com.dms.flip.ui.util.LightDarkPreview
 data class TabBarItem(
     val title: String,
     val icon: ImageVector,
-    val route: Any
+    val route: Any,
+    val badgeCount: Int = 0
 )
 
 @Composable
 fun BottomNavBar(
     modifier: Modifier = Modifier,
     navController: NavHostController,
+    communityBadgeCount: Int = 0
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -73,7 +77,8 @@ fun BottomNavBar(
         TabBarItem(
             title = stringResource(R.string.community_title),
             icon = Icons.Outlined.Group,
-            route = CommunityRoute
+            route = CommunityRoute,
+            badgeCount = communityBadgeCount
         )
     )
 
@@ -113,6 +118,7 @@ fun BottomNavBar(
                         isSelected = isSelected,
                         icon = tabBarItem.icon,
                         label = tabBarItem.title,
+                        badgeCount = tabBarItem.badgeCount,
                         onClick = {
                             if (!isSelected) {
                                 navController.navigate(tabBarItem.route) {
@@ -136,6 +142,7 @@ private fun NavBarItem(
     isSelected: Boolean,
     icon: ImageVector,
     label: String,
+    badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
     val iconColor by animateColorAsState(
@@ -181,12 +188,29 @@ private fun NavBarItem(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    modifier = Modifier.size(22.dp),
-                    tint = iconColor
-                )
+                if (badgeCount > 0) {
+                    BadgedBox(
+                        badge = {
+                            Badge {
+                                Text(text = badgeCount.toString())
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            modifier = Modifier.size(22.dp),
+                            tint = iconColor
+                        )
+                    }
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = label,
+                        modifier = Modifier.size(22.dp),
+                        tint = iconColor
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(3.dp))
 
@@ -211,7 +235,10 @@ private fun NavBarItem(
 fun BottomNavBarPreview() {
     FlipTheme {
         Box(modifier = Modifier.fillMaxWidth()) {
-            BottomNavBar(navController = rememberNavController())
+            BottomNavBar(
+                navController = rememberNavController(),
+                communityBadgeCount = 3
+            )
         }
     }
 }
