@@ -1,6 +1,6 @@
 package com.dms.flip.data.repository.community
 
-import com.dms.flip.data.firebase.mapper.SuggestionDto.toDomain
+import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.SuggestionsSource
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.repository.community.SuggestionsRepository

@@ -35,9 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
-import com.dms.flip.ui.community.PublicProfile
-import com.dms.flip.ui.community.RecentActivity
-import com.dms.flip.ui.community.RelationshipStatus
+import com.dms.flip.domain.model.community.PublicProfile
+import com.dms.flip.domain.model.community.RecentActivity
+import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPublicProfile

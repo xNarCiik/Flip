@@ -5,7 +5,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
-import com.dms.flip.ui.community.CommunityTab
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendPleasure
@@ -17,7 +16,6 @@ import com.dms.flip.domain.model.community.PleasureStatus
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.RelationshipStatus
-import com.dms.flip.ui.community.SuggestionSource
 import com.dms.flip.domain.model.community.UserSearchResult
 import com.dms.flip.ui.history.WeeklyDay
 
@@ -174,32 +172,28 @@ val previewSuggestions = listOf(
         username = "Alexandre Dupont",
         handle = "@alex.dupont",
         avatarUrl = null,
-        mutualFriendsCount = 5,
-        source = SuggestionSource.ALGORITHM
+        mutualFriendsCount = 5
     ),
     FriendSuggestion(
         id = "s2",
         username = "Marie Claire",
         handle = "@marie_claire",
         avatarUrl = null,
-        mutualFriendsCount = 2,
-        source = SuggestionSource.COMMUNITY
+        mutualFriendsCount = 2
     ),
     FriendSuggestion(
         id = "s3",
         username = "Lucas Martin",
         handle = "@lucasm",
         avatarUrl = null,
-        mutualFriendsCount = 8,
-        source = SuggestionSource.CONTACTS
+        mutualFriendsCount = 8
     ),
     FriendSuggestion(
         id = "s4",
         username = "Emma Rousseau",
         handle = "@emma.r",
         avatarUrl = null,
-        mutualFriendsCount = 3,
-        source = SuggestionSource.ALGORITHM
+        mutualFriendsCount = 3
     )
 )
 
@@ -339,7 +333,6 @@ val previewPublicProfile = PublicProfile(
  */
 val previewCommunityUiStateFull = CommunityUiState(
     isLoading = false,
-    selectedTab = CommunityTab.FRIENDS,
     friendsPosts = previewPosts,
     friends = previewFriends,
     suggestions = previewSuggestions,
@@ -355,7 +348,6 @@ val previewCommunityUiStateFull = CommunityUiState(
  */
 val previewCommunityUiStateSearching = CommunityUiState(
     isLoading = false,
-    selectedTab = CommunityTab.FRIENDS,
     friendsPosts = previewPosts,
     friends = previewFriends,
     suggestions = previewSuggestions,

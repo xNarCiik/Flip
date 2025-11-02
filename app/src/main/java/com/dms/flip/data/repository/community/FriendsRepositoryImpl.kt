@@ -1,6 +1,6 @@
 package com.dms.flip.data.repository.community
 
-import com.dms.flip.data.firebase.mapper.FriendDto.toDomain
+import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.repository.community.FriendsRepository

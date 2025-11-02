@@ -1,7 +1,7 @@
 package com.dms.flip.data.repository.community
 
-import com.dms.flip.data.firebase.mapper.RequestDto.toPendingReceived
-import com.dms.flip.data.firebase.mapper.RequestDto.toPendingSent
+import com.dms.flip.data.firebase.mapper.toPendingReceived
+import com.dms.flip.data.firebase.mapper.toPendingSent
 import com.dms.flip.data.firebase.source.RequestsSource
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.repository.community.RequestsRepository

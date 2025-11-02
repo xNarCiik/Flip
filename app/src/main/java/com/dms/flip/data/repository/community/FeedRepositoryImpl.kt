@@ -1,8 +1,7 @@
 package com.dms.flip.data.repository.community
 
 import com.dms.flip.data.firebase.dto.CommentDto
-import com.dms.flip.data.firebase.mapper.CommentDto.toDomain
-import com.dms.flip.data.firebase.mapper.PostDto.toDomain
+import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.domain.model.community.Friend

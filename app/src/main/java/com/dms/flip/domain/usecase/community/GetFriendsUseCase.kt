@@ -1,5 +1,4 @@
-
-package com.dms.flip.domain.usecase.social
+package com.dms.flip.domain.usecase.community
 
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.repository.SocialRepository

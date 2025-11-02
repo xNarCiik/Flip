@@ -38,11 +38,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
-import com.dms.flip.ui.community.RelationshipStatus
-import com.dms.flip.ui.community.UserSearchResult
+import com.dms.flip.domain.model.community.RelationshipStatus
+import com.dms.flip.domain.model.community.UserSearchResult
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewSearchResults
+import kotlin.collections.take
 
 @Composable
 fun SearchTopBar(
