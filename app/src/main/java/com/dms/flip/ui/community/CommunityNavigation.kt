@@ -13,9 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.AnimatedNavHost
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberAnimatedNavController
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.dms.flip.ui.community.screen.CommunityScreen
 import com.dms.flip.ui.community.screen.FriendsListScreen
@@ -36,12 +36,12 @@ sealed class CommunityRoute(val route: String) {
 @Composable
 fun CommunityNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberAnimatedNavController(),
+    navController: NavHostController = rememberNavController(),
     viewModel: CommunityViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    AnimatedNavHost(
+    NavHost(
         navController = navController,
         startDestination = CommunityRoute.Main.route,
         modifier = modifier

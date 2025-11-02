@@ -79,44 +79,44 @@ class HistoryViewModel @Inject constructor(
     private fun loadWeeklyHistory(weekOffset: Int, showLoading: Boolean = true) {
         loadHistoryJob?.cancel()
         loadHistoryJob = viewModelScope.launch {
-        val weekBounds = calculateWeekBounds(weekOffset)
-        val weekLabels = calculateWeekLabels(weekOffset, weekBounds)
+            val weekBounds = calculateWeekBounds(weekOffset)
+            val weekLabels = calculateWeekLabels(weekOffset, weekBounds)
 
-        getWeeklyHistoryUseCase()
-            .onStart {
-                _uiState.update {
-                    it.copy(
-                        isLoading = showLoading,
-                        error = null,
-                        weekOffset = weekOffset,
-                        weekTitle = weekLabels.title,
-                        weekDates = weekLabels.dates,
-                        canNavigateToNextWeek = weekOffset < 0
-                    )
+            getWeeklyHistoryUseCase()
+                .onStart {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = showLoading,
+                            error = null,
+                            weekOffset = weekOffset,
+                            weekTitle = weekLabels.title,
+                            weekDates = weekLabels.dates,
+                            canNavigateToNextWeek = weekOffset < 0
+                        )
+                    }
                 }
-            }
-            .catch { throwable ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = throwable.message ?: "Une erreur inconnue est survenue"
-                    )
+                .catch { throwable ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = throwable.message ?: "Une erreur inconnue est survenue"
+                        )
+                    }
                 }
-            }
-            .collect { allEntries ->
-                val filteredEntries = filterEntriesForWeek(allEntries, weekBounds)
-                val weeklyDays = generateWeeklyDays(weekBounds.start, filteredEntries)
-                val streak = calculateStreak(filteredEntries, weekBounds.end)
+                .collect { allEntries ->
+                    val filteredEntries = filterEntriesForWeek(allEntries, weekBounds)
+                    val weeklyDays = generateWeeklyDays(weekBounds.start, filteredEntries)
+                    val streak = calculateStreak(filteredEntries, weekBounds.end)
 
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        weeklyDays = weeklyDays,
-                        streakDays = streak,
-                        error = null
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            weeklyDays = weeklyDays,
+                            streakDays = streak,
+                            error = null
+                        )
+                    }
                 }
-            }
         }
     }
 

@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberAnimatedNavController
+import androidx.navigation.compose.rememberNavController
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.domain.model.Theme
 import com.dms.flip.ui.component.BottomNavBar
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                     visible = contentVisible,
                     enter = fadeIn(animationSpec = tween(durationMillis = 1000))
                 ) {
-                    val navController = rememberAnimatedNavController()
+                    val navController = rememberNavController()
 
                     LaunchedEffect(rootNavigationState) {
                         navController.navigate(RootRoute) {

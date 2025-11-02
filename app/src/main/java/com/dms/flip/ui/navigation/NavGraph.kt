@@ -15,8 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.AnimatedNavHost
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.ui.community.CommunityNavHost
 import com.dms.flip.ui.dailyflip.DailyFlipScreen
@@ -76,7 +76,7 @@ fun NavGraph(
         }
     }
 
-    AnimatedNavHost(
+    NavHost(
         navController = navController,
         startDestination = RootRoute
     ) {
