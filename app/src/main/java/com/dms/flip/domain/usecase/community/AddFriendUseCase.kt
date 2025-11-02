@@ -1,6 +1,5 @@
 package com.dms.flip.domain.usecase.community
 
-import com.dms.flip.domain.repository.SocialRepository
 import javax.inject.Inject
 
 class AddFriendUseCase @Inject constructor(

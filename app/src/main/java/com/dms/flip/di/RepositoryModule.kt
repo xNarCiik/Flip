@@ -9,7 +9,6 @@ import com.dms.flip.data.repository.HistoryRepositoryImpl
 import com.dms.flip.data.repository.OnboardingRepositoryImpl
 import com.dms.flip.data.repository.PleasureRepositoryImpl
 import com.dms.flip.data.repository.SettingsRepositoryImpl
-import com.dms.flip.data.repository.SocialRepositoryImpl
 import com.dms.flip.data.repository.StatisticsRepositoryImpl
 import com.dms.flip.data.repository.StorageRepository
 import com.dms.flip.data.repository.UserRepositoryImpl
@@ -17,7 +16,6 @@ import com.dms.flip.domain.repository.DailyMessageRepository
 import com.dms.flip.domain.repository.HistoryRepository
 import com.dms.flip.domain.repository.PleasureRepository
 import com.dms.flip.domain.repository.SettingsRepository
-import com.dms.flip.domain.repository.SocialRepository
 import com.dms.flip.domain.repository.StatisticsRepository
 import com.dms.flip.domain.repository.UserRepository
 import com.dms.flip.domain.repository.onboarding.OnboardingRepository
@@ -93,10 +91,6 @@ object RepositoryModule {
     @Singleton
     fun provideSettingsRepository(dataStore: DataStore<Preferences>): SettingsRepository =
         SettingsRepositoryImpl(dataStore = dataStore)
-
-    @Provides
-    @Singleton
-    fun provideSocialRepository(): SocialRepository = SocialRepositoryImpl()
 
     @Provides
     @Singleton

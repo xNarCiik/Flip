@@ -22,6 +22,7 @@ import com.dms.flip.domain.usecase.community.ObserveFriendsUseCase
 import com.dms.flip.domain.usecase.community.ObservePendingReceivedUseCase
 import com.dms.flip.domain.usecase.community.ObservePendingSentUseCase
 import com.dms.flip.domain.usecase.community.ObserveSuggestionsUseCase
+import com.dms.flip.domain.usecase.community.RemoveFriendUseCase
 import com.dms.flip.domain.usecase.community.SearchUsersUseCase
 import com.dms.flip.domain.usecase.community.SendFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.ToggleLikeUseCase
