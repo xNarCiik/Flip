@@ -9,15 +9,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 
 @Composable
-fun LoadingState(modifier: Modifier = Modifier) {
+fun LoadingState(
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.background
+) {
     Box(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.background),
+            .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         Surface(

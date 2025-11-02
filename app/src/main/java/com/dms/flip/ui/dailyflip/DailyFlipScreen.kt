@@ -47,10 +47,12 @@ fun DailyFlipScreen(
     Column(modifier = modifier.fillMaxSize()) {
         FlipTopBar(
             title = stringResource(R.string.app_name),
-            endTopBarIcon = TopBarIcon(
-                icon = Icons.Default.Settings,
-                contentDescription = stringResource(R.string.settings_title),
-                onClick = navigateToSettings
+            endTopBarIcons = listOf(
+                TopBarIcon(
+                    icon = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.settings_title),
+                    onClick = navigateToSettings
+                )
             )
         )
 

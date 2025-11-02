@@ -6,13 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -32,14 +31,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
+import com.dms.flip.ui.component.FlipTopBar
+import com.dms.flip.ui.component.TopBarIcon
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewSearchResults
@@ -52,22 +54,24 @@ fun SearchTopBar(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-        }
+    Column(modifier = modifier.fillMaxWidth()) {
+        FlipTopBar(
+            title = stringResource(R.string.community_search),
+            startTopBarIcon = TopBarIcon(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.navigate_back),
+                onClick = onNavigateBack
+            )
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         BasicTextField(
             value = searchQuery,
             onValueChange = onQueryChange,
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
                 .height(48.dp)
                 .clip(MaterialTheme.shapes.extraLarge)
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -130,19 +134,11 @@ fun SearchResultItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.weight(1f)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = result.username.firstOrNull()?.uppercase() ?: "?",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            CommunityAvatar(
+                imageUrl = result.avatarUrl,
+                fallbackText = result.username.firstOrNull()?.uppercase() ?: "?",
+                size = 48.dp
+            )
 
             Column {
                 Text(

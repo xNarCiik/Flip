@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPosts
@@ -65,7 +65,11 @@ fun PostOptionsDialog(
                         )
                     },
                     leadingContent = {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                        CommunityAvatar(
+                            imageUrl = post.friend.avatarUrl,
+                            fallbackText = post.friend.username.firstOrNull()?.uppercase() ?: "?",
+                            size = 48.dp
+                        )
                     },
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))

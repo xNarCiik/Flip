@@ -21,15 +21,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +35,9 @@ import com.dms.flip.R
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.RelationshipStatus
+import com.dms.flip.ui.component.FlipTopBar
+import com.dms.flip.ui.component.TopBarIcon
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPublicProfile
@@ -54,20 +54,21 @@ fun PublicProfileScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
-            }
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-            }
-        }
+        FlipTopBar(
+            title = profile.username,
+            startTopBarIcon = TopBarIcon(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.navigate_back),
+                onClick = onNavigateBack
+            ),
+            endTopBarIcons = listOf(
+                TopBarIcon(
+                    icon = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.friend_options),
+                    onClick = {}
+                )
+            )
+        )
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -80,19 +81,11 @@ fun PublicProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = profile.username.firstOrNull()?.uppercase() ?: "?",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    CommunityAvatar(
+                        imageUrl = profile.avatarUrl,
+                        fallbackText = profile.username.firstOrNull()?.uppercase() ?: "?",
+                        size = 120.dp
+                    )
 
                     Spacer(Modifier.height(16.dp))
 

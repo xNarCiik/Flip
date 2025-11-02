@@ -72,13 +72,17 @@ fun ManagePleasuresScreen(
                     }
                 }
             ),
-            endTopBarIcon = if (!uiState.isSelectionMode) {
-                TopBarIcon(
-                    icon = Icons.Outlined.Edit,
-                    contentDescription = stringResource(R.string.edit_mode),
-                    onClick = { onEvent(ManagePleasuresEvent.OnEnterSelectionMode) }
+            endTopBarIcons = if (!uiState.isSelectionMode) {
+                listOf(
+                    TopBarIcon(
+                        icon = Icons.Outlined.Edit,
+                        contentDescription = stringResource(R.string.edit_mode),
+                        onClick = { onEvent(ManagePleasuresEvent.OnEnterSelectionMode) }
+                    )
                 )
-            } else null
+            } else {
+                emptyList()
+            }
         )
 
         Box(modifier = Modifier.fillMaxSize()) {

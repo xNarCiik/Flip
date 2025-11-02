@@ -23,8 +23,8 @@ import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.ui.community.component.FriendListItem
 import com.dms.flip.ui.community.component.FriendOptionsDialog
-import com.dms.flip.ui.community.component.FriendsListTopBar
 import com.dms.flip.ui.community.component.CommunityEmptyState
+import com.dms.flip.ui.community.component.FriendsListTopBar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewCommunityUiStateFull
@@ -33,7 +33,8 @@ import com.dms.flip.ui.util.previewCommunityUiStateFull
 fun FriendsListScreen(
     modifier: Modifier = Modifier,
     uiState: CommunityUiState,
-    onEvent: (CommunityEvent) -> Unit
+    onEvent: (CommunityEvent) -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     var selectedFriend by remember { mutableStateOf<Friend?>(null) }
 
@@ -43,6 +44,7 @@ fun FriendsListScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         FriendsListTopBar(
+            onNavigateBack = onNavigateBack,
             onSearchClick = { onEvent(CommunityEvent.OnSearchClicked) },
             onAddFriendClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
         )
@@ -114,7 +116,8 @@ private fun FriendsListScreenPreview() {
         Surface {
             FriendsListScreen(
                 uiState = previewCommunityUiStateFull,
-                onEvent = {}
+                onEvent = {},
+                onNavigateBack = {}
             )
         }
     }

@@ -1,6 +1,7 @@
 package com.dms.flip.ui.community
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -8,13 +9,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.dms.flip.ui.community.screen.*
+import com.dms.flip.ui.community.screen.CommunityScreen
+import com.dms.flip.ui.community.screen.FriendsListScreen
+import com.dms.flip.ui.community.screen.InvitationsScreen
+import com.dms.flip.ui.community.screen.PublicProfileScreen
+import com.dms.flip.ui.community.screen.SearchFriendsScreen
 
 sealed class CommunityRoute(val route: String) {
     data object Main : CommunityRoute("community_main")
@@ -103,7 +105,8 @@ fun CommunityNavHost(
 
                         else -> viewModel.onEvent(event)
                     }
-                }
+                },
+                onNavigateBack = { navController.navigateUp() }
             )
         }
 

@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
+import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.history.component.WeekNavigationHeader
 import com.dms.flip.ui.history.component.WeeklyPleasuresList
@@ -34,18 +38,22 @@ fun HistoryScreen(
     onEvent: (HistoryEvent) -> Unit,
     navigateToDailyFlip: () -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        HistoryContent(
-            weeklyDays = uiState.weeklyDays,
-            weekTitle = uiState.weekTitle,
-            weekDates = uiState.weekDates,
-            streakDays = uiState.streakDays,
-            canNavigateToNextWeek = uiState.canNavigateToNextWeek,
-            isLoading = uiState.isLoading,
-            error = uiState.error,
-            onEvent = onEvent,
-            navigateToDailyFlip = navigateToDailyFlip
-        )
+    Column(modifier = modifier.fillMaxSize()) {
+        FlipTopBar(title = stringResource(id = R.string.history_title))
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            HistoryContent(
+                weeklyDays = uiState.weeklyDays,
+                weekTitle = uiState.weekTitle,
+                weekDates = uiState.weekDates,
+                streakDays = uiState.streakDays,
+                canNavigateToNextWeek = uiState.canNavigateToNextWeek,
+                isLoading = uiState.isLoading,
+                error = uiState.error,
+                onEvent = onEvent,
+                navigateToDailyFlip = navigateToDailyFlip
+            )
+        }
     }
 }
 
@@ -93,35 +101,48 @@ private fun HistoryContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Weekly pleasures list or state feedback
-        when {
-            isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 200.dp)
-                ) {
-                    LoadingState(modifier = Modifier.align(Alignment.Center))
-                }
-            }
+        val hasHistoryEntries = weeklyDays.any { it.historyEntry != null }
 
-            error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 200.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.generic_error_message, error),
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-
-            else -> {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 200.dp)
+        ) {
+            if (error != null && !hasHistoryEntries) {
+                Text(
+                    text = stringResource(R.string.generic_error_message, error),
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            } else {
                 WeeklyPleasuresList(
                     items = weeklyDays,
                     onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
                     onDiscoverTodayClicked = navigateToDailyFlip
+                )
+
+                if (error != null) {
+                    Text(
+                        text = stringResource(R.string.generic_error_message, error),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            if (isLoading) {
+                LoadingState(
+                    modifier = Modifier.matchParentSize(),
+                    backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
                 )
             }
         }
