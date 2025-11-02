@@ -13,6 +13,7 @@ import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.PleasureStatus
+import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.RelationshipStatus

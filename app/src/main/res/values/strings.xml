@@ -50,7 +50,7 @@
 
     <!-- Reminder Step -->
     <string name="onboarding_reminder_title">Quand souhaitez-vous votre plaisir ?</string>
-    <string name="onboarding_reminder_subtitle">Choisissez l'heure à laquelle nous vous rappellerons de flipper votre carte.</string>
+    <string name="onboarding_reminder_subtitle">Choisissez l\'heure à laquelle nous vous rappellerons de flipper votre carte.</string>
     <string name="onboarding_reminder_label">Heure du rappel</string>
     <string name="onboarding_reminder_hint">Appuyez pour modifier</string>
     <string name="onboarding_reminder_info">Vous pourrez modifier cette heure à tout moment dans les paramètres.</string>
@@ -222,11 +222,11 @@
 
     <string name="community_empty_invitations_emoji" translatable="false">📫</string>
     <string name="community_empty_invitations_title">Aucune invitation pour le moment</string>
-    <string name="community_empty_invitations_description">Lorsque quelqu'un vous invitera, ses demandes apparaîtront ici.</string>
+    <string name="community_empty_invitations_description">Lorsque quelqu\'un vous invitera, ses demandes apparaîtront ici.</string>
 
     <string name="community_empty_search_initial_emoji" translatable="false">🔍</string>
     <string name="community_empty_search_initial_title">Recherchez un ami</string>
-    <string name="community_empty_search_initial_description">Saisissez le nom ou le pseudo d'une personne pour la retrouver.</string>
+    <string name="community_empty_search_initial_description">Saisissez le nom ou le pseudo d\'une personne pour la retrouver.</string>
 
     <string name="community_empty_search_results_emoji" translatable="false">😕</string>
     <string name="community_empty_search_results_title">Aucun résultat</string>
@@ -251,7 +251,7 @@
     <!-- Friend Requests -->
     <string name="requests_received">Reçues</string>
     <string name="requests_sent">Envoyées</string>
-    <string name="community_request_time_today">Aujourd'hui</string>
+    <string name="community_request_time_today">Aujourd\'hui</string>
     <string name="community_request_time_yesterday">Il y a 1 jour</string>
     <plurals name="community_request_time_days">
         <item quantity="one">Il y a %d jour</item>
