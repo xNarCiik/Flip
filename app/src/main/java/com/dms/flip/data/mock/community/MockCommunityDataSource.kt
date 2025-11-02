@@ -148,10 +148,10 @@ class MockCommunityDataSource @Inject constructor() {
             isOnline = false,
             currentPleasure = FriendPleasure(
                 title = "Atelier cuisine italienne",
-                category = PleasureCategory.CULINARY,
+                category = PleasureCategory.FOOD,
                 status = PleasureStatus.COMPLETED
             ),
-            favoriteCategory = PleasureCategory.CULINARY
+            favoriteCategory = PleasureCategory.FOOD
         ),
         "friend_bastien" to Friend(
             id = "friend_bastien",
@@ -311,7 +311,7 @@ class MockCommunityDataSource @Inject constructor() {
                 RecentActivity(
                     id = "activity_camille_cafe",
                     pleasureTitle = "Découverte d'un nouveau café",
-                    category = PleasureCategory.CULINARY,
+                    category = PleasureCategory.FOOD,
                     completedAt = now - TimeUnit.DAYS.toMillis(1),
                     isCompleted = true
                 )
@@ -338,7 +338,7 @@ class MockCommunityDataSource @Inject constructor() {
                 RecentActivity(
                     id = "activity_alex_tasting",
                     pleasureTitle = "Dégustation de cafés", 
-                    category = PleasureCategory.CULINARY,
+                    category = PleasureCategory.FOOD,
                     completedAt = now - TimeUnit.DAYS.toMillis(2),
                     isCompleted = true
                 )
@@ -530,14 +530,6 @@ class MockCommunityDataSource @Inject constructor() {
             else -> RelationshipStatus.NONE
         }
     }
-
-    fun getCurrentUser(): Friend = currentUser
-
-    fun getFriendIds(): Set<String> = _friends.value.map { it.id }.toSet()
-
-    fun getPendingReceivedIds(): Set<String> = _pendingReceived.value.map { it.userId }.toSet()
-
-    fun getPendingSentIds(): Set<String> = _pendingSent.value.map { it.userId }.toSet()
 
     fun getUser(userId: String): Friend =
         knownUsers.getOrPut(userId) { createPlaceholderUser(userId) }
