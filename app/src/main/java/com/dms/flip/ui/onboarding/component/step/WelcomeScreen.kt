@@ -111,7 +111,7 @@ fun WelcomeScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = "Commencer",
+                text = stringResource(id = R.string.onboarding_welcome_start),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )

@@ -34,12 +34,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
@@ -301,7 +302,11 @@ private fun SuggestionCard(
 
                 if (suggestion.mutualFriendsCount > 0) {
                     Text(
-                        text = "${suggestion.mutualFriendsCount} amis en commun",
+                        text = pluralStringResource(
+                            id = R.plurals.community_mutual_friends,
+                            count = suggestion.mutualFriendsCount,
+                            suggestion.mutualFriendsCount
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -324,12 +329,17 @@ private fun SuggestionCard(
     }
 }
 
+@Composable
 internal fun formatRequestTime(timestamp: Long): String {
     val days = ((System.currentTimeMillis() - timestamp) / (1_000 * 60 * 60 * 24)).toInt()
     return when (days) {
-        0 -> "Aujourd'hui"
-        1 -> "Il y a 1 jour"
-        else -> "Il y a ${days} jours"
+        0 -> stringResource(id = R.string.community_request_time_today)
+        1 -> stringResource(id = R.string.community_request_time_yesterday)
+        else -> pluralStringResource(
+            id = R.plurals.community_request_time_days,
+            count = days,
+            days
+        )
     }
 }
 

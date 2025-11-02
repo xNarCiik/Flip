@@ -77,13 +77,13 @@ fun NotificationPermissionStep(
             },
             title = {
                 Text(
-                    text = "Activer les notifications ?",
+                    text = stringResource(id = R.string.onboarding_notification_warning_title),
                     style = MaterialTheme.typography.titleLarge
                 )
             },
             text = {
                 Text(
-                    text = "Les notifications vous aideront à ne jamais manquer votre moment de bien-être quotidien. Vous pourrez toujours les désactiver plus tard dans les paramètres.",
+                    text = stringResource(id = R.string.onboarding_notification_warning_message),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -98,12 +98,12 @@ fun NotificationPermissionStep(
                         }
                     }
                 ) {
-                    Text("Activer")
+                    Text(stringResource(id = R.string.onboarding_notification_enable))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismissWarning) {
-                    Text("Plus tard")
+                    Text(stringResource(id = R.string.onboarding_notification_later))
                 }
             }
         )
@@ -171,15 +171,15 @@ fun NotificationPermissionStep(
             ) {
                 NotificationBenefitItem(
                     emoji = "⏰",
-                    text = "Un rappel quotidien personnalisé"
+                    text = stringResource(id = R.string.onboarding_notification_benefit_reminder)
                 )
                 NotificationBenefitItem(
                     emoji = "✨",
-                    text = "Ne manquez jamais votre moment de bien-être"
+                    text = stringResource(id = R.string.onboarding_notification_benefit_never_miss)
                 )
                 NotificationBenefitItem(
                     emoji = "🎯",
-                    text = "Restez connecté avec vos amis"
+                    text = stringResource(id = R.string.onboarding_notification_benefit_connected)
                 )
             }
         }
@@ -212,7 +212,7 @@ fun NotificationPermissionStep(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Activer les notifications",
+                    text = stringResource(id = R.string.onboarding_notification_activate_button),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -238,7 +238,7 @@ fun NotificationPermissionStep(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Notifications activées !",
+                        text = stringResource(id = R.string.onboarding_notification_enabled),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.tertiary
                     )

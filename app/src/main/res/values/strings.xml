@@ -16,6 +16,7 @@
     <string name="login_continue_with_google">Continuer avec Google</string>
 
     <!-- Onboarding -->
+    <string name="onboarding_progress_step">Étape %1$d sur %2$d</string>
     <!-- Welcome Step -->
     <string name="onboarding_welcome_title">Bienvenue dans Flip</string>
     <string name="onboarding_welcome_subtitle">Configurons ensemble votre expérience pour profiter pleinement de vos plaisirs quotidiens.</string>
@@ -25,6 +26,7 @@
     <string name="onboarding_welcome_feature2_text">Choisissez vos plaisirs préférés</string>
     <string name="onboarding_welcome_feature3_emoji" translatable="false">🔔</string>
     <string name="onboarding_welcome_feature3_text">Configurez vos rappels</string>
+    <string name="onboarding_welcome_start">Commencer</string>
     <!-- Username Step -->
     <string name="onboarding_username_title">Comment voulez-vous qu\'on vous appelle ?</string>
     <string name="onboarding_username_subtitle">Ce nom sera utilisé pour personnaliser votre expérience.</string>
@@ -36,6 +38,22 @@
     <!-- Notification Step -->
     <string name="onboarding_notification_title">Configurez vos rappels</string>
     <string name="onboarding_notification_subtitle">Recevez une notification quotidienne pour découvrir votre plaisir du jour.</string>
+    <string name="onboarding_notification_warning_title">Activer les notifications ?</string>
+    <string name="onboarding_notification_warning_message">Les notifications vous aideront à ne jamais manquer votre moment de bien-être quotidien. Vous pourrez toujours les désactiver plus tard dans les paramètres.</string>
+    <string name="onboarding_notification_enable">Activer</string>
+    <string name="onboarding_notification_later">Plus tard</string>
+    <string name="onboarding_notification_benefit_reminder">Un rappel quotidien personnalisé</string>
+    <string name="onboarding_notification_benefit_never_miss">Ne manquez jamais votre moment de bien-être</string>
+    <string name="onboarding_notification_benefit_connected">Restez connecté avec vos amis</string>
+    <string name="onboarding_notification_activate_button">Activer les notifications</string>
+    <string name="onboarding_notification_enabled">Notifications activées !</string>
+
+    <!-- Reminder Step -->
+    <string name="onboarding_reminder_title">Quand souhaitez-vous votre plaisir ?</string>
+    <string name="onboarding_reminder_subtitle">Choisissez l'heure à laquelle nous vous rappellerons de flipper votre carte.</string>
+    <string name="onboarding_reminder_label">Heure du rappel</string>
+    <string name="onboarding_reminder_hint">Appuyez pour modifier</string>
+    <string name="onboarding_reminder_info">Vous pourrez modifier cette heure à tout moment dans les paramètres.</string>
 
     <!-- Daily Flip Screen -->
     <!-- Setup State -->
@@ -64,6 +82,7 @@
     <string name="history_streak_days">Jours de série</string>
     <string name="history_ready_for_joy">Prêt(e) pour votre joie du jour ?</string>
     <string name="history_discover_button">Découvrir</string>
+    <string name="history_discovery_loading">Découverte en cours…</string>
     <string name="status_done_checked">Fait ✓</string>
 
     <string name="dialog_close">Fermer</string>
@@ -190,6 +209,35 @@
     <string name="community_comment">Commenter</string>
     <string name="community_post_menu">Menu du post</string>
 
+    <!-- Empty States -->
+    <string name="community_empty_feed_emoji" translatable="false">🎈</string>
+    <string name="community_empty_feed_title">Votre fil est encore vide</string>
+    <string name="community_empty_feed_description">Ajoutez des amis pour découvrir leurs plaisirs quotidiens et partager les vôtres.</string>
+    <string name="community_empty_feed_action">Ajouter des amis</string>
+
+    <string name="community_empty_friends_emoji" translatable="false">🤝</string>
+    <string name="community_empty_friends_title">Aucun ami pour le moment</string>
+    <string name="community_empty_friends_description">Invitez vos proches pour célébrer vos moments de joie ensemble.</string>
+    <string name="community_empty_friends_action">Rechercher des amis</string>
+
+    <string name="community_empty_invitations_emoji" translatable="false">📫</string>
+    <string name="community_empty_invitations_title">Aucune invitation pour le moment</string>
+    <string name="community_empty_invitations_description">Lorsque quelqu'un vous invitera, ses demandes apparaîtront ici.</string>
+
+    <string name="community_empty_search_initial_emoji" translatable="false">🔍</string>
+    <string name="community_empty_search_initial_title">Recherchez un ami</string>
+    <string name="community_empty_search_initial_description">Saisissez le nom ou le pseudo d'une personne pour la retrouver.</string>
+
+    <string name="community_empty_search_results_emoji" translatable="false">😕</string>
+    <string name="community_empty_search_results_title">Aucun résultat</string>
+    <string name="community_empty_search_results_description">Essayez un autre nom ou un pseudo différent.</string>
+
+    <!-- Posts -->
+    <string name="community_add_comment_placeholder">Ajouter un commentaire…</string>
+    <string name="community_post_options_title">Options du post</string>
+    <string name="community_post_view_profile">Voir le profil de %1$s</string>
+    <string name="community_post_report">Signaler le post</string>
+
     <!-- Friends List -->
     <string name="friends_list_title">Mes Amis</string>
     <string name="friends_invite_to_pleasure">Inviter à un plaisir</string>
@@ -203,6 +251,16 @@
     <!-- Friend Requests -->
     <string name="requests_received">Reçues</string>
     <string name="requests_sent">Envoyées</string>
+    <string name="community_request_time_today">Aujourd'hui</string>
+    <string name="community_request_time_yesterday">Il y a 1 jour</string>
+    <plurals name="community_request_time_days">
+        <item quantity="one">Il y a %d jour</item>
+        <item quantity="other">Il y a %d jours</item>
+    </plurals>
+    <plurals name="community_mutual_friends">
+        <item quantity="one">%d ami en commun</item>
+        <item quantity="other">%d amis en commun</item>
+    </plurals>
 
     <!-- Buttons -->
     <string name="button_add">Ajouter</string>

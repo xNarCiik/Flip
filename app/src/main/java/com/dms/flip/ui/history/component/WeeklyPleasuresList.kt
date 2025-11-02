@@ -274,7 +274,7 @@ private fun TodayLoadingCard(weeklyDay: WeeklyDay) {
                 )
 
                 Text(
-                    text = "Découverte en cours...",
+                    text = stringResource(id = R.string.history_discovery_loading),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

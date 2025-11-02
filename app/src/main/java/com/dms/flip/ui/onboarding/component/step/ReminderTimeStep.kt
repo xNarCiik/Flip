@@ -32,10 +32,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dms.flip.R
 import com.dms.flip.ui.component.TimePicker
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -89,7 +91,7 @@ fun ReminderTimeStep(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Quand souhaitez-vous votre plaisir ?",
+            text = stringResource(id = R.string.onboarding_reminder_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -98,7 +100,7 @@ fun ReminderTimeStep(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Choisissez l'heure à laquelle nous vous rappellerons de flipper votre carte.",
+            text = stringResource(id = R.string.onboarding_reminder_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -126,7 +128,7 @@ fun ReminderTimeStep(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Heure du rappel",
+                    text = stringResource(id = R.string.onboarding_reminder_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -172,7 +174,7 @@ fun ReminderTimeStep(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Appuyez pour modifier",
+                    text = stringResource(id = R.string.onboarding_reminder_hint),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -200,7 +202,7 @@ fun ReminderTimeStep(
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = "Vous pourrez modifier cette heure à tout moment dans les paramètres",
+                    text = stringResource(id = R.string.onboarding_reminder_info),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

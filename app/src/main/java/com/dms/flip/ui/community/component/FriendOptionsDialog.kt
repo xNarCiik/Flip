@@ -25,8 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dms.flip.R
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -82,7 +84,7 @@ fun FriendOptionsDialog(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = "Voir le profil",
+                            text = stringResource(id = R.string.view_profile),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },
@@ -97,7 +99,7 @@ fun FriendOptionsDialog(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = "Inviter à un plaisir",
+                            text = stringResource(id = R.string.friends_invite_to_pleasure),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },
@@ -112,7 +114,7 @@ fun FriendOptionsDialog(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = "Retirer de mes amis",
+                            text = stringResource(id = R.string.remove_friend),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -133,7 +135,7 @@ fun FriendOptionsDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Fermer")
+                Text(text = stringResource(id = R.string.dialog_close))
             }
         },
         shape = RoundedCornerShape(28.dp)

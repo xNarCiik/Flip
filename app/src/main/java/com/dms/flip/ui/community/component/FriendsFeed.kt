@@ -53,7 +53,6 @@ import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.domain.model.community.FriendPost
-import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.formatTimestamp
@@ -377,25 +376,7 @@ private fun PleasureCard(
 private class FriendsFeedPreviewParameterProvider : PreviewParameterProvider<List<FriendPost>> {
     override val values: Sequence<List<FriendPost>> = sequenceOf(
         previewPosts.take(3),
-        previewPosts.take(2).mapIndexed { index, post ->
-            if (index == 0) {
-                post.copy(
-                    comments = listOf(
-                        post.comments.firstOrNull() ?: PostComment(
-                            id = "comment1",
-                            userId = "user1",
-                            username = "Léa Dupont",
-                            userHandle = "@lea.d",
-                            content = "Bravo pour ta régularité !",
-                            timestamp = System.currentTimeMillis() - 45_000
-                        )
-                    ),
-                    commentsCount = 1
-                )
-            } else {
-                post
-            }
-        }
+        previewPosts.take(2)
     )
 }
 

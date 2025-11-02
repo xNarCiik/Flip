@@ -1,24 +1,30 @@
 package com.dms.flip.ui.community.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.ui.res.stringResource
+import com.dms.flip.R
+import com.dms.flip.ui.component.ErrorState
+import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.ui.community.component.FriendListItem
 import com.dms.flip.ui.community.component.FriendOptionsDialog
 import com.dms.flip.ui.community.component.FriendsListTopBar
+import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewCommunityUiStateFull
@@ -41,14 +47,42 @@ fun FriendsListScreen(
             onAddFriendClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
         )
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(items = uiState.friends, key = { it.id }) { friend ->
-                FriendListItem(
-                    friend = friend,
-                    onClick = { onEvent(CommunityEvent.OnFriendClicked(friend)) },
-                    onMenuClick = { selectedFriend = friend },
-                    onQuickAction = { onEvent(CommunityEvent.OnInviteFriendToPleasure(friend)) }
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                uiState.error != null -> {
+                    ErrorState(
+                        modifier = Modifier.fillMaxSize(),
+                        message = stringResource(id = uiState.error),
+                        onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
+                    )
+                }
+
+                uiState.isLoading && uiState.friends.isEmpty() -> {
+                    LoadingState(modifier = Modifier.fillMaxSize())
+                }
+
+                uiState.friends.isEmpty() -> {
+                    CommunityEmptyState(
+                        emoji = stringResource(id = R.string.community_empty_friends_emoji),
+                        title = stringResource(id = R.string.community_empty_friends_title),
+                        description = stringResource(id = R.string.community_empty_friends_description),
+                        actionText = stringResource(id = R.string.community_empty_friends_action),
+                        onActionClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
+                    )
+                }
+
+                else -> {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(items = uiState.friends, key = { it.id }) { friend ->
+                            FriendListItem(
+                                friend = friend,
+                                onClick = { onEvent(CommunityEvent.OnFriendClicked(friend)) },
+                                onMenuClick = { selectedFriend = friend },
+                                onQuickAction = { onEvent(CommunityEvent.OnInviteFriendToPleasure(friend)) }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

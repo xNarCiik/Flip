@@ -27,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dms.flip.R
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -81,7 +83,7 @@ private fun CommentInput(
             decorationBox = { innerTextField ->
                 if (commentText.isEmpty()) {
                     Text(
-                        text = "Ajouter un commentaire...",
+                        text = stringResource(id = R.string.community_add_comment_placeholder),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )

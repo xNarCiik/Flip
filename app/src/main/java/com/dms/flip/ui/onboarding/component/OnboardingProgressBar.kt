@@ -16,10 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dms.flip.R
 import com.dms.flip.ui.onboarding.OnboardingStep
 import com.dms.flip.ui.theme.flipGradients
 
@@ -57,7 +59,11 @@ fun OnboardingProgressBar(
     ) {
         // Label "Étape X sur Y" - Plus grand et centré
         Text(
-            text = "Étape $stepNumber sur $totalSteps",
+            text = stringResource(
+                id = R.string.onboarding_progress_step,
+                stepNumber,
+                totalSteps
+            ),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,

@@ -20,9 +20,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dms.flip.R
 import com.dms.flip.domain.model.community.FriendPost
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -40,7 +42,7 @@ fun PostOptionsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Options du post",
+                text = stringResource(id = R.string.community_post_options_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
@@ -55,7 +57,10 @@ fun PostOptionsDialog(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = "Voir le profil de ${post.friend.username}",
+                            text = stringResource(
+                                id = R.string.community_post_view_profile,
+                                post.friend.username
+                            ),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },
@@ -75,7 +80,7 @@ fun PostOptionsDialog(
                 ListItem(
                     headlineContent = {
                         Text(
-                            text = "Signaler le post",
+                            text = stringResource(id = R.string.community_post_report),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -96,7 +101,7 @@ fun PostOptionsDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text(stringResource(id = R.string.button_cancel))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,

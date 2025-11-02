@@ -33,27 +33,27 @@ val previewDailyPleasure = Pleasure(
 val previewFriends = listOf(
     Friend(
         id = "1",
-        username = "Damien",
+        username = "Amélie Dubois",
         currentPleasure = FriendPleasure(
-            title = "Fumé un pet.. ou deux",
-            status = PleasureStatus.COMPLETED,
+            title = "Séance de méditation",
+            status = PleasureStatus.IN_PROGRESS,
             category = PleasureCategory.WELLNESS
         ),
         avatarUrl = null,
-        handle = "@damien.lgx",
+        handle = "@amelie.db",
         streak = 12,
         isOnline = true,
         favoriteCategory = PleasureCategory.WELLNESS
     ),
     Friend(
         id = "2",
-        username = "La mère michek",
-        handle = "@emmamiaa",
+        username = "Lucas Bernard",
+        handle = "@lucas.bernard",
         streak = 24,
         currentPleasure = FriendPleasure(
-            title = "Baiser Ugo",
-            status = PleasureStatus.IN_PROGRESS,
-            category = PleasureCategory.FOOD
+            title = "Sortie running",
+            status = PleasureStatus.COMPLETED,
+            category = PleasureCategory.SPORT
         ),
         avatarUrl = null,
         isOnline = false,
@@ -75,8 +75,8 @@ val previewFriends = listOf(
     ),
     Friend(
         id = "4",
-        username = "Lucas Dubois",
-        handle = "@lucas.dubois",
+        username = "Théo Martin",
+        handle = "@theo.martin",
         avatarUrl = null,
         streak = 5,
         isOnline = false,
@@ -114,7 +114,32 @@ val previewPosts = listOf(
         isLiked = false,
         pleasureCategory = PleasureCategory.WELLNESS,
         pleasureTitle = "Méditation guidée",
-        comments = emptyList()
+        comments = listOf(
+            PostComment(
+                id = "c1",
+                userId = previewFriends[1].id,
+                username = previewFriends[1].username,
+                userHandle = previewFriends[1].handle,
+                content = "Bravo pour ta constance !",
+                timestamp = System.currentTimeMillis() - 180000
+            ),
+            PostComment(
+                id = "c2",
+                userId = previewFriends[2].id,
+                username = previewFriends[2].username,
+                userHandle = previewFriends[2].handle,
+                content = "Ça donne envie de s'y mettre 😊",
+                timestamp = System.currentTimeMillis() - 150000
+            ),
+            PostComment(
+                id = "c3",
+                userId = previewFriends[4].id,
+                username = previewFriends[4].username,
+                userHandle = previewFriends[4].handle,
+                content = "Je rejoins ta prochaine séance !",
+                timestamp = System.currentTimeMillis() - 60000
+            )
+        )
     ),
     FriendPost(
         id = "p2",
@@ -126,7 +151,24 @@ val previewPosts = listOf(
         isLiked = true,
         pleasureCategory = PleasureCategory.SPORT,
         pleasureTitle = "Run de quartier",
-        comments = emptyList()
+        comments = listOf(
+            PostComment(
+                id = "c4",
+                userId = previewFriends[0].id,
+                username = previewFriends[0].username,
+                userHandle = previewFriends[0].handle,
+                content = "Quelle énergie !",
+                timestamp = System.currentTimeMillis() - 1500000
+            ),
+            PostComment(
+                id = "c5",
+                userId = previewFriends[3].id,
+                username = previewFriends[3].username,
+                userHandle = previewFriends[3].handle,
+                content = "On se fait une sortie ensemble ce week-end ?",
+                timestamp = System.currentTimeMillis() - 1200000
+            )
+        )
     ),
     FriendPost(
         id = "p3",
@@ -138,7 +180,40 @@ val previewPosts = listOf(
         isLiked = false,
         pleasureCategory = PleasureCategory.OUTDOOR,
         pleasureTitle = "Balade en forêt",
-        comments = emptyList()
+        comments = listOf(
+            PostComment(
+                id = "c6",
+                userId = previewFriends[1].id,
+                username = previewFriends[1].username,
+                userHandle = previewFriends[1].handle,
+                content = "Les photos sont sublimes !",
+                timestamp = System.currentTimeMillis() - 3300000
+            ),
+            PostComment(
+                id = "c7",
+                userId = previewFriends[4].id,
+                username = previewFriends[4].username,
+                userHandle = previewFriends[4].handle,
+                content = "Ça fait rêver ✨",
+                timestamp = System.currentTimeMillis() - 3000000
+            ),
+            PostComment(
+                id = "c8",
+                userId = previewFriends[0].id,
+                username = previewFriends[0].username,
+                userHandle = previewFriends[0].handle,
+                content = "On y va ensemble la prochaine fois ?",
+                timestamp = System.currentTimeMillis() - 2700000
+            ),
+            PostComment(
+                id = "c9",
+                userId = previewFriends[3].id,
+                username = previewFriends[3].username,
+                userHandle = previewFriends[3].handle,
+                content = "J'arrive avec le pique-nique !",
+                timestamp = System.currentTimeMillis() - 2400000
+            )
+        )
     ),
     FriendPost(
         id = "p4",
@@ -146,11 +221,36 @@ val previewPosts = listOf(
         content = "Préparation d'un délicieux petit-déjeuner healthy 🥑🍳 La journée commence bien !",
         timestamp = System.currentTimeMillis() - 7200000, // 2h ago
         likesCount = 34,
-        commentsCount = 5,
+        commentsCount = 3,
         isLiked = true,
         pleasureCategory = PleasureCategory.FOOD,
         pleasureTitle = "Brunch du dimanche",
-        comments = emptyList()
+        comments = listOf(
+            PostComment(
+                id = "c10",
+                userId = previewFriends[4].id,
+                username = previewFriends[4].username,
+                userHandle = previewFriends[4].handle,
+                content = "Ça a l'air délicieux !",
+                timestamp = System.currentTimeMillis() - 6900000
+            ),
+            PostComment(
+                id = "c11",
+                userId = previewFriends[2].id,
+                username = previewFriends[2].username,
+                userHandle = previewFriends[2].handle,
+                content = "Tu partages la recette ?",
+                timestamp = System.currentTimeMillis() - 6600000
+            ),
+            PostComment(
+                id = "c12",
+                userId = previewFriends[0].id,
+                username = previewFriends[0].username,
+                userHandle = previewFriends[0].handle,
+                content = "Je passe tout de suite !",
+                timestamp = System.currentTimeMillis() - 6300000
+            )
+        )
     ),
     FriendPost(
         id = "p5",
@@ -162,7 +262,16 @@ val previewPosts = listOf(
         isLiked = false,
         pleasureCategory = PleasureCategory.CULTURE,
         pleasureTitle = "Pause lecture",
-        comments = emptyList()
+        comments = listOf(
+            PostComment(
+                id = "c13",
+                userId = previewFriends[2].id,
+                username = previewFriends[2].username,
+                userHandle = previewFriends[2].handle,
+                content = "Tu me le prêtes après ?",
+                timestamp = System.currentTimeMillis() - 9600000
+            )
+        )
     )
 )
 
