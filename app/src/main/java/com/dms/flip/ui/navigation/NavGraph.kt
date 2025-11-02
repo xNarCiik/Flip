@@ -1,5 +1,8 @@
 package com.dms.flip.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -14,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -54,7 +58,66 @@ object ManagePleasuresRoute
 @Serializable
 object StatisticsRoute
 
-private const val navigationAnimationDuration = 900
+private val navRouteOrder = listOf(
+    WeeklyRoute::class.qualifiedName,
+    DailyPleasureRoute::class.qualifiedName,
+    CommunityRoute::class.qualifiedName
+).mapIndexed { index, route -> route to index }
+    .toMap()
+
+private enum class NavDirection { Forward, Backward }
+
+private fun navDirection(
+    initialRoute: String?,
+    targetRoute: String?
+): NavDirection? {
+    val from = initialRoute?.let(navRouteOrder::get)
+    val to = targetRoute?.let(navRouteOrder::get)
+
+    if (from == null || to == null || from == to) {
+        return null
+    }
+
+    return if (to > from) NavDirection.Forward else NavDirection.Backward
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnterTransition(): EnterTransition {
+    val direction = navDirection(
+        initialRoute = initialState.destination.route,
+        targetRoute = targetState.destination.route
+    )
+
+    val offset = when (direction) {
+        NavDirection.Forward -> { fullWidth: Int -> fullWidth / 3 }
+        NavDirection.Backward -> { fullWidth: Int -> -fullWidth / 3 }
+        null -> { fullWidth: Int -> fullWidth / 4 }
+    }
+
+    return fadeIn(animationSpec = tween(250)) +
+            slideInHorizontally(
+                animationSpec = tween(300),
+                initialOffsetX = offset
+            )
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navExitTransition(): ExitTransition {
+    val direction = navDirection(
+        initialRoute = initialState.destination.route,
+        targetRoute = targetState.destination.route
+    )
+
+    val offset = when (direction) {
+        NavDirection.Forward -> { fullWidth: Int -> -fullWidth / 4 }
+        NavDirection.Backward -> { fullWidth: Int -> fullWidth / 4 }
+        null -> { fullWidth: Int -> -fullWidth / 4 }
+    }
+
+    return fadeOut(animationSpec = tween(200)) +
+            slideOutHorizontally(
+                animationSpec = tween(250),
+                targetOffsetX = offset
+            )
+}
 
 @Composable
 fun NavGraph(
@@ -78,7 +141,11 @@ fun NavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = RootRoute
+        startDestination = RootRoute,
+        enterTransition = { navEnterTransition() },
+        exitTransition = { navExitTransition() },
+        popEnterTransition = { navEnterTransition() },
+        popExitTransition = { navExitTransition() }
     ) {
         composable<RootRoute> {
             when (rootNavigationState) {
@@ -103,36 +170,7 @@ fun NavGraph(
             }
         }
 
-        composable<DailyPleasureRoute>(
-            enterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { it / 3 }
-                        )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { -it / 4 }
-                        )
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { -it / 3 }
-                        )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { it / 4 }
-                        )
-            }
-        ) {
+        composable<DailyPleasureRoute> {
             val viewModel: DailyFlipViewModel = hiltViewModel()
             val dailyPleasureUiState by viewModel.uiState.collectAsState()
 
@@ -145,36 +183,7 @@ fun NavGraph(
             )
         }
 
-        composable<WeeklyRoute>(
-            enterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { it / 3 }
-                        )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { -it / 4 }
-                        )
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { -it / 3 }
-                        )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { it / 4 }
-                        )
-            }
-        ) {
+        composable<WeeklyRoute> {
             val viewModel: HistoryViewModel = hiltViewModel()
             val historyState by viewModel.uiState.collectAsState()
 
@@ -186,69 +195,11 @@ fun NavGraph(
             )
         }
 
-        composable<CommunityRoute>(
-            enterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { it / 3 }
-                        )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { -it / 4 }
-                        )
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { -it / 3 }
-                        )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { it / 4 }
-                        )
-            }
-        ) {
+        composable<CommunityRoute> {
             CommunityNavHost(modifier = modifierWithPaddingValues)
         }
 
-        composable<SettingsRoute>(
-            enterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { it / 3 }
-                        )
-            },
-            exitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { -it / 4 }
-                        )
-            },
-            popEnterTransition = {
-                fadeIn(animationSpec = tween(250)) +
-                        slideInHorizontally(
-                            animationSpec = tween(300),
-                            initialOffsetX = { -it / 3 }
-                        )
-            },
-            popExitTransition = {
-                fadeOut(animationSpec = tween(200)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(250),
-                            targetOffsetX = { it / 4 }
-                        )
-            }
-        ) {
+        composable<SettingsRoute> {
             val viewModel: SettingsViewModel = hiltViewModel()
             val settingsState by viewModel.uiState.collectAsState()
 
@@ -262,44 +213,7 @@ fun NavGraph(
             )
         }
 
-        composable<ManagePleasuresRoute>(
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = navigationAnimationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(
-                        durationMillis = navigationAnimationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            },
-            popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -fullWidth },
-                    animationSpec = tween(
-                        durationMillis = navigationAnimationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(
-                        durationMillis = navigationAnimationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            }
-        ) {
+        composable<ManagePleasuresRoute> {
             val viewModel: ManagePleasuresViewModel = hiltViewModel()
             val managePleasuresUiState by viewModel.uiState.collectAsState()
 
