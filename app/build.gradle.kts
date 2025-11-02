@@ -23,12 +23,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("Boolean", "USE_MOCK_COMMUNITY_DATA", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("Boolean", "USE_MOCK_COMMUNITY_DATA", "false")
         }
     }
     compileOptions {
