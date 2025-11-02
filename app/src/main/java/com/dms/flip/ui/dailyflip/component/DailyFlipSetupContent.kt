@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -48,6 +49,7 @@ fun DailyFlipSetupContent(
     requiredCount: Int = 7,
     onConfigureClick: () -> Unit
 ) {
+    val context = LocalContext.current
     var playAnimation by rememberSaveable { mutableStateOf(true) }
 
     val plantComposition by rememberLottieComposition(
@@ -146,7 +148,7 @@ fun DailyFlipSetupContent(
                 .fillMaxWidth()
                 .height(56.dp)
                 .semantics {
-                    contentDescription = stringResource(R.string.setup_button_text)
+                    contentDescription = context.getString(R.string.setup_button_text)
                 },
             shape = RoundedCornerShape(50.dp),
             colors = ButtonDefaults.buttonColors(

@@ -65,7 +65,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.airbnb.lottie.RenderMode
@@ -130,8 +129,7 @@ fun DailyFlipContent(
     val confettiProgress by animateLottieCompositionAsState(
         composition = confettiComposition,
         isPlaying = confettiIsPlaying,
-        restartOnPlay = false,
-        iterations = 1
+        restartOnPlay = false
     )
 
     LaunchedEffect(confettiIsPlaying) {
@@ -151,8 +149,9 @@ fun DailyFlipContent(
             }
         }
     }
+
     LaunchedEffect(confettiProgress) {
-        if (showConfettiAnimation && confettiProgress >= 0.99f) {
+        if (showConfettiAnimation && confettiProgress >= 1f) {
             delay(250)
             showConfettiAnimation = false
         }
@@ -194,36 +193,9 @@ fun DailyFlipContent(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        // ========== LAYER 1 : Confettis en arrière-plan ==========
-        ConfettiBackground(
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(0f),
-            isVisible = uiState.isCardFlipped
-        )
-
-        // ========== LAYER 2 : Lottie confetti overlay ==========
-        if (showConfettiAnimation) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                LottieAnimation(
-                    modifier = Modifier.size(320.dp),
-                    composition = confettiComposition,
-                    progress = { confettiProgress },
-                    renderMode = RenderMode.HARDWARE
-                )
-            }
-        }
-
-        // ========== LAYER 3 : Contenu principal ==========
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .zIndex(2f)
                 .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -292,7 +264,7 @@ fun DailyFlipContent(
             ) {
                 PleasureCard(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 42.dp)
                         .offset(
                             x = (animatedOffsetX.value + if (uiState.isCardFlipped) hintOffsetX else 0f).dp
                         )
@@ -301,7 +273,6 @@ fun DailyFlipContent(
                                 animatedRotationZ.value + if (uiState.isCardFlipped) hintRotation else 0f
                             alpha = 1f - (abs(animatedOffsetX.value) / 900f).coerceIn(0f, 1f)
                         }
-                        .zIndex(3f)
                         .semantics { contentDescription = cardContentDescription },
                     pleasure = uiState.dailyPleasure,
                     flipped = uiState.isCardFlipped,
@@ -348,6 +319,19 @@ fun DailyFlipContent(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (showConfettiAnimation) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                LottieAnimation(
+                    modifier = Modifier.fillMaxWidth(),
+                    composition = confettiComposition,
+                    progress = { confettiProgress }
+                )
+            }
         }
     }
 }
@@ -403,10 +387,12 @@ private fun CategorySelector(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     TextButton(
         onClick = onClick,
         modifier = modifier.semantics {
-            contentDescription = stringResource(R.string.daily_flip_category_selector_content_description)
+            contentDescription = context.getString(R.string.daily_flip_category_selector_content_description)
         },
         shape = RoundedCornerShape(50.dp),
         colors = ButtonDefaults.textButtonColors(
@@ -444,6 +430,7 @@ private fun ShareButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val gradients = flipGradients()
 
     Box(
@@ -463,7 +450,7 @@ private fun ShareButton(
                 pressedElevation = 2.dp
             ),
             modifier = Modifier.semantics {
-                contentDescription = stringResource(R.string.daily_flip_share_button_content_description)
+                contentDescription = context.getString(R.string.daily_flip_share_button_content_description)
             }
         ) {
             Row(

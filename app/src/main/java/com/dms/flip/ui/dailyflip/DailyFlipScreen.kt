@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,9 +50,10 @@ fun DailyFlipScreen(
     navigateToSettings: () -> Unit = {}
 ) {
     val screenState = uiState.screenState
-
     val avatarFallback = uiState.userInfo?.username?.firstOrNull()?.uppercase() ?: "?"
+
     Column(modifier = modifier.fillMaxSize()) {
+        // TopBar
         FlipTopBar(
             title = stringResource(R.string.app_name),
             endTopBarIcons = listOf(
@@ -69,53 +71,53 @@ fun DailyFlipScreen(
             )
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 24.dp)
-        ) {
-            // Header Message
-            AnimatedVisibility(
-                visible = uiState.headerMessage.isNotBlank(),
-                enter = fadeIn(animationSpec = tween(250)) +
-                        slideInVertically(
-                            animationSpec = tween(250),
-                            initialOffsetY = { fullHeight -> -fullHeight / 6 }
-                        ),
-                exit = fadeOut(animationSpec = tween(200)) +
-                        slideOutVertically(
-                            animationSpec = tween(200),
-                            targetOffsetY = { fullHeight -> -fullHeight / 6 }
-                        ),
+        if (screenState is DailyFlipScreenState.Loading) {
+            Box(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .zIndex(-1f)
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                HeaderMessage(message = uiState.headerMessage)
+                LoadingState(modifier = Modifier.fillMaxSize())
             }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(vertical = 24.dp)
+            ) {
+                // Header Message
+                AnimatedVisibility(
+                    visible = uiState.headerMessage.isNotBlank(),
+                    enter = fadeIn(animationSpec = tween(250)) +
+                            slideInVertically(animationSpec = tween(250), initialOffsetY = { -it / 6 }),
+                    exit = fadeOut(animationSpec = tween(200)) +
+                            slideOutVertically(animationSpec = tween(200), targetOffsetY = { -it / 6 }),
+                    modifier = Modifier.zIndex(0f)
+                ) {
+                    HeaderMessage(message = uiState.headerMessage)
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            val contentModifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .zIndex(1f)
-
-            if (screenState is DailyFlipScreenState.Loading) {
-                LoadingState(modifier = contentModifier)
-            } else {
                 Box(
-                    modifier = contentModifier.animateContentSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .zIndex(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Crossfade(targetState = screenState, label = "DailyFlipTransition") { state ->
+                    Crossfade(
+                        targetState = screenState,
+                        label = "DailyFlipTransition"
+                    ) { state ->
                         when (state) {
                             is DailyFlipScreenState.Error -> {
                                 ErrorState(message = state.message) {
                                     onEvent(DailyFlipEvent.Reload)
                                 }
                             }
-
                             is DailyFlipScreenState.SetupRequired -> {
                                 DailyFlipSetupContent(
                                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -124,7 +126,6 @@ fun DailyFlipScreen(
                                     onConfigureClick = navigateToManagePleasures
                                 )
                             }
-
                             is DailyFlipScreenState.Ready -> {
                                 DailyFlipContent(
                                     modifier = Modifier.fillMaxSize(),
@@ -132,14 +133,12 @@ fun DailyFlipScreen(
                                     onEvent = onEvent
                                 )
                             }
-
                             is DailyFlipScreenState.Completed -> {
                                 DailyFlipCompletedContent(
                                     modifier = Modifier.padding(horizontal = 16.dp)
                                 )
                             }
-
-                            else -> {}
+                            else -> Unit
                         }
                     }
                 }
@@ -156,7 +155,7 @@ private fun HeaderMessage(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 16.dp)
             .animateContentSize(),
         contentAlignment = Alignment.Center
     ) {

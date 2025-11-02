@@ -129,8 +129,7 @@ fun NavGraph(
 
     val navigateSingleTop: (Any) -> Unit = { route ->
         navController.navigate(route) {
-            popUpTo(navController.graph.id)
-            {
+            popUpTo(navController.graph.id) {
                 saveState = true
                 inclusive = true
             }

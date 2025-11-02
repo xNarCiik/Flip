@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,6 +54,8 @@ fun DailyFlipCompletedContent(
     modifier: Modifier = Modifier,
     onShareClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+
     var hasPlayed by rememberSaveable { mutableStateOf(false) }
     var playAnimation by remember { mutableStateOf(false) }
 
@@ -188,7 +191,7 @@ fun DailyFlipCompletedContent(
                 .fillMaxWidth()
                 .height(56.dp)
                 .semantics {
-                    contentDescription = stringResource(R.string.daily_flip_completed_share_button)
+                    contentDescription = context.getString(R.string.daily_flip_completed_share_button)
                 },
             shape = RoundedCornerShape(50.dp),
             colors = ButtonDefaults.buttonColors(

@@ -59,7 +59,7 @@ fun CategorySelectionDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(16.dp)
             ) {
                 // Titre
                 Text(
