@@ -10,11 +10,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -71,8 +71,7 @@ fun DailyFlipScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 24.dp),
+                .padding(vertical = 24.dp)
         ) {
             // Header Message
             AnimatedVisibility(
@@ -86,10 +85,13 @@ fun DailyFlipScreen(
                         slideOutVertically(
                             animationSpec = tween(200),
                             targetOffsetY = { fullHeight -> -fullHeight / 6 }
-                        )
+                        ),
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 HeaderMessage(message = uiState.headerMessage)
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             val contentModifier = Modifier
                 .fillMaxWidth()
@@ -112,6 +114,7 @@ fun DailyFlipScreen(
 
                             is DailyFlipScreenState.SetupRequired -> {
                                 DailyFlipSetupContent(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
                                     currentPleasureCount = state.pleasureCount,
                                     requiredCount = MinimumPleasuresCount,
                                     onConfigureClick = navigateToManagePleasures
@@ -120,13 +123,16 @@ fun DailyFlipScreen(
 
                             is DailyFlipScreenState.Ready -> {
                                 DailyFlipContent(
+                                    modifier = Modifier.fillMaxSize(),
                                     uiState = state,
                                     onEvent = onEvent
                                 )
                             }
 
                             is DailyFlipScreenState.Completed -> {
-                                DailyFlipCompletedContent()
+                                DailyFlipCompletedContent(
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
                             }
 
                             else -> {}

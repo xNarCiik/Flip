@@ -54,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +66,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -84,14 +87,15 @@ import kotlin.math.abs
 
 @Composable
 fun DailyFlipContent(
+    modifier: Modifier = Modifier,
     uiState: DailyFlipScreenState.Ready,
     onEvent: (DailyFlipEvent) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var showConfettiAnimation by remember { mutableStateOf(false) }
-    var showCategoryDialog by remember { mutableStateOf(false) }
+    var showConfettiAnimation by rememberSaveable { mutableStateOf(false) }
+    var showCategoryDialog by rememberSaveable { mutableStateOf(false) }
 
     // --- Vibrator
     val vibrator = remember(context) {
@@ -147,6 +151,12 @@ fun DailyFlipContent(
             }
         }
     }
+    LaunchedEffect(showConfettiAnimation) {
+        if (showConfettiAnimation) {
+            delay(2000)
+            showConfettiAnimation = false
+        }
+    }
     LaunchedEffect(confettiProgress) {
         if (showConfettiAnimation && confettiProgress >= 1f) {
             showConfettiAnimation = false
@@ -159,6 +169,16 @@ fun DailyFlipContent(
     // --- Swipe physics
     val animatedOffsetX = remember { Animatable(0f) }
     val animatedRotationZ = remember { Animatable(0f) }
+    val dragState = rememberDraggableState { delta ->
+        val friction = 0.22f
+        val next = animatedOffsetX.value + (delta * friction)
+        scope.launch {
+            animatedOffsetX.snapTo(next.coerceIn(-1000f, 1000f))
+            animatedRotationZ.snapTo(
+                (animatedOffsetX.value / 24f).coerceIn(-5f, 15f)
+            )
+        }
+    }
 
     // 🎭 Dialogue de catégorie
     if (showCategoryDialog) {
@@ -172,7 +192,13 @@ fun DailyFlipContent(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val cardContentDescription = if (uiState.isCardFlipped) {
+        stringResource(R.string.daily_flip_card_back_description)
+    } else {
+        stringResource(R.string.daily_flip_card_front_description)
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         // ========== LAYER 1 : Confettis en arrière-plan ==========
         ConfettiBackground(
             modifier = Modifier
@@ -203,83 +229,75 @@ fun DailyFlipContent(
             modifier = Modifier
                 .fillMaxSize()
                 .zIndex(2f)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        enabled = uiState.isCardFlipped,
+                        state = dragState,
+                        onDragStopped = { velocity ->
+                            scope.launch {
+                                val threshold = 180f
+                                val offset = animatedOffsetX.value
+                                val v = velocity
+
+                                val shouldComplete =
+                                    offset > threshold || (v > 2500f && offset > 0f)
+
+                                if (shouldComplete) {
+                                    val target = 1200f
+                                    launch {
+                                        animatedOffsetX.animateTo(
+                                            target,
+                                            animationSpec = tween(
+                                                durationMillis = 520,
+                                                easing = LinearOutSlowInEasing
+                                            )
+                                        )
+                                    }
+                                    launch {
+                                        animatedRotationZ.animateTo(
+                                            15f,
+                                            animationSpec = tween(520, easing = EaseInOut)
+                                        )
+                                    }
+                                    delay(260)
+                                    onEvent(DailyFlipEvent.OnCardMarkedAsDone)
+                                } else {
+                                    val stiffness = 500f
+                                    val damping = 0.78f
+                                    launch {
+                                        animatedOffsetX.animateTo(
+                                            0f,
+                                            animationSpec = spring(
+                                                stiffness = stiffness,
+                                                dampingRatio = damping
+                                            )
+                                        )
+                                    }
+                                    launch {
+                                        animatedRotationZ.animateTo(
+                                            0f,
+                                            animationSpec = spring(
+                                                stiffness = stiffness,
+                                                dampingRatio = damping
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 PleasureCard(
                     modifier = Modifier
-                        .draggable(
-                            orientation = Orientation.Horizontal,
-                            enabled = uiState.isCardFlipped,
-                            state = rememberDraggableState { delta ->
-                                val friction = 0.22f
-                                val next = animatedOffsetX.value + (delta * friction)
-                                scope.launch {
-                                    animatedOffsetX.snapTo(next.coerceIn(-1000f, 1000f))
-                                    animatedRotationZ.snapTo(
-                                        (animatedOffsetX.value / 24f).coerceIn(-5f, 15f)
-                                    )
-                                }
-                            },
-                            onDragStopped = { velocity ->
-                                scope.launch {
-                                    val threshold = 180f
-                                    val offset = animatedOffsetX.value
-                                    val v = velocity
-
-                                    val shouldComplete =
-                                        offset > threshold || (v > 2500f && offset > 0f)
-
-                                    if (shouldComplete) {
-                                        val target = 1200f
-                                        launch {
-                                            animatedOffsetX.animateTo(
-                                                target,
-                                                animationSpec = tween(
-                                                    durationMillis = 520,
-                                                    easing = LinearOutSlowInEasing
-                                                )
-                                            )
-                                        }
-                                        launch {
-                                            animatedRotationZ.animateTo(
-                                                15f,
-                                                animationSpec = tween(520, easing = EaseInOut)
-                                            )
-                                        }
-                                        delay(260)
-                                        onEvent(DailyFlipEvent.OnCardMarkedAsDone)
-                                    } else {
-                                        val stiffness = 500f
-                                        val damping = 0.78f
-                                        launch {
-                                            animatedOffsetX.animateTo(
-                                                0f,
-                                                animationSpec = spring(
-                                                    stiffness = stiffness,
-                                                    dampingRatio = damping
-                                                )
-                                            )
-                                        }
-                                        launch {
-                                            animatedRotationZ.animateTo(
-                                                0f,
-                                                animationSpec = spring(
-                                                    stiffness = stiffness,
-                                                    dampingRatio = damping
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        )
+                        .padding(horizontal = 16.dp)
                         .offset(
                             x = (animatedOffsetX.value + if (uiState.isCardFlipped) hintOffsetX else 0f).dp
                         )
@@ -287,7 +305,9 @@ fun DailyFlipContent(
                             rotationZ =
                                 animatedRotationZ.value + if (uiState.isCardFlipped) hintRotation else 0f
                             alpha = 1f - (abs(animatedOffsetX.value) / 900f).coerceIn(0f, 1f)
-                        },
+                        }
+                        .zIndex(3f)
+                        .semantics { contentDescription = cardContentDescription },
                     pleasure = uiState.dailyPleasure,
                     flipped = uiState.isCardFlipped,
                     durationRotation = 1300,
@@ -304,7 +324,8 @@ fun DailyFlipContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp),
+                    .height(64.dp)
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 this@Column.AnimatedVisibility(
@@ -389,7 +410,9 @@ private fun CategorySelector(
 ) {
     TextButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.semantics {
+            contentDescription = stringResource(R.string.daily_flip_category_selector_content_description)
+        },
         shape = RoundedCornerShape(50.dp),
         colors = ButtonDefaults.textButtonColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
@@ -441,9 +464,12 @@ private fun ShareButton(
                 contentColor = Color.White
             ),
             elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 4.dp,
-                pressedElevation = 8.dp
-            )
+                defaultElevation = 0.dp,
+                pressedElevation = 2.dp
+            ),
+            modifier = Modifier.semantics {
+                contentDescription = stringResource(R.string.daily_flip_share_button_content_description)
+            }
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -452,7 +478,7 @@ private fun ShareButton(
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.daily_flip_share_button_content_description),
                     modifier = Modifier.size(20.dp)
                 )
                 Text(

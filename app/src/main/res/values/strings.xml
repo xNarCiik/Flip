@@ -66,6 +66,10 @@
     <string name="category_selector_title">Catégorie : %s</string>
     <string name="choose_category">Choisir une catégorie</string>
     <string name="daily_flip_share_button">Partager</string>
+    <string name="daily_flip_share_button_content_description">Partager le plaisir du jour</string>
+    <string name="daily_flip_category_selector_content_description">Changer de catégorie de carte</string>
+    <string name="daily_flip_card_front_description">Carte à retourner pour révéler votre plaisir du jour.</string>
+    <string name="daily_flip_card_back_description">Carte révélée. Balayez pour valider votre plaisir du jour.</string>
     <string name="pleasure_card_back_title">Prêt pour votre moment de joie ?</string>
     <string name="pleasure_card_back_subtitle">Touchez pour découvrir votre plaisir du jour</string>
     <!-- Completed State -->
