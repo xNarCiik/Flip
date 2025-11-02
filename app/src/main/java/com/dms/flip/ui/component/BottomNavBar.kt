@@ -51,14 +51,14 @@ data class TabBarItem(
     val title: String,
     val icon: ImageVector,
     val route: Any,
-    val badgeCount: Int = 0,
+    val badgeCount: Int = 0
 )
 
 @Composable
 fun BottomNavBar(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    communityBadgeCount: Int = 0,
+    communityBadgeCount: Int = 0
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination

@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.onEach
 
 @HiltViewModel
 class CommunityBadgeViewModel @Inject constructor(
-    observePendingReceivedUseCase: ObservePendingReceivedUseCase,
+    observePendingReceivedUseCase: ObservePendingReceivedUseCase
 ) : ViewModel() {
 
     private val _pendingRequestsCount = MutableStateFlow(0)
