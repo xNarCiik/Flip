@@ -13,8 +13,12 @@ import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.RequestsSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
+import com.dms.flip.data.mock.community.MockFeedRepository
 import com.dms.flip.data.mock.community.MockFriendsRepository
+import com.dms.flip.data.mock.community.MockProfileRepository
 import com.dms.flip.data.mock.community.MockRequestsRepository
+import com.dms.flip.data.mock.community.MockSearchRepository
+import com.dms.flip.data.mock.community.MockSuggestionsRepository
 import com.dms.flip.data.repository.community.FeedRepositoryImpl
 import com.dms.flip.data.repository.community.FriendsRepositoryImpl
 import com.dms.flip.data.repository.community.ProfileRepositoryImpl
@@ -28,7 +32,6 @@ import com.dms.flip.domain.repository.community.RequestsRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,63 +41,77 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class CommunityModule {
+object CommunityModule {
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindFeedRepository(impl: FeedRepositoryImpl): FeedRepository
+    fun provideFeedSource(firestore: FirebaseFirestore): FeedSource = FirestoreFeedSource(firestore)
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindSuggestionsRepository(impl: SuggestionsRepositoryImpl): SuggestionsRepository
+    fun provideFriendsSource(firestore: FirebaseFirestore): FriendsSource = FirestoreFriendsSource(firestore)
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
+    fun provideRequestsSource(firestore: FirebaseFirestore): RequestsSource = FirestoreRequestsSource(firestore)
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+    fun provideSuggestionsSource(firestore: FirebaseFirestore): SuggestionsSource = FirestoreSuggestionsSource(firestore)
 
-    companion object {
-        @Provides
-        @Singleton
-        fun provideFeedSource(firestore: FirebaseFirestore): FeedSource = FirestoreFeedSource(firestore)
+    @Provides
+    @Singleton
+    fun provideSearchSource(firestore: FirebaseFirestore): SearchSource = FirestoreSearchSource(firestore)
 
-        @Provides
-        @Singleton
-        fun provideFriendsSource(firestore: FirebaseFirestore): FriendsSource = FirestoreFriendsSource(firestore)
+    @Provides
+    @Singleton
+    fun provideProfileSource(firestore: FirebaseFirestore): ProfileSource = FirestoreProfileSource(firestore)
 
-        @Provides
-        @Singleton
-        fun provideRequestsSource(firestore: FirebaseFirestore): RequestsSource = FirestoreRequestsSource(firestore)
+    @Provides
+    @Singleton
+    fun provideFeedRepository(
+        impl: Lazy<FeedRepositoryImpl>,
+        mock: Lazy<MockFeedRepository>
+    ): FeedRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 
-        @Provides
-        @Singleton
-        fun provideSuggestionsSource(firestore: FirebaseFirestore): SuggestionsSource = FirestoreSuggestionsSource(firestore)
+    @Provides
+    @Singleton
+    fun provideSuggestionsRepository(
+        impl: Lazy<SuggestionsRepositoryImpl>,
+        mock: Lazy<MockSuggestionsRepository>
+    ): SuggestionsRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 
-        @Provides
-        @Singleton
-        fun provideSearchSource(firestore: FirebaseFirestore): SearchSource = FirestoreSearchSource(firestore)
+    @Provides
+    @Singleton
+    fun provideSearchRepository(
+        impl: Lazy<SearchRepositoryImpl>,
+        mock: Lazy<MockSearchRepository>
+    ): SearchRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 
-        @Provides
-        @Singleton
-        fun provideProfileSource(firestore: FirebaseFirestore): ProfileSource = FirestoreProfileSource(firestore)
+    @Provides
+    @Singleton
+    fun provideProfileRepository(
+        impl: Lazy<ProfileRepositoryImpl>,
+        mock: Lazy<MockProfileRepository>
+    ): ProfileRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 
-        @Provides
-        @Singleton
-        fun provideFriendsRepository(
-            impl: Lazy<FriendsRepositoryImpl>,
-            mock: Lazy<MockFriendsRepository>
-        ): FriendsRepository =
-            if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
+    @Provides
+    @Singleton
+    fun provideFriendsRepository(
+        impl: Lazy<FriendsRepositoryImpl>,
+        mock: Lazy<MockFriendsRepository>
+    ): FriendsRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 
-        @Provides
-        @Singleton
-        fun provideRequestsRepository(
-            impl: Lazy<RequestsRepositoryImpl>,
-            mock: Lazy<MockRequestsRepository>
-        ): RequestsRepository =
-            if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
-    }
+    @Provides
+    @Singleton
+    fun provideRequestsRepository(
+        impl: Lazy<RequestsRepositoryImpl>,
+        mock: Lazy<MockRequestsRepository>
+    ): RequestsRepository =
+        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 }

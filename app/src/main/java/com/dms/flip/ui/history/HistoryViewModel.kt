@@ -57,7 +57,9 @@ class HistoryViewModel @Inject constructor(
     }
 
     private fun navigateToNextWeek() {
-        val nextOffset = _uiState.value.weekOffset + 1
+        val currentOffset = _uiState.value.weekOffset
+        if (currentOffset >= 0) return
+        val nextOffset = currentOffset + 1
         loadWeeklyHistory(nextOffset)
     }
 
@@ -77,7 +79,8 @@ class HistoryViewModel @Inject constructor(
                         error = null,
                         weekOffset = weekOffset,
                         weekTitle = weekLabels.title,
-                        weekDates = weekLabels.dates
+                        weekDates = weekLabels.dates,
+                        canNavigateToNextWeek = weekOffset < 0
                     )
                 }
             }

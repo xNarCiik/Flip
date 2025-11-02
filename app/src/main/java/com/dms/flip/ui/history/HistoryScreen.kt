@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,29 +35,17 @@ fun HistoryScreen(
     navigateToDailyFlip: () -> Unit
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
-                LoadingState(modifier = modifier.fillMaxSize())
-            }
-
-            uiState.error != null -> {
-                Text(
-                    text = stringResource(R.string.generic_error_message, uiState.error),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            else -> {
-                HistoryContent(
-                    weeklyDays = uiState.weeklyDays,
-                    weekTitle = uiState.weekTitle,
-                    weekDates = uiState.weekDates,
-                    streakDays = uiState.streakDays,
-                    onEvent = onEvent,
-                    navigateToDailyFlip = navigateToDailyFlip
-                )
-            }
-        }
+        HistoryContent(
+            weeklyDays = uiState.weeklyDays,
+            weekTitle = uiState.weekTitle,
+            weekDates = uiState.weekDates,
+            streakDays = uiState.streakDays,
+            canNavigateToNextWeek = uiState.canNavigateToNextWeek,
+            isLoading = uiState.isLoading,
+            error = uiState.error,
+            onEvent = onEvent,
+            navigateToDailyFlip = navigateToDailyFlip
+        )
     }
 }
 
@@ -66,6 +56,9 @@ private fun HistoryContent(
     weekTitle: String,
     weekDates: String,
     streakDays: Int,
+    canNavigateToNextWeek: Boolean,
+    isLoading: Boolean,
+    error: String?,
     onEvent: (HistoryEvent) -> Unit,
     navigateToDailyFlip: () -> Unit
 ) {
@@ -82,7 +75,8 @@ private fun HistoryContent(
             weekTitle = weekTitle,
             weekDates = weekDates,
             onPreviousWeekClick = { onEvent(HistoryEvent.OnPreviousWeekClicked) },
-            onNextWeekClick = { onEvent(HistoryEvent.OnNextWeekClicked) }
+            onNextWeekClick = { onEvent(HistoryEvent.OnNextWeekClicked) },
+            isNextEnabled = canNavigateToNextWeek
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -98,12 +92,39 @@ private fun HistoryContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Weekly pleasures list
-        WeeklyPleasuresList(
-            items = weeklyDays,
-            onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
-            onDiscoverTodayClicked = navigateToDailyFlip
-        )
+        // Weekly pleasures list or state feedback
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp)
+                ) {
+                    LoadingState(modifier = Modifier.align(Alignment.Center))
+                }
+            }
+
+            error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.generic_error_message, error),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
+            else -> {
+                WeeklyPleasuresList(
+                    items = weeklyDays,
+                    onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                    onDiscoverTodayClicked = navigateToDailyFlip
+                )
+            }
+        }
     }
 }
 

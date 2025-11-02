@@ -32,7 +32,8 @@ fun WeekNavigationHeader(
     weekDates: String,
     onPreviousWeekClick: () -> Unit,
     onNextWeekClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isNextEnabled: Boolean = true
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -52,7 +53,6 @@ fun WeekNavigationHeader(
             ) {
                 Surface(
                     modifier = Modifier.size(36.dp),
-                    onClick = onPreviousWeekClick,
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                 ) {
@@ -88,18 +88,24 @@ fun WeekNavigationHeader(
             // Bouton Suivant
             IconButton(
                 onClick = onNextWeekClick,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
+                enabled = isNextEnabled
             ) {
                 Surface(
                     modifier = Modifier.size(36.dp),
-                    onClick = onNextWeekClick,
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = if (isNextEnabled) 0.6f else 0.3f
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = stringResource(R.string.history_next_week),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = if (isNextEnabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        }
                     )
                 }
             }
