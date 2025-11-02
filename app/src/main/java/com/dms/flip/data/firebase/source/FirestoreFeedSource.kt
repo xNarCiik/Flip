@@ -25,9 +25,10 @@ class FirestoreFeedSource @Inject constructor(
         limit: Int,
         cursor: String?
     ): Flow<Paged<FeedSource.PostDocument>> = callbackFlow {
-        val feedCollection = firestore.collection("feed")
-            .document(uid)
-            .collection("posts")
+        val feedCollection =
+            firestore.collection("users")
+                .document(uid)
+                .collection("feed")
 
         suspend fun buildQuery(): Query {
             var query: Query = feedCollection
@@ -56,7 +57,8 @@ class FirestoreFeedSource @Inject constructor(
                         FeedSource.PostDocument(id = doc.id, data = dto)
                     }
                 }
-                val nextCursor = if (documents.size < limit) null else snapshot.documents.lastOrNull()?.id
+                val nextCursor =
+                    if (documents.size < limit) null else snapshot.documents.lastOrNull()?.id
                 trySend(Paged(documents, nextCursor))
             }
         }

@@ -40,15 +40,15 @@ L’idée : s’accorder un moment rien qu’à soi, sans culpabilité, avec une
 
 ### 🔥 Firestore – Espace Communauté
 
-| Chemin | Description |
-| --- | --- |
-| `public_profiles/{userId}` | Profil public (username, handle, avatar_url, bio, stats). |
-| `users/{uid}/friends/{friendId}` | Relation d'amitié (`since`). |
+| Chemin                                             | Description |
+|----------------------------------------------------| --- |
+| `public_profiles/{userId}`                         | Profil public (username, handle, avatar_url, bio, stats). |
+| `users/{uid}/friends/{friendId}`                   | Relation d'amitié (`since`). |
 | `users/{uid}/friend_requests_received/{requestId}` | Demandes reçues (RequestDto). |
-| `users/{uid}/friend_requests_sent/{requestId}` | Demandes envoyées. |
-| `users/{uid}/suggestions/{userId}` | Suggestions personnalisées. |
-| `feed/{uid}/posts/{postId}` | Flux personnalisé (PostDto + sous-collections `comments`, `likes`). |
-| `posts/{postId}` | Référence globale pour réactions/commentaires rapides. |
+| `users/{uid}/friend_requests_sent/{requestId}`     | Demandes envoyées. |
+| `users/{uid}/suggestions/{userId}`                 | Suggestions personnalisées. |
+| `users/{uid}/feed/{postId}`                        | Flux personnalisé (PostDto + sous-collections `comments`, `likes`). |
+| `posts/{postId}`                                   | Référence globale pour réactions/commentaires rapides. |
 
 Sous-collections : `comments/{commentId}` (CommentDto), `likes/{userId}`.
 
