@@ -14,8 +14,6 @@ class ObserveFriendsUseCase @Inject constructor(
     operator fun invoke(): Flow<List<Friend>> = friendsRepository.observeFriends()
 }
 
-typealias GetFriendsUseCase = ObserveFriendsUseCase
-
 class AddFriendUseCase @Inject constructor(
     private val requestsRepository: RequestsRepository
 ) {

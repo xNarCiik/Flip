@@ -20,6 +20,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -233,24 +237,24 @@ private fun SuggestionCard(
     onHide: () -> Unit,
     onClick: () -> Unit
 ) {
-    androidx.compose.material3.Card(
+    Card(
         modifier = Modifier
             .width(140.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = androidx.compose.material3.CardDefaults.cardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         )
     ) {
         Box {
-            androidx.compose.material3.IconButton(
+            IconButton(
                 onClick = onHide,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
                     .size(28.dp)
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.button_hide),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -340,25 +344,27 @@ private fun InvitationsComponentsPreview(
     requests: List<FriendRequest>
 ) {
     FlipTheme {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            InvitationsTopBar(onNavigateBack = {})
-            ReceivedRequestItem(
-                request = requests.first(),
-                onAccept = {},
-                onDecline = {},
-                onClick = {}
-            )
-            SentRequestItem(
-                request = previewSentRequests.first(),
-                onCancel = {},
-                onClick = {}
-            )
-            SuggestionsSection(
-                suggestions = previewSuggestions,
-                onAdd = {},
-                onHide = {},
-                onSuggestionClick = {}
-            )
+        Surface {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                InvitationsTopBar(onNavigateBack = {})
+                ReceivedRequestItem(
+                    request = requests.first(),
+                    onAccept = {},
+                    onDecline = {},
+                    onClick = {}
+                )
+                SentRequestItem(
+                    request = previewSentRequests.first(),
+                    onCancel = {},
+                    onClick = {}
+                )
+                SuggestionsSection(
+                    suggestions = previewSuggestions,
+                    onAdd = {},
+                    onHide = {},
+                    onSuggestionClick = {}
+                )
+            }
         }
     }
 }
