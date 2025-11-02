@@ -10,6 +10,7 @@ import com.dms.flip.domain.usecase.dailypleasure.GetRandomPleasureUseCase
 import com.dms.flip.domain.usecase.history.GetTodayHistoryEntryUseCase
 import com.dms.flip.domain.usecase.history.SaveHistoryEntryUseCase
 import com.dms.flip.domain.usecase.pleasures.GetPleasuresUseCase
+import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +33,8 @@ class DailyFlipViewModel @Inject constructor(
     private val getPleasuresUseCase: GetPleasuresUseCase,
     private val getRandomPleasureUseCase: GetRandomPleasureUseCase,
     private val saveHistoryEntryUseCase: SaveHistoryEntryUseCase,
-    private val getTodayHistoryEntryUseCase: GetTodayHistoryEntryUseCase
+    private val getTodayHistoryEntryUseCase: GetTodayHistoryEntryUseCase,
+    private val getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyFlipUiState())
@@ -49,20 +51,23 @@ class DailyFlipViewModel @Inject constructor(
             combine(
                 getPleasuresUseCase(),
                 getTodayHistoryEntryUseCase(),
-                flow { emit(getRandomDailyMessageUseCase()) }
-            ) { pleasures, todayHistory, randomMessage ->
+                flow { emit(getRandomDailyMessageUseCase()) },
+                getUserInfoUseCase()
+            ) { pleasures, todayHistory, randomMessage, userInfo ->
 
                 val enabledCount = pleasures.count { it.isEnabled }
                 val isSetupRequired = enabledCount < MinimumPleasuresCount
 
                 when {
                     isSetupRequired -> DailyFlipUiState(
-                        screenState = DailyFlipScreenState.SetupRequired(enabledCount)
+                        screenState = DailyFlipScreenState.SetupRequired(enabledCount),
+                        userInfo = userInfo
                     )
 
                     todayHistory?.completed == true -> DailyFlipUiState(
                         screenState = DailyFlipScreenState.Completed,
-                        headerMessage = ""
+                        headerMessage = "",
+                        userInfo = userInfo
                     )
 
                     else -> DailyFlipUiState(
@@ -74,7 +79,8 @@ class DailyFlipViewModel @Inject constructor(
                         headerMessage = if (todayHistory == null)
                             randomMessage
                         else
-                            resources.getString(R.string.your_flip_daily)
+                            resources.getString(R.string.your_flip_daily),
+                        userInfo = userInfo
                     )
                 }
             }
@@ -82,7 +88,8 @@ class DailyFlipViewModel @Inject constructor(
                     _uiState.value = DailyFlipUiState(
                         screenState = DailyFlipScreenState.Error(
                             e.message ?: resources.getString(R.string.generic_error_message)
-                        )
+                        ),
+                        userInfo = _uiState.value.userInfo
                     )
                 }
                 .collectLatest { newState ->
@@ -123,7 +130,8 @@ class DailyFlipViewModel @Inject constructor(
                 _uiState.value = DailyFlipUiState(
                     screenState = DailyFlipScreenState.Error(
                         "Impossible de tirer une carte : ${e.message}"
-                    )
+                    ),
+                    userInfo = _uiState.value.userInfo
                 )
             }
         }
@@ -149,14 +157,16 @@ class DailyFlipViewModel @Inject constructor(
                     saveHistoryEntryUseCase(pleasure, markAsCompleted = true)
                     _uiState.value = DailyFlipUiState(
                         screenState = DailyFlipScreenState.Completed,
-                        headerMessage = ""
+                        headerMessage = "",
+                        userInfo = _uiState.value.userInfo
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = DailyFlipUiState(
                     screenState = DailyFlipScreenState.Error(
                         "Erreur lors de la validation du plaisir : ${e.message}"
-                    )
+                    ),
+                    userInfo = _uiState.value.userInfo
                 )
             }
         }

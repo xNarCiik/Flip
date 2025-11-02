@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.LoadingState
@@ -50,14 +49,21 @@ fun DailyFlipScreen(
 ) {
     val screenState = uiState.screenState
 
+    val avatarFallback = uiState.userInfo?.username?.firstOrNull()?.uppercase() ?: "?"
     Column(modifier = modifier.fillMaxSize()) {
         FlipTopBar(
             title = stringResource(R.string.app_name),
             endTopBarIcons = listOf(
                 TopBarIcon(
-                    icon = Icons.Default.Settings,
                     contentDescription = stringResource(R.string.settings_title),
-                    onClick = navigateToSettings
+                    onClick = navigateToSettings,
+                    customContent = {
+                        CommunityAvatar(
+                            imageUrl = uiState.userInfo?.avatarUrl,
+                            fallbackText = avatarFallback,
+                            size = 40.dp
+                        )
+                    }
                 )
             )
         )
