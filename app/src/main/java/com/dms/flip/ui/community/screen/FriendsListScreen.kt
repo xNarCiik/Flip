@@ -46,7 +46,8 @@ fun FriendsListScreen(
         FriendsListTopBar(
             onNavigateBack = onNavigateBack,
             onSearchClick = { onEvent(CommunityEvent.OnSearchClicked) },
-            onAddFriendClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
+            onAddFriendClick = { onEvent(CommunityEvent.OnInvitationsClicked) },
+            pendingRequestsCount = uiState.pendingRequests.size
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -69,7 +70,7 @@ fun FriendsListScreen(
                         title = stringResource(id = R.string.community_empty_friends_title),
                         description = stringResource(id = R.string.community_empty_friends_description),
                         actionText = stringResource(id = R.string.community_empty_friends_action),
-                        onActionClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
+                        onActionClick = { onEvent(CommunityEvent.OnInvitationsClicked) }
                     )
                 }
 
@@ -80,7 +81,13 @@ fun FriendsListScreen(
                                 friend = friend,
                                 onClick = { onEvent(CommunityEvent.OnFriendClicked(friend)) },
                                 onMenuClick = { selectedFriend = friend },
-                                onQuickAction = { onEvent(CommunityEvent.OnInviteFriendToPleasure(friend)) }
+                                onQuickAction = {
+                                    onEvent(
+                                        CommunityEvent.OnInviteFriendToPleasure(
+                                            friend
+                                        )
+                                    )
+                                }
                             )
                         }
                     }

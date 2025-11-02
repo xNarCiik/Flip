@@ -68,6 +68,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.dms.flip.R
 import com.dms.flip.domain.model.Theme
 import com.dms.flip.domain.model.UserInfo
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TimePicker
 import com.dms.flip.ui.component.TopBarIcon
@@ -162,9 +163,11 @@ fun SettingsScreen(
                     cameraImageUri = uri
                     cameraLauncher.launch(uri)
                 }
+
                 CameraPermissionHandler.shouldShowRationale(it) -> {
                     cameraPermissionDialogType = PermissionDialogType.RATIONALE
                 }
+
                 else -> {
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                 }
@@ -224,6 +227,7 @@ fun SettingsScreen(
                 isPermanentlyDenied = false
             )
         }
+
         PermissionDialogType.PERMANENTLY_DENIED -> {
             CameraPermissionDialog(
                 onDismiss = {
@@ -232,7 +236,9 @@ fun SettingsScreen(
                 isPermanentlyDenied = true
             )
         }
-        PermissionDialogType.NONE -> { /* Pas de dialog */ }
+
+        PermissionDialogType.NONE -> { /* Pas de dialog */
+        }
     }
 
     Column(
@@ -474,23 +480,12 @@ private fun UserProfileCard(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                if (userInfo.avatarUrl != null) {
-                    GlideImage(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        model = userInfo.avatarUrl,
-                        contentDescription = null
-                    )
-                } else {
-                    Text(
-                        text = userInfo.username?.firstOrNull()?.uppercase() ?: "?",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                CommunityAvatar(
+                    imageUrl = userInfo.avatarUrl,
+                    fallbackText = userInfo.username?.firstOrNull()?.uppercase() ?: "?",
+                    textStyle = MaterialTheme.typography.headlineLarge,
+                    size = 100.dp
+                )
 
                 // Overlay sombre pendant le chargement
                 if (isUploading) {

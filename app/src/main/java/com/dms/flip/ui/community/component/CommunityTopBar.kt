@@ -25,12 +25,12 @@ fun CommunityTopBar(
     FlipTopBar(
         modifier = modifier,
         title = stringResource(R.string.community_title),
+        startTopBarIcon = TopBarIcon(
+            icon = Icons.Default.People,
+            contentDescription = stringResource(R.string.friends_list),
+            onClick = onFriendsListClick
+        ),
         endTopBarIcons = listOf(
-            TopBarIcon(
-                icon = Icons.Default.People,
-                contentDescription = stringResource(R.string.friends_list),
-                onClick = onFriendsListClick
-            ),
             TopBarIcon(
                 icon = Icons.Default.PersonAdd,
                 contentDescription = stringResource(R.string.community_invitations),

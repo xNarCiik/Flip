@@ -97,6 +97,10 @@ fun CommunityNavHost(
                             navController.navigate(CommunityRoute.Search.route)
                         }
 
+                        is CommunityEvent.OnInvitationsClicked -> {
+                            navController.navigate(CommunityRoute.Invitations.route)
+                        }
+
                         is CommunityEvent.OnFriendClicked -> {
                             navController.navigate(
                                 CommunityRoute.Profile.createRoute(event.friend.id)

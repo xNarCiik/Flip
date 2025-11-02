@@ -57,37 +57,12 @@ fun FriendListItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box {
-            if (friend.avatarUrl != null) {
-                GlideImage(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape),
-                    model = friend.avatarUrl,
-                    contentDescription = null
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = friend.username.firstOrNull()?.uppercase() ?: "?",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            CommunityAvatar(
+                imageUrl = friend.avatarUrl,
+                fallbackText = friend.username.firstOrNull()?.uppercase() ?: "?",
+                textStyle = MaterialTheme.typography.titleLarge,
+                size = 56.dp
+            )
 
             if (friend.isOnline) {
                 Box(
@@ -153,39 +128,6 @@ fun FriendListItem(
                 text = friend.handle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            friend.favoriteCategory?.let { category ->
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(category.iconTint.copy(alpha = 0.12f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = category.icon,
-                        contentDescription = null,
-                        tint = category.iconTint,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = category.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = category.iconTint
-                    )
-                }
-            }
-        }
-
-        IconButton(onClick = onQuickAction, modifier = Modifier.size(48.dp)) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
             )
         }
 

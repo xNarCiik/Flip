@@ -16,6 +16,7 @@ import com.dms.flip.ui.util.LightDarkPreview
 
 @Composable
 fun FriendsListTopBar(
+    pendingRequestsCount: Int,
     onNavigateBack: () -> Unit,
     onSearchClick: () -> Unit,
     onAddFriendClick: () -> Unit,
@@ -38,7 +39,8 @@ fun FriendsListTopBar(
             TopBarIcon(
                 icon = Icons.Default.PersonAdd,
                 contentDescription = stringResource(R.string.community_add_friend),
-                onClick = onAddFriendClick
+                onClick = onAddFriendClick,
+                badgeCount = pendingRequestsCount.takeIf { it > 0 }
             )
         )
     )
@@ -52,7 +54,8 @@ private fun FriendsListTopBarPreview() {
             FriendsListTopBar(
                 onNavigateBack = {},
                 onSearchClick = {},
-                onAddFriendClick = {}
+                onAddFriendClick = {},
+                pendingRequestsCount = 2
             )
         }
     }

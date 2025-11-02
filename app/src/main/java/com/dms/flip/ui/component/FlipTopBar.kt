@@ -3,6 +3,7 @@ package com.dms.flip.ui.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -67,6 +68,8 @@ fun FlipTopBar(
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
+            } ?: @Composable {
+                Spacer(modifier = Modifier.size(48.dp))
             }
 
             Text(
@@ -114,6 +117,8 @@ fun FlipTopBar(
                         }
                     }
                 }
+            } else {
+                Spacer(modifier = Modifier.size(48.dp))
             }
         }
     }

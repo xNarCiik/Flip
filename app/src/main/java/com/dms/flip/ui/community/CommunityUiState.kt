@@ -29,12 +29,10 @@ data class CommunityUiState(
 
 sealed interface CommunityEvent {
     data object OnSearchClicked : CommunityEvent
-    data object OnAddFriendClicked : CommunityEvent
     data object OnInvitationsClicked : CommunityEvent
     data object OnFriendsListClicked : CommunityEvent
 
     data class OnPostLiked(val postId: String) : CommunityEvent
-    data class OnPostMenuClicked(val post: FriendPost) : CommunityEvent
     data class OnAddComment(val postId: String, val comment: String) : CommunityEvent
     data class OnToggleComments(val postId: String) : CommunityEvent
 

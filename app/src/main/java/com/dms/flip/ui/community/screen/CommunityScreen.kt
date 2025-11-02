@@ -66,7 +66,7 @@ fun CommunityScreen(
                         title = stringResource(id = R.string.community_empty_feed_title),
                         description = stringResource(id = R.string.community_empty_feed_description),
                         actionText = stringResource(id = R.string.community_empty_feed_action),
-                        onActionClick = { onEvent(CommunityEvent.OnAddFriendClicked) }
+                        onActionClick = { onEvent(CommunityEvent.OnInvitationsClicked) }
                     )
                 }
 
