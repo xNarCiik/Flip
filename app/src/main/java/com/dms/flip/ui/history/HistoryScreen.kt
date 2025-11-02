@@ -51,6 +51,7 @@ fun HistoryScreen(
                     weekTitle = uiState.weekTitle,
                     weekDates = uiState.weekDates,
                     streakDays = uiState.streakDays,
+                    canNavigateToNextWeek = uiState.canNavigateToNextWeek,
                     onEvent = onEvent,
                     navigateToDailyFlip = navigateToDailyFlip
                 )
@@ -66,6 +67,7 @@ private fun HistoryContent(
     weekTitle: String,
     weekDates: String,
     streakDays: Int,
+    canNavigateToNextWeek: Boolean,
     onEvent: (HistoryEvent) -> Unit,
     navigateToDailyFlip: () -> Unit
 ) {
@@ -82,7 +84,8 @@ private fun HistoryContent(
             weekTitle = weekTitle,
             weekDates = weekDates,
             onPreviousWeekClick = { onEvent(HistoryEvent.OnPreviousWeekClicked) },
-            onNextWeekClick = { onEvent(HistoryEvent.OnNextWeekClicked) }
+            onNextWeekClick = { onEvent(HistoryEvent.OnNextWeekClicked) },
+            isNextEnabled = canNavigateToNextWeek
         )
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -11,7 +11,8 @@ data class HistoryUiState(
     val weekTitle: String = "Cette Semaine",
     val weekDates: String = "",
     val streakDays: Int = 0,
-    val weekOffset: Int = 0
+    val weekOffset: Int = 0,
+    val canNavigateToNextWeek: Boolean = false
 )
 
 data class WeeklyDay(
