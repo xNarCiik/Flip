@@ -35,7 +35,7 @@ fun HistoryScreen(
     Box(modifier = modifier.fillMaxSize()) {
         when {
             uiState.isLoading -> {
-                LoadingState(modifier = modifier.fillMaxSize())
+                LoadingState(modifier = Modifier.align(Alignment.Center))
             }
 
             uiState.error != null -> {
