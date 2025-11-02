@@ -26,12 +26,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,12 +44,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dms.flip.R
-import com.dms.flip.ui.navigation.DailyPleasureRoute
 import com.dms.flip.ui.navigation.CommunityRoute
+import com.dms.flip.ui.navigation.DailyPleasureRoute
 import com.dms.flip.ui.navigation.WeeklyRoute
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 
+@Immutable
 data class TabBarItem(
     val title: String,
     val icon: ImageVector,
@@ -63,24 +67,49 @@ fun BottomNavBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val tabBarItems = listOf(
-        TabBarItem(
-            title = stringResource(R.string.history_title),
-            icon = Icons.Outlined.CalendarMonth,
-            route = WeeklyRoute
-        ),
-        TabBarItem(
-            title = stringResource(R.string.my_flip_title),
-            icon = Icons.Outlined.Home,
-            route = DailyPleasureRoute
-        ),
-        TabBarItem(
-            title = stringResource(R.string.community_title),
-            icon = Icons.Outlined.Group,
-            route = CommunityRoute,
-            badgeCount = communityBadgeCount
+    val historyTitle = stringResource(R.string.history_title)
+    val dailyTitle = stringResource(R.string.my_flip_title)
+    val communityTitle = stringResource(R.string.community_title)
+
+    val tabBarItems = remember(historyTitle, dailyTitle, communityTitle, communityBadgeCount) {
+        listOf(
+            TabBarItem(
+                title = historyTitle,
+                icon = Icons.Outlined.CalendarMonth,
+                route = WeeklyRoute
+            ),
+            TabBarItem(
+                title = dailyTitle,
+                icon = Icons.Outlined.Home,
+                route = DailyPleasureRoute
+            ),
+            TabBarItem(
+                title = communityTitle,
+                icon = Icons.Outlined.Group,
+                route = CommunityRoute,
+                badgeCount = communityBadgeCount
+            )
         )
-    )
+    }
+
+    val currentRoute = currentDestination?.route
+    val selectedIndex = remember(currentRoute, tabBarItems) {
+        tabBarItems.indexOfFirst { item ->
+            item.route::class.qualifiedName == currentRoute
+        }.takeIf { it >= 0 } ?: 1
+    }
+
+    val navigateToItem = remember(navController) {
+        { item: TabBarItem ->
+            navController.navigate(item.route) {
+                popUpTo(navController.graph.id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Surface(
         modifier = modifier
@@ -111,9 +140,8 @@ fun BottomNavBar(
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                tabBarItems.forEach { tabBarItem ->
-                    val isSelected =
-                        currentDestination?.route == tabBarItem.route::class.qualifiedName
+                tabBarItems.forEachIndexed { index, tabBarItem ->
+                    val isSelected = index == selectedIndex
                     NavBarItem(
                         isSelected = isSelected,
                         icon = tabBarItem.icon,
@@ -121,13 +149,7 @@ fun BottomNavBar(
                         badgeCount = tabBarItem.badgeCount,
                         onClick = {
                             if (!isSelected) {
-                                navController.navigate(tabBarItem.route) {
-                                    popUpTo(navController.graph.id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navigateToItem(tabBarItem)
                             }
                         }
                     )
@@ -145,6 +167,7 @@ private fun NavBarItem(
     badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
+    val iconPainter = rememberVectorPainter(image = icon)
     val iconColor by animateColorAsState(
         targetValue = if (isSelected)
             Color.White
@@ -197,7 +220,7 @@ private fun NavBarItem(
                         }
                     ) {
                         Icon(
-                            imageVector = icon,
+                            painter = iconPainter,
                             contentDescription = label,
                             modifier = Modifier.size(22.dp),
                             tint = iconColor
@@ -205,7 +228,7 @@ private fun NavBarItem(
                     }
                 } else {
                     Icon(
-                        imageVector = icon,
+                        painter = iconPainter,
                         contentDescription = label,
                         modifier = Modifier.size(22.dp),
                         tint = iconColor

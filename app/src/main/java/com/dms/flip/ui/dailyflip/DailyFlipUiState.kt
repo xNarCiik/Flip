@@ -1,9 +1,11 @@
 package com.dms.flip.ui.dailyflip
 
+import androidx.compose.runtime.Stable
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.UserInfo
 
+@Stable
 data class DailyFlipUiState(
     val screenState: DailyFlipScreenState = DailyFlipScreenState.Loading,
     val headerMessage: String = "",
@@ -16,6 +18,7 @@ sealed interface DailyFlipScreenState {
 
     data class SetupRequired(val pleasureCount: Int) : DailyFlipScreenState
 
+    @Stable
     data class Ready(
         val availableCategories: List<PleasureCategory> = emptyList(),
         val selectedCategory: PleasureCategory = PleasureCategory.ALL,

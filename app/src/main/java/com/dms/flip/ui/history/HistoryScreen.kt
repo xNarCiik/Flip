@@ -2,6 +2,8 @@ package com.dms.flip.ui.history
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
@@ -24,9 +26,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -157,17 +161,23 @@ private fun HistoryContent(
                     textAlign = TextAlign.Center
                 )
             } else {
+                var shouldAnimateList by rememberSaveable { mutableStateOf(true) }
+
                 AnimatedContent(
                     targetState = weeklyDays,
                     transitionSpec = {
-                        (slideInVertically(
-                            animationSpec = tween(350),
-                            initialOffsetY = { fullHeight -> fullHeight / 8 }
-                        ) + fadeIn(animationSpec = tween(350))) togetherWith
-                                (slideOutVertically(
-                                    animationSpec = tween(250),
-                                    targetOffsetY = { fullHeight -> -fullHeight / 8 }
-                                ) + fadeOut(animationSpec = tween(200)))
+                        if (shouldAnimateList) {
+                            (slideInVertically(
+                                animationSpec = tween(350),
+                                initialOffsetY = { fullHeight -> fullHeight / 8 }
+                            ) + fadeIn(animationSpec = tween(350))) togetherWith
+                                    (slideOutVertically(
+                                        animationSpec = tween(250),
+                                        targetOffsetY = { fullHeight -> -fullHeight / 8 }
+                                    ) + fadeOut(animationSpec = tween(200)))
+                        } else {
+                            EnterTransition.None togetherWith ExitTransition.None
+                        }
                     },
                     label = "HistoryListTransition"
                 ) { days ->
@@ -176,6 +186,12 @@ private fun HistoryContent(
                         onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
                         onDiscoverTodayClicked = navigateToDailyFlip
                     )
+                }
+
+                LaunchedEffect(weeklyDays, isLoading) {
+                    if (shouldAnimateList && !isLoading) {
+                        shouldAnimateList = false
+                    }
                 }
 
                 this@Column.AnimatedVisibility(

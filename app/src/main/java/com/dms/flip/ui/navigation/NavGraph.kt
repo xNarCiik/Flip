@@ -13,14 +13,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.ui.community.CommunityNavHost
 import com.dms.flip.ui.dailyflip.DailyFlipScreen
@@ -127,14 +128,16 @@ fun NavGraph(
 ) {
     val modifierWithPaddingValues = Modifier.padding(paddingValues)
 
-    val navigateSingleTop: (Any) -> Unit = { route ->
-        navController.navigate(route) {
-            popUpTo(navController.graph.id) {
-                saveState = true
-                inclusive = true
+    val navigateSingleTop = remember(navController) {
+        { route: Any ->
+            navController.navigate(route) {
+                popUpTo(navController.graph.id) {
+                    saveState = true
+                    inclusive = true
+                }
+                launchSingleTop = true
+                restoreState = true
             }
-            launchSingleTop = true
-            restoreState = true
         }
     }
 
@@ -171,7 +174,7 @@ fun NavGraph(
 
         composable<DailyPleasureRoute> {
             val viewModel: DailyFlipViewModel = hiltViewModel()
-            val dailyPleasureUiState by viewModel.uiState.collectAsState()
+            val dailyPleasureUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             DailyFlipScreen(
                 modifier = modifierWithPaddingValues,
@@ -184,7 +187,7 @@ fun NavGraph(
 
         composable<WeeklyRoute> {
             val viewModel: HistoryViewModel = hiltViewModel()
-            val historyState by viewModel.uiState.collectAsState()
+            val historyState by viewModel.uiState.collectAsStateWithLifecycle()
 
             HistoryScreen(
                 modifier = modifierWithPaddingValues,
@@ -200,7 +203,7 @@ fun NavGraph(
 
         composable<SettingsRoute> {
             val viewModel: SettingsViewModel = hiltViewModel()
-            val settingsState by viewModel.uiState.collectAsState()
+            val settingsState by viewModel.uiState.collectAsStateWithLifecycle()
 
             SettingsScreen(
                 modifier = modifierWithPaddingValues,
@@ -214,7 +217,7 @@ fun NavGraph(
 
         composable<ManagePleasuresRoute> {
             val viewModel: ManagePleasuresViewModel = hiltViewModel()
-            val managePleasuresUiState by viewModel.uiState.collectAsState()
+            val managePleasuresUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             ManagePleasuresScreen(
                 modifier = modifierWithPaddingValues,
@@ -226,7 +229,7 @@ fun NavGraph(
 
         composable<StatisticsRoute> {
             val viewModel: StatisticsViewModel = hiltViewModel()
-            val uiState by viewModel.uiState.collectAsState()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             StatisticsScreen(
                 uiState = uiState,

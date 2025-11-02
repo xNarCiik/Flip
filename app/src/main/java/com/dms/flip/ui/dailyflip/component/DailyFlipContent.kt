@@ -13,6 +13,7 @@ import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
@@ -53,7 +54,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,9 +69,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieAnimatable
+import com.airbnb.lottie.compose.LottieCancellationBehavior
+import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.dailyflip.DailyFlipEvent
@@ -125,15 +128,22 @@ fun DailyFlipContent(
 
     // --- Lottie confetti
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
-    val confettiIsPlaying by rememberUpdatedState(showConfettiAnimation)
-    val confettiProgress by animateLottieCompositionAsState(
-        composition = confettiComposition,
-        isPlaying = confettiIsPlaying,
-        restartOnPlay = false
+    val confettiAnimatable = rememberLottieAnimatable()
+    var confettiVisible by remember { mutableStateOf(false) }
+    val confettiAlpha by animateFloatAsState(
+        targetValue = if (confettiVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 280),
+        label = "confettiAlpha"
     )
 
-    LaunchedEffect(confettiIsPlaying) {
-        if (confettiIsPlaying) {
+    LaunchedEffect(showConfettiAnimation, confettiComposition) {
+        val composition = confettiComposition ?: return@LaunchedEffect
+        if (showConfettiAnimation) {
+            confettiAnimatable.snapTo(
+                composition = composition,
+                progress = 0f
+            )
+            confettiVisible = true
             soundPool.setVolume(soundId, 0.25f, 0.25f)
             soundPool.play(soundId, 0.25f, 0.25f, 1, 0, 1f)
 
@@ -147,13 +157,23 @@ fun DailyFlipContent(
                     vibrator.vibrate(220L)
                 }
             }
-        }
-    }
 
-    LaunchedEffect(confettiProgress) {
-        if (showConfettiAnimation && confettiProgress >= 1f) {
-            delay(250)
+            confettiAnimatable.animate(
+                composition = composition,
+                clipSpec = LottieClipSpec.Progress(0f, 1f),
+                iterations = 1,
+                cancellationBehavior = LottieCancellationBehavior.OnIterationFinish
+            )
+            delay(1800)
+            confettiVisible = false
+            confettiAnimatable.snapTo(
+                composition = composition,
+                progress = 0f
+            )
             showConfettiAnimation = false
+        } else if (!showConfettiAnimation) {
+            confettiVisible = false
+            confettiAnimatable.snapTo(progress = 0f)
         }
     }
 
@@ -321,15 +341,19 @@ fun DailyFlipContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        if (showConfettiAnimation) {
+        if (showConfettiAnimation || confettiVisible) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = confettiAlpha }
+                    .zIndex(2f),
                 contentAlignment = Alignment.Center
             ) {
                 LottieAnimation(
                     modifier = Modifier.fillMaxWidth(),
                     composition = confettiComposition,
-                    progress = { confettiProgress }
+                    renderMode = RenderMode.AUTOMATIC,
+                    progress = { confettiAnimatable.progress }
                 )
             }
         }

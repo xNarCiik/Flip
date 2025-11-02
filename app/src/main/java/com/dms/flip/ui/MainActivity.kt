@@ -18,7 +18,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +27,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.domain.model.Theme
 import com.dms.flip.ui.community.CommunityBadgeViewModel
@@ -60,10 +60,10 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         setContent {
-            val rootNavigationState by mainViewModel.rootNavigationState.collectAsState()
+            val rootNavigationState by mainViewModel.rootNavigationState.collectAsStateWithLifecycle()
 
             val settingsViewModel: SettingsViewModel = hiltViewModel()
-            val settingsUiState by settingsViewModel.uiState.collectAsState()
+            val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
             val useDarkTheme = when (settingsUiState.theme) {
                 Theme.LIGHT -> false
                 Theme.DARK -> true
@@ -110,16 +110,19 @@ class MainActivity : ComponentActivity() {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route
                     val communityBadgeViewModel: CommunityBadgeViewModel = hiltViewModel()
-                    val pendingRequestsCount by communityBadgeViewModel.pendingRequestsCount.collectAsState()
+                    val pendingRequestsCount by communityBadgeViewModel.pendingRequestsCount.collectAsStateWithLifecycle()
 
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         bottomBar = {
-                            val visible = currentRoute in listOf(
-                                DailyPleasureRoute::class.qualifiedName,
-                                WeeklyRoute::class.qualifiedName,
-                                CommunityRoute::class.qualifiedName
-                            )
+                            val bottomDestinations = remember {
+                                setOf(
+                                    DailyPleasureRoute::class.qualifiedName,
+                                    WeeklyRoute::class.qualifiedName,
+                                    CommunityRoute::class.qualifiedName
+                                )
+                            }
+                            val visible = currentRoute in bottomDestinations
 
                             if (visible) {
                                 BottomNavBar(

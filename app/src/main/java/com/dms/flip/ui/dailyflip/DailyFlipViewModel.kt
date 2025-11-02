@@ -12,14 +12,18 @@ import com.dms.flip.domain.usecase.history.SaveHistoryEntryUseCase
 import com.dms.flip.domain.usecase.pleasures.GetPleasuresUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,19 +44,33 @@ class DailyFlipViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(DailyFlipUiState())
     val uiState: StateFlow<DailyFlipUiState> = _uiState.asStateFlow()
 
+    private val todayHistoryState = getTodayHistoryEntryUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
+
+    private var observeJob: Job? = null
+
     init {
         observeData()
     }
 
     private fun observeData() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(screenState = DailyFlipScreenState.Loading)
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
+            _uiState.update { it.copy(screenState = DailyFlipScreenState.Loading) }
+
+            val pleasuresFlow = getPleasuresUseCase().distinctUntilChanged()
+            val randomMessageFlow = flowOf(getRandomDailyMessageUseCase())
+            val userInfoFlow = getUserInfoUseCase().distinctUntilChanged()
 
             combine(
-                getPleasuresUseCase(),
-                getTodayHistoryEntryUseCase(),
-                flow { emit(getRandomDailyMessageUseCase()) },
-                getUserInfoUseCase()
+                pleasuresFlow,
+                todayHistoryState,
+                randomMessageFlow,
+                userInfoFlow
             ) { pleasures, todayHistory, randomMessage, userInfo ->
 
                 val enabledCount = pleasures.count { it.isEnabled }

@@ -13,6 +13,7 @@ import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -97,18 +98,62 @@ class PleasureRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getPleasureHistory(id: String): PleasureHistory? {
-        val snapshot = firestore.collection("users")
+        val document = firestore.collection("users")
             .document(userId)
             .collection("history")
-            .whereEqualTo("id", id)
-            .limit(1)
+            .document(id)
             .get()
             .await()
 
-        val doc = snapshot.documents.firstOrNull() ?: return null
+        if (!document.exists()) {
+            return null
+        }
 
-        val dto = doc.toObject(PleasureHistoryDto::class.java) ?: return null
+        val dto = document.toObject(PleasureHistoryDto::class.java) ?: return null
 
         return dto.toDomain()
     }
+
+    override fun observePleasureHistory(id: String): Flow<PleasureHistory?> = callbackFlow {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            trySend(null)
+            close()
+            return@callbackFlow
+        }
+
+        val documentRef = firestore.collection("users")
+            .document(userId)
+            .collection("history")
+            .document(id)
+
+        var lastNonNull: PleasureHistory? = null
+        var hasEmittedInitial = false
+
+        val registration = documentRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                val dto = snapshot.toObject(PleasureHistoryDto::class.java)
+                val history = dto?.toDomain()
+                if (history != null && history != lastNonNull) {
+                    lastNonNull = history
+                    hasEmittedInitial = true
+                    trySend(history).isSuccess
+                }
+            } else {
+                if (!hasEmittedInitial) {
+                    hasEmittedInitial = true
+                    trySend(null).isSuccess
+                } else if (lastNonNull != null) {
+                    lastNonNull = null
+                    trySend(null).isSuccess
+                }
+            }
+        }
+
+        awaitClose { registration.remove() }
+    }.distinctUntilChanged()
 }
