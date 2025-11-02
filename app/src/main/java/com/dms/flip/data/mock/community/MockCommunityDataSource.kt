@@ -41,11 +41,11 @@ class MockCommunityDataSource @Inject constructor() {
     )
 
     private val knownUsers = mutableMapOf(
-        "friend_alex" to Friend(
-            id = "friend_alex",
-            username = "Alexandre Dupont",
-            handle = "@alexandre",
-            avatarUrl = "https://example.com/avatar/alexandre.png",
+        "friend_emma" to Friend(
+            id = "friend_emma",
+            username = "La mère michel",
+            handle = "@mamamiaa",
+            avatarUrl = "https://scontent.cdninstagram.com/v/t51.2885-19/401916050_1385369609057390_7192697213845317191_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=108&ccb=7-5&_nc_sid=bf7eb4&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=qVn4MJ0HHO8Q7kNvwE3sWZq&_nc_oc=AdnN5gfuDIdeBymllMgcFHOxMhnigLeek2XkVwqWUTTebGKBhuB6flhsdWlRLtMuGAqHKypBzlCj85vALRT2gqaQ&_nc_zt=24&_nc_ht=scontent.cdninstagram.com&oh=00_Afj5BzdOX_yWaafK_LftZtkDaLQKoDS7764rsMN3rzg83w&oe=690C9EC1",
             streak = 7,
             isOnline = true,
             currentPleasure = FriendPleasure(
@@ -55,11 +55,11 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             favoriteCategory = PleasureCategory.CULTURE
         ),
-        "friend_lea" to Friend(
-            id = "friend_lea",
-            username = "Léa Bernard",
-            handle = "@lea",
-            avatarUrl = "https://example.com/avatar/lea.png",
+        "friend_dams" to Friend(
+            id = "friend_dams",
+            username = "Dams",
+            handle = "@dams_lgx",
+            avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/456069928_491069416973778_8102649957987195103_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=106&_nc_oc=Q6cZ2QF9Xmw8N1iCgPnDUx4Kw5eFhwS3qI0R99yeBe-y42tLx3zBCIwn8bY6oBnCdDRrNf45Ar-rBNTqnF0iqNQABwa1&_nc_ohc=WBRH9bfze2oQ7kNvwHjBN7q&_nc_gid=VUXDXVDh4eW4ZxG7unEuRw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfjL_VrAPaR7xo4kyqWyvnFPkZUfbbOazo6OesOUw6FlwQ&oe=690C8B45&_nc_sid=10d13b",
             streak = 12,
             isOnline = false,
             currentPleasure = FriendPleasure(
@@ -69,11 +69,11 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             favoriteCategory = PleasureCategory.WELLNESS
         ),
-        "friend_quentin" to Friend(
-            id = "friend_quentin",
-            username = "Quentin Moreau",
-            handle = "@quentin",
-            avatarUrl = "https://example.com/avatar/quentin.png",
+        "friend_kimy" to Friend(
+            id = "friend_kimy",
+            username = "Kimimi",
+            handle = "@kimy_david",
+            avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/572111130_18544577635056527_2214624452472528223_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=111&_nc_oc=Q6cZ2QFNCvY6ONexfO4sERI2xlvmYiLuGlVXDrbduhjZgMD-3p_FljbXdI_UkzkbQ8vGS9Q6DR46J7UlpoGyAbHu8_W3&_nc_ohc=Ap7jGp6iUywQ7kNvwHp_WuH&_nc_gid=d7UwzgG3pzj7Lrftftwovg&edm=AP4sbd4BAAAA&ccb=7-5&oh=00_AfhWzi0TPaWhSrC5Dz4U3WAa8omuqnWYMnEqKAQ2obcKJA&oe=690C9C64&_nc_sid=7a9f4b",
             streak = 3,
             isOnline = true,
             currentPleasure = FriendPleasure(
@@ -83,13 +83,13 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             favoriteCategory = PleasureCategory.OUTDOOR
         ),
-        "friend_sarah" to Friend(
-            id = "friend_sarah",
-            username = "Sarah Lopez",
-            handle = "@sarah",
-            avatarUrl = "https://example.com/avatar/sarah.png",
+        "friend_anthony" to Friend(
+            id = "friend_anthony",
+            username = "Anthony Arrighi",
+            handle = "@anthony.arrighi",
             streak = 21,
             isOnline = false,
+            avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/502718768_18065806517284093_1519982854029510988_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=101&_nc_oc=Q6cZ2QEy3HjmzcGaILUbcmVoA9q6AHMXG1TFUix8HiPDQ_AOrVopsbF71uGlAxTqozBUzUToobuM3mXdUl9z7psxZkuJ&_nc_ohc=uvm_14EYNKAQ7kNvwE5xPEQ&_nc_gid=K1DszhkAKf_TUzYVIt-ioQ&edm=ALGbJPMBAAAA&ccb=7-5&oh=00_AfjzMC3dODdrpoe7MiIcYAJ8omBEYX-bH6mKcoCF5WdZxg&oe=690C8181&_nc_sid=7d3ac5",
             currentPleasure = FriendPleasure(
                 title = "Atelier peinture",
                 category = PleasureCategory.CREATIVE,
@@ -101,7 +101,6 @@ class MockCommunityDataSource @Inject constructor() {
             id = "friend_thomas",
             username = "Thomas Garcia",
             handle = "@thomas",
-            avatarUrl = "https://example.com/avatar/thomas.png",
             streak = 9,
             isOnline = true,
             currentPleasure = FriendPleasure(
@@ -115,7 +114,6 @@ class MockCommunityDataSource @Inject constructor() {
             id = "friend_marie",
             username = "Marie Dubois",
             handle = "@marie",
-            avatarUrl = "https://example.com/avatar/marie.png",
             streak = 5,
             isOnline = false,
             currentPleasure = FriendPleasure(
@@ -129,7 +127,6 @@ class MockCommunityDataSource @Inject constructor() {
             id = "friend_nicolas",
             username = "Nicolas Petit",
             handle = "@nicolas",
-            avatarUrl = "https://example.com/avatar/nicolas.png",
             streak = 2,
             isOnline = true,
             currentPleasure = FriendPleasure(
@@ -143,21 +140,19 @@ class MockCommunityDataSource @Inject constructor() {
             id = "friend_claire",
             username = "Claire Rossi",
             handle = "@claire",
-            avatarUrl = "https://example.com/avatar/claire.png",
             streak = 16,
             isOnline = false,
             currentPleasure = FriendPleasure(
                 title = "Atelier cuisine italienne",
-                category = PleasureCategory.CULINARY,
+                category = PleasureCategory.FOOD,
                 status = PleasureStatus.COMPLETED
             ),
-            favoriteCategory = PleasureCategory.CULINARY
+            favoriteCategory = PleasureCategory.FOOD
         ),
         "friend_bastien" to Friend(
             id = "friend_bastien",
             username = "Bastien Fournier",
             handle = "@bastien",
-            avatarUrl = "https://example.com/avatar/bastien.png",
             streak = 11,
             isOnline = true,
             currentPleasure = FriendPleasure(
@@ -171,9 +166,9 @@ class MockCommunityDataSource @Inject constructor() {
 
     private val _friends = MutableStateFlow(
         listOf(
-            knownUsers.getValue("friend_alex"),
-            knownUsers.getValue("friend_lea"),
-            knownUsers.getValue("friend_quentin")
+            knownUsers.getValue("friend_emma"),
+            knownUsers.getValue("friend_dams"),
+            knownUsers.getValue("friend_kimy")
         )
     )
     val friends: StateFlow<List<Friend>> = _friends.asStateFlow()
@@ -184,10 +179,10 @@ class MockCommunityDataSource @Inject constructor() {
         listOf(
             FriendRequest(
                 id = "request_${UUID.randomUUID()}",
-                userId = "friend_sarah",
-                username = knownUsers.getValue("friend_sarah").username,
-                handle = knownUsers.getValue("friend_sarah").handle,
-                avatarUrl = knownUsers.getValue("friend_sarah").avatarUrl,
+                userId = "friend_claire",
+                username = knownUsers.getValue("friend_claire").username,
+                handle = knownUsers.getValue("friend_claire").handle,
+                avatarUrl = knownUsers.getValue("friend_claire").avatarUrl,
                 requestedAt = now - TimeUnit.HOURS.toMillis(3),
                 source = FriendRequestSource.SUGGESTION
             )
@@ -241,43 +236,56 @@ class MockCommunityDataSource @Inject constructor() {
         listOf(
             FriendPost(
                 id = "post_lea_morning_yoga",
-                friend = knownUsers.getValue("friend_lea"),
-                content = "Séance de yoga matinale terminée. Une énergie incroyable pour commencer la journée !",
+                friend = knownUsers.getValue("friend_dams"),
+                content = "Séance de méditation terminé \uD83D\uDCA8",
                 timestamp = now - TimeUnit.HOURS.toMillis(2),
                 likesCount = 18,
                 commentsCount = 2,
                 isLiked = true,
                 pleasureCategory = PleasureCategory.WELLNESS,
-                pleasureTitle = "Yoga matinal",
+                pleasureTitle = "Fumer un pet.. ou deux",
                 comments = listOf(
-                    commentFrom("friend_alex", "Bravo pour ta constance !", now - TimeUnit.HOURS.toMillis(1)),
-                    commentFrom("friend_quentin", "On se fait une séance ensemble demain ?", now - TimeUnit.MINUTES.toMillis(45))
+                    commentFrom("friend_emma", "Bravo pour ta constance !", now - TimeUnit.HOURS.toMillis(1)),
+                    commentFrom("friend_kimy", "On se fait une séance ensemble demain ?", now - TimeUnit.MINUTES.toMillis(45))
                 )
             ),
             FriendPost(
                 id = "post_alex_evening_reading",
-                friend = knownUsers.getValue("friend_alex"),
-                content = "J'ai fini 'Le cercle littéraire'. Une vraie pépite à recommander !",
+                friend = knownUsers.getValue("friend_emma"),
+                content = "Heureuseeeeee",
                 timestamp = now - TimeUnit.HOURS.toMillis(5),
                 likesCount = 24,
                 commentsCount = 3,
-                pleasureCategory = PleasureCategory.CULTURE,
-                pleasureTitle = "Session de lecture",
+                pleasureCategory = PleasureCategory.SPORT,
+                pleasureTitle = "Session de sport avec Ugo \uD83C\uDF51",
                 comments = listOf(
-                    commentFrom("friend_lea", "Je note pour ma prochaine lecture.", now - TimeUnit.HOURS.toMillis(4)),
-                    commentFrom("friend_sarah", "Tu vas adorer la suite !", now - TimeUnit.HOURS.toMillis(3)),
+                    commentFrom("friend_dams", "Je note pour ma prochaine lecture.", now - TimeUnit.HOURS.toMillis(4)),
+                    commentFrom("friend_claire", "Tu vas adorer la suite !", now - TimeUnit.HOURS.toMillis(3)),
                     commentFrom(currentUser.id, "Merci pour l'inspiration, je l'ajoute à ma liste !", now - TimeUnit.HOURS.toMillis(2))
                 )
             ),
             FriendPost(
-                id = "post_quentin_run",
-                friend = knownUsers.getValue("friend_quentin"),
-                content = "8km de course au parc ce matin, record battu malgré le vent !",
+                id = "post_kimy",
+                friend = knownUsers.getValue("friend_kimy"),
+                content = "Bon bah c'est repartie, au revoir les copainsss",
                 timestamp = now - TimeUnit.DAYS.toMillis(1),
                 likesCount = 32,
                 commentsCount = 1,
                 pleasureCategory = PleasureCategory.OUTDOOR,
-                pleasureTitle = "Course au parc",
+                pleasureTitle = "Un week end à l'étranger",
+                comments = listOf(
+                    commentFrom("friend_thomas", "Tu es prêt pour le semi-marathon !", now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1))
+                )
+            ),
+            FriendPost(
+                id = "post_anthony",
+                friend = knownUsers.getValue("friend_anthony"),
+                content = "Oh minceeee",
+                timestamp = now - TimeUnit.DAYS.toMillis(1),
+                likesCount = 32,
+                commentsCount = 1,
+                pleasureCategory = PleasureCategory.OUTDOOR,
+                pleasureTitle = "Ce soir: 3 litres de vodka",
                 comments = listOf(
                     commentFrom("friend_thomas", "Tu es prêt pour le semi-marathon !", now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1))
                 )
@@ -307,22 +315,22 @@ class MockCommunityDataSource @Inject constructor() {
                 RecentActivity(
                     id = "activity_camille_cafe",
                     pleasureTitle = "Découverte d'un nouveau café",
-                    category = PleasureCategory.CULINARY,
+                    category = PleasureCategory.FOOD,
                     completedAt = now - TimeUnit.DAYS.toMillis(1),
                     isCompleted = true
                 )
             ),
             relationshipStatus = RelationshipStatus.FRIEND
         ),
-        "friend_alex" to PublicProfile(
-            id = "friend_alex",
-            username = knownUsers.getValue("friend_alex").username,
-            handle = knownUsers.getValue("friend_alex").handle,
-            avatarUrl = knownUsers.getValue("friend_alex").avatarUrl,
+        "friend_emma" to PublicProfile(
+            id = "friend_emma",
+            username = knownUsers.getValue("friend_emma").username,
+            handle = knownUsers.getValue("friend_emma").handle,
+            avatarUrl = knownUsers.getValue("friend_emma").avatarUrl,
             bio = "Lecteur compulsif et amateur de cafés littéraires.",
             friendsCount = 58,
             daysCompleted = 97,
-            currentStreak = knownUsers.getValue("friend_alex").streak,
+            currentStreak = knownUsers.getValue("friend_emma").streak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_alex_reading",
@@ -334,21 +342,21 @@ class MockCommunityDataSource @Inject constructor() {
                 RecentActivity(
                     id = "activity_alex_tasting",
                     pleasureTitle = "Dégustation de cafés", 
-                    category = PleasureCategory.CULINARY,
+                    category = PleasureCategory.FOOD,
                     completedAt = now - TimeUnit.DAYS.toMillis(2),
                     isCompleted = true
                 )
             )
         ),
-        "friend_lea" to PublicProfile(
-            id = "friend_lea",
-            username = knownUsers.getValue("friend_lea").username,
-            handle = knownUsers.getValue("friend_lea").handle,
-            avatarUrl = knownUsers.getValue("friend_lea").avatarUrl,
+        "friend_dams" to PublicProfile(
+            id = "friend_dams",
+            username = knownUsers.getValue("friend_dams").username,
+            handle = knownUsers.getValue("friend_dams").handle,
+            avatarUrl = knownUsers.getValue("friend_dams").avatarUrl,
             bio = "Toujours partante pour un cours de yoga au lever du soleil.",
             friendsCount = 74,
             daysCompleted = 163,
-            currentStreak = knownUsers.getValue("friend_lea").streak,
+            currentStreak = knownUsers.getValue("friend_dams").streak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_lea_yoga",
@@ -366,15 +374,15 @@ class MockCommunityDataSource @Inject constructor() {
                 )
             )
         ),
-        "friend_quentin" to PublicProfile(
-            id = "friend_quentin",
-            username = knownUsers.getValue("friend_quentin").username,
-            handle = knownUsers.getValue("friend_quentin").handle,
-            avatarUrl = knownUsers.getValue("friend_quentin").avatarUrl,
+        "friend_kimy" to PublicProfile(
+            id = "friend_kimy",
+            username = knownUsers.getValue("friend_kimy").username,
+            handle = knownUsers.getValue("friend_kimy").handle,
+            avatarUrl = knownUsers.getValue("friend_kimy").avatarUrl,
             bio = "Toujours prêt pour une nouvelle aventure sportive.",
             friendsCount = 36,
             daysCompleted = 52,
-            currentStreak = knownUsers.getValue("friend_quentin").streak,
+            currentStreak = knownUsers.getValue("friend_kimy").streak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_quentin_run",
