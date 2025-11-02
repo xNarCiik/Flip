@@ -518,7 +518,7 @@ class MockCommunityDataSource @Inject constructor() {
 
     fun getPublicProfile(userId: String): PublicProfile {
         val friend = getUser(userId)
-        return knownProfiles[userId] ?: createDefaultProfile(friend)
+        return knownProfiles.getOrPut(userId) { createDefaultProfile(friend) }
     }
 
     fun determineRelationship(userId: String): RelationshipStatus {
