@@ -2,10 +2,10 @@ package com.dms.flip.ui.history
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -163,32 +163,34 @@ private fun HistoryContent(
             } else {
                 var shouldAnimateList by rememberSaveable { mutableStateOf(true) }
 
-                AnimatedContent(
-                    targetState = weeklyDays,
-                    transitionSpec = {
-                        if (shouldAnimateList) {
-                            (slideInVertically(
-                                animationSpec = tween(350),
-                                initialOffsetY = { fullHeight -> fullHeight / 8 }
-                            ) + fadeIn(animationSpec = tween(350))) togetherWith
-                                    (slideOutVertically(
-                                        animationSpec = tween(250),
-                                        targetOffsetY = { fullHeight -> -fullHeight / 8 }
-                                    ) + fadeOut(animationSpec = tween(200)))
-                        } else {
-                            EnterTransition.None togetherWith ExitTransition.None
-                        }
-                    },
-                    label = "HistoryListTransition"
-                ) { days ->
+                if (shouldAnimateList) {
+                    val visibleState = remember { MutableTransitionState(false) }
+                    LaunchedEffect(Unit) {
+                        visibleState.targetState = true
+                    }
+                    AnimatedVisibility(
+                        visibleState = visibleState,
+                        enter = slideInVertically(
+                            animationSpec = tween(350),
+                            initialOffsetY = { fullHeight -> fullHeight / 8 }
+                        ) + fadeIn(animationSpec = tween(350)),
+                        exit = ExitTransition.None
+                    ) {
+                        WeeklyPleasuresList(
+                            items = weeklyDays,
+                            onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                            onDiscoverTodayClicked = navigateToDailyFlip
+                        )
+                    }
+                } else {
                     WeeklyPleasuresList(
-                        items = days,
+                        items = weeklyDays,
                         onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
                         onDiscoverTodayClicked = navigateToDailyFlip
                     )
                 }
 
-                LaunchedEffect(weeklyDays, isLoading) {
+                LaunchedEffect(isLoading) {
                     if (shouldAnimateList && !isLoading) {
                         shouldAnimateList = false
                     }

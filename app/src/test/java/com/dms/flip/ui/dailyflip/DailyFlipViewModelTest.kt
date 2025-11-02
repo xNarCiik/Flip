@@ -104,6 +104,57 @@ class DailyFlipViewModelTest {
         assertThat(updatedState.isCardFlipped).isTrue()
     }
 
+    @Test
+    fun `card stays unflipped until acknowledged`() = runTest {
+        val pleasuresFlow = MutableStateFlow(
+            List(MinimumPleasuresCount) { index ->
+                Pleasure(id = index.toString(), title = "Pleasure $index")
+            }
+        )
+        val randomPleasure = Pleasure(
+            id = "random",
+            title = "Random",
+            category = PleasureCategory.ALL
+        )
+        val historyFlow = MutableStateFlow<PleasureHistory?>(null)
+        val userInfoFlow = MutableStateFlow(UserInfo(id = "user", username = "Flip"))
+
+        val pleasureRepository = FakePleasureRepository(
+            pleasuresFlow = pleasuresFlow,
+            randomPleasureFlow = MutableStateFlow(randomPleasure),
+            historyFlow = historyFlow
+        )
+        val userRepository = FakeUserRepository(userInfoFlow)
+        val dailyMessageRepository = FakeDailyMessageRepository("hello")
+
+        val viewModel = DailyFlipViewModel(
+            resources = resources,
+            getRandomDailyMessageUseCase = GetRandomDailyMessageUseCase(dailyMessageRepository),
+            getPleasuresUseCase = GetPleasuresUseCase(pleasureRepository),
+            getRandomPleasureUseCase = GetRandomPleasureUseCase(pleasureRepository),
+            saveHistoryEntryUseCase = SaveHistoryEntryUseCase(pleasureRepository),
+            getTodayHistoryEntryUseCase = GetTodayHistoryEntryUseCase(pleasureRepository),
+            getUserInfoUseCase = GetUserInfoUseCase(userRepository)
+        )
+
+        advanceUntilIdle()
+
+        viewModel.onEvent(DailyFlipEvent.OnCardClicked)
+
+        advanceUntilIdle()
+
+        val afterDraw = viewModel.uiState.value.screenState as DailyFlipScreenState.Ready
+        assertThat(afterDraw.dailyPleasure?.id).isEqualTo(randomPleasure.id)
+        assertThat(afterDraw.isCardFlipped).isFalse()
+
+        viewModel.onEvent(DailyFlipEvent.OnCardFlipped)
+
+        advanceUntilIdle()
+
+        val afterFlip = viewModel.uiState.value.screenState as DailyFlipScreenState.Ready
+        assertThat(afterFlip.isCardFlipped).isTrue()
+    }
+
     private class FakePleasureRepository(
         private val pleasuresFlow: MutableStateFlow<List<Pleasure>>,
         private val randomPleasureFlow: MutableStateFlow<Pleasure>,

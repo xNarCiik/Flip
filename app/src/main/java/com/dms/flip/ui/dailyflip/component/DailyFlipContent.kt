@@ -69,12 +69,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieAnimatable
 import com.airbnb.lottie.compose.LottieCancellationBehavior
-import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.dailyflip.DailyFlipEvent
@@ -128,22 +126,26 @@ fun DailyFlipContent(
 
     // --- Lottie confetti
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
-    val confettiAnimatable = rememberLottieAnimatable()
-    var confettiVisible by remember { mutableStateOf(false) }
+    var confettiVisible by rememberSaveable { mutableStateOf(false) }
+    var confettiPlaying by remember { mutableStateOf(false) }
     val confettiAlpha by animateFloatAsState(
         targetValue = if (confettiVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 280),
         label = "confettiAlpha"
     )
+    val confettiProgress by animateLottieCompositionAsState(
+        composition = confettiComposition,
+        isPlaying = confettiPlaying,
+        iterations = 1,
+        restartOnPlay = true,
+        cancellationBehavior = LottieCancellationBehavior.OnIterationFinish
+    )
 
-    LaunchedEffect(showConfettiAnimation, confettiComposition) {
-        val composition = confettiComposition ?: return@LaunchedEffect
-        if (showConfettiAnimation) {
-            confettiAnimatable.snapTo(
-                composition = composition,
-                progress = 0f
-            )
+    LaunchedEffect(showConfettiAnimation) {
+        if (showConfettiAnimation && !confettiPlaying) {
             confettiVisible = true
+            confettiPlaying = true
+
             soundPool.setVolume(soundId, 0.25f, 0.25f)
             soundPool.play(soundId, 0.25f, 0.25f, 1, 0, 1f)
 
@@ -157,23 +159,15 @@ fun DailyFlipContent(
                     vibrator.vibrate(220L)
                 }
             }
+        }
+    }
 
-            confettiAnimatable.animate(
-                composition = composition,
-                clipSpec = LottieClipSpec.Progress(0f, 1f),
-                iterations = 1,
-                cancellationBehavior = LottieCancellationBehavior.OnIterationFinish
-            )
+    LaunchedEffect(confettiProgress, confettiPlaying) {
+        if (confettiPlaying && confettiProgress >= 0.99f) {
+            confettiPlaying = false
             delay(1800)
             confettiVisible = false
-            confettiAnimatable.snapTo(
-                composition = composition,
-                progress = 0f
-            )
             showConfettiAnimation = false
-        } else if (!showConfettiAnimation) {
-            confettiVisible = false
-            confettiAnimatable.snapTo(progress = 0f)
         }
     }
 
@@ -341,7 +335,9 @@ fun DailyFlipContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        if (showConfettiAnimation || confettiVisible) {
+        val shouldRenderConfetti =
+            showConfettiAnimation || confettiVisible || confettiPlaying || confettiAlpha > 0.01f
+        if (shouldRenderConfetti) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -350,10 +346,10 @@ fun DailyFlipContent(
                 contentAlignment = Alignment.Center
             ) {
                 LottieAnimation(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                     composition = confettiComposition,
                     renderMode = RenderMode.AUTOMATIC,
-                    progress = { confettiAnimatable.progress }
+                    progress = { confettiProgress }
                 )
             }
         }

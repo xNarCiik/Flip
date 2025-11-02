@@ -52,6 +52,7 @@ class DailyFlipViewModel @Inject constructor(
         )
 
     private var observeJob: Job? = null
+    private var awaitingFlipAcknowledgement: Boolean = false
 
     init {
         observeData()
@@ -88,18 +89,21 @@ class DailyFlipViewModel @Inject constructor(
                         userInfo = userInfo
                     )
 
-                    else -> DailyFlipUiState(
+                    else -> {
+                        val isCardFlipped = todayHistory != null && !awaitingFlipAcknowledgement
+                        DailyFlipUiState(
                         screenState = DailyFlipScreenState.Ready(
                             availableCategories = PleasureCategory.entries,
                             dailyPleasure = todayHistory?.toPleasureOrNull(), // TODO LET HISTORY ?
-                            isCardFlipped = todayHistory != null
+                            isCardFlipped = isCardFlipped
                         ),
                         headerMessage = if (todayHistory == null)
                             randomMessage
                         else
                             resources.getString(R.string.your_flip_daily),
                         userInfo = userInfo
-                    )
+                        )
+                    }
                 }
             }
                 .catch { e ->
@@ -139,12 +143,14 @@ class DailyFlipViewModel @Inject constructor(
         val current = _uiState.value.screenState
         if (current is DailyFlipScreenState.Ready && current.dailyPleasure == null) {
             try {
+                awaitingFlipAcknowledgement = true
                 val randomPleasure = getRandomPleasureUseCase(current.selectedCategory).first()
                 saveHistoryEntryUseCase(randomPleasure)
                 _uiState.update {
                     it.copy(screenState = current.copy(dailyPleasure = randomPleasure))
                 }
             } catch (e: Exception) {
+                awaitingFlipAcknowledgement = false
                 _uiState.value = DailyFlipUiState(
                     screenState = DailyFlipScreenState.Error(
                         "Impossible de tirer une carte : ${e.message}"
@@ -158,6 +164,7 @@ class DailyFlipViewModel @Inject constructor(
     private fun handleCardFlipped() {
         val current = _uiState.value.screenState
         if (current is DailyFlipScreenState.Ready) {
+            awaitingFlipAcknowledgement = false
             _uiState.update {
                 it.copy(
                     screenState = current.copy(isCardFlipped = true),
@@ -178,6 +185,7 @@ class DailyFlipViewModel @Inject constructor(
                         headerMessage = "",
                         userInfo = _uiState.value.userInfo
                     )
+                    awaitingFlipAcknowledgement = false
                 }
             } catch (e: Exception) {
                 _uiState.value = DailyFlipUiState(
