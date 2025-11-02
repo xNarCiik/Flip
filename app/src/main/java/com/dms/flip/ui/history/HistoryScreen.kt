@@ -1,5 +1,14 @@
 package com.dms.flip.ui.history
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,17 +19,23 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.dms.flip.R
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.LoadingState
@@ -38,6 +53,24 @@ fun HistoryScreen(
     onEvent: (HistoryEvent) -> Unit,
     navigateToDailyFlip: () -> Unit
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val hasResumedOnce = remember { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (hasResumedOnce.value) {
+                    onEvent(HistoryEvent.OnScreenResumed)
+                } else {
+                    hasResumedOnce.value = true
+                }
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         FlipTopBar(title = stringResource(id = R.string.history_title))
 
@@ -93,10 +126,19 @@ private fun HistoryContent(
         val history = weeklyDays.mapNotNull { it.historyEntry }
         val completedCount = history.count { it.completed }
 
-        WeeklyStatsGrid(
-            pleasuresCount = completedCount,
-            streakDays = streakDays
-        )
+        AnimatedContent(
+            targetState = Pair(completedCount, streakDays),
+            transitionSpec = {
+                fadeIn(animationSpec = tween(250)) togetherWith
+                        fadeOut(animationSpec = tween(200))
+            },
+            label = "HistoryStatsTransition"
+        ) { (count, streak) ->
+            WeeklyStatsGrid(
+                pleasuresCount = count,
+                streakDays = streak
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -115,17 +157,44 @@ private fun HistoryContent(
                     textAlign = TextAlign.Center
                 )
             } else {
-                WeeklyPleasuresList(
-                    items = weeklyDays,
-                    onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
-                    onDiscoverTodayClicked = navigateToDailyFlip
-                )
+                AnimatedContent(
+                    targetState = weeklyDays,
+                    transitionSpec = {
+                        (slideInVertically(
+                            animationSpec = tween(350),
+                            initialOffsetY = { fullHeight -> fullHeight / 8 }
+                        ) + fadeIn(animationSpec = tween(350))) togetherWith
+                                (slideOutVertically(
+                                    animationSpec = tween(250),
+                                    targetOffsetY = { fullHeight -> -fullHeight / 8 }
+                                ) + fadeOut(animationSpec = tween(200)))
+                    },
+                    label = "HistoryListTransition"
+                ) { days ->
+                    WeeklyPleasuresList(
+                        items = days,
+                        onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                        onDiscoverTodayClicked = navigateToDailyFlip
+                    )
+                }
 
-                if (error != null) {
+                AnimatedVisibility(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    visible = error != null,
+                    enter = fadeIn(animationSpec = tween(200)) +
+                            slideInVertically(
+                                animationSpec = tween(200),
+                                initialOffsetY = { it / 4 }
+                            ),
+                    exit = fadeOut(animationSpec = tween(200)) +
+                            slideOutVertically(
+                                animationSpec = tween(200),
+                                targetOffsetY = { it / 4 }
+                            )
+                ) {
                     Text(
-                        text = stringResource(R.string.generic_error_message, error),
+                        text = stringResource(R.string.generic_error_message, error ?: ""),
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
                             .padding(16.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f),

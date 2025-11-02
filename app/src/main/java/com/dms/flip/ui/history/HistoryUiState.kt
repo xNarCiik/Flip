@@ -28,6 +28,7 @@ sealed interface HistoryEvent {
     data object OnPreviousWeekClicked : HistoryEvent
     data object OnNextWeekClicked : HistoryEvent
     data object OnDiscoverTodayClicked : HistoryEvent
+    data object OnScreenResumed : HistoryEvent
 }
 
 fun getDayName(dayOfWeek: Int): String {

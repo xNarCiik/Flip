@@ -1,5 +1,10 @@
 package com.dms.flip.ui.community
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -8,9 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.AnimatedNavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.rememberAnimatedNavController
 import androidx.navigation.navArgument
 import com.dms.flip.ui.community.screen.CommunityScreen
 import com.dms.flip.ui.community.screen.FriendsListScreen
@@ -31,17 +36,47 @@ sealed class CommunityRoute(val route: String) {
 @Composable
 fun CommunityNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
+    navController: NavHostController = rememberAnimatedNavController(),
     viewModel: CommunityViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    NavHost(
+    AnimatedNavHost(
         navController = navController,
         startDestination = CommunityRoute.Main.route,
         modifier = modifier
     ) {
-        composable(CommunityRoute.Main.route) {
+        composable(
+            CommunityRoute.Main.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { it / 4 }
+                        )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { -it / 4 }
+                        )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { -it / 4 }
+                        )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { it / 4 }
+                        )
+            }
+        ) {
             CommunityScreen(
                 uiState = uiState,
                 onEvent = { event ->
@@ -70,7 +105,37 @@ fun CommunityNavHost(
             )
         }
 
-        composable(CommunityRoute.Invitations.route) {
+        composable(
+            CommunityRoute.Invitations.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { it / 4 }
+                        )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { -it / 4 }
+                        )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { -it / 4 }
+                        )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { it / 4 }
+                        )
+            }
+        ) {
             InvitationsScreen(
                 uiState = uiState,
                 onEvent = { event ->
@@ -88,7 +153,37 @@ fun CommunityNavHost(
             )
         }
 
-        composable(CommunityRoute.FriendsList.route) {
+        composable(
+            CommunityRoute.FriendsList.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { it / 4 }
+                        )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { -it / 4 }
+                        )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { -it / 4 }
+                        )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { it / 4 }
+                        )
+            }
+        ) {
             FriendsListScreen(
                 uiState = uiState,
                 onEvent = { event ->
@@ -114,7 +209,37 @@ fun CommunityNavHost(
             )
         }
 
-        composable(CommunityRoute.Search.route) {
+        composable(
+            CommunityRoute.Search.route,
+            enterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { it / 4 }
+                        )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { -it / 4 }
+                        )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(200)) +
+                        slideInHorizontally(
+                            animationSpec = tween(250),
+                            initialOffsetX = { -it / 4 }
+                        )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(180)) +
+                        slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { it / 4 }
+                        )
+            }
+        ) {
             SearchFriendsScreen(
                 uiState = uiState,
                 onEvent = { event ->

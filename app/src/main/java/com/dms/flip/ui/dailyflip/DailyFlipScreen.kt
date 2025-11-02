@@ -1,7 +1,13 @@
 package com.dms.flip.ui.dailyflip
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +69,19 @@ fun DailyFlipScreen(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             // Header Message
-            if (uiState.headerMessage.isNotBlank()) {
+            AnimatedVisibility(
+                visible = uiState.headerMessage.isNotBlank(),
+                enter = fadeIn(animationSpec = tween(250)) +
+                        slideInVertically(
+                            animationSpec = tween(250),
+                            initialOffsetY = { fullHeight -> -fullHeight / 6 }
+                        ),
+                exit = fadeOut(animationSpec = tween(200)) +
+                        slideOutVertically(
+                            animationSpec = tween(200),
+                            targetOffsetY = { fullHeight -> -fullHeight / 6 }
+                        )
+            ) {
                 HeaderMessage(message = uiState.headerMessage)
             }
 

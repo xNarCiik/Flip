@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.usecase.weekly.GetWeeklyHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -36,6 +37,7 @@ class HistoryViewModel @Inject constructor(
             is HistoryEvent.OnPreviousWeekClicked -> navigateToPreviousWeek()
             is HistoryEvent.OnNextWeekClicked -> navigateToNextWeek()
             is HistoryEvent.OnDiscoverTodayClicked -> discoverToday()
+            is HistoryEvent.OnScreenResumed -> refreshCurrentWeek()
         }
     }
 
@@ -67,7 +69,16 @@ class HistoryViewModel @Inject constructor(
 
     }
 
-    private fun loadWeeklyHistory(weekOffset: Int) = viewModelScope.launch {
+    private var loadHistoryJob: Job? = null
+
+    private fun refreshCurrentWeek() {
+        val currentOffset = _uiState.value.weekOffset
+        loadWeeklyHistory(currentOffset, showLoading = false)
+    }
+
+    private fun loadWeeklyHistory(weekOffset: Int, showLoading: Boolean = true) {
+        loadHistoryJob?.cancel()
+        loadHistoryJob = viewModelScope.launch {
         val weekBounds = calculateWeekBounds(weekOffset)
         val weekLabels = calculateWeekLabels(weekOffset, weekBounds)
 
@@ -75,7 +86,7 @@ class HistoryViewModel @Inject constructor(
             .onStart {
                 _uiState.update {
                     it.copy(
-                        isLoading = true,
+                        isLoading = showLoading,
                         error = null,
                         weekOffset = weekOffset,
                         weekTitle = weekLabels.title,
@@ -106,6 +117,7 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
             }
+        }
     }
 
     // ========== Date Utils ==========
