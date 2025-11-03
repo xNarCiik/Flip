@@ -1,21 +1,22 @@
 package com.dms.flip.ui.history.component
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.dms.flip.R
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
+import kotlinx.coroutines.delay
 
 @Composable
 fun WeeklyStatsGrid(
@@ -40,7 +42,7 @@ fun WeeklyStatsGrid(
     ) {
         // Carte 1 : Plaisirs de la semaine
         StatCard(
-            value = pleasuresCount.toString(),
+            value = pleasuresCount,
             label = stringResource(R.string.history_pleasures_this_week),
             backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
             textColor = MaterialTheme.colorScheme.primary,
@@ -49,9 +51,9 @@ fun WeeklyStatsGrid(
 
         // Carte 2 : Jours de série (Streak)
         StatCard(
-            value = streakDays.toString(),
+            value = streakDays,
             label = stringResource(R.string.history_streak_days),
-            backgroundColor = Color(0xFFFCD34D).copy(alpha = 0.2f), // Amber from mockup
+            backgroundColor = Color(0xFFFCD34D).copy(alpha = 0.2f),
             textColor = Color(0xFFFCD34D),
             icon = {
                 Icon(
@@ -68,7 +70,7 @@ fun WeeklyStatsGrid(
 
 @Composable
 private fun StatCard(
-    value: String,
+    value: Int,
     label: String,
     backgroundColor: Color,
     textColor: Color,
@@ -91,14 +93,11 @@ private fun StatCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                if (icon != null) {
-                    icon()
-                }
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 32.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = textColor
+                if (icon != null) icon()
+
+                AnimatedCounter(
+                    targetValue = value,
+                    textColor = textColor
                 )
             }
 
@@ -112,6 +111,52 @@ private fun StatCard(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedCounter(
+    targetValue: Int,
+    textColor: Color,
+    durationMillis: Int = 300
+) {
+    var displayedValue by remember { mutableIntStateOf(targetValue) }
+    var previousValue by remember { mutableIntStateOf(targetValue) }
+
+    LaunchedEffect(targetValue) {
+        previousValue = displayedValue
+        val step = if (targetValue > previousValue) 1 else -1
+        val diff = kotlin.math.abs(targetValue - previousValue)
+        if (diff == 0) return@LaunchedEffect
+
+        val stepDuration = durationMillis / diff
+        for (i in 1..diff) {
+            delay(stepDuration.toLong())
+            displayedValue += step
+        }
+    }
+
+    AnimatedContent(
+        targetState = displayedValue,
+        transitionSpec = {
+            slideInVertically(
+                initialOffsetY = { it / 3 },
+                animationSpec = tween(200, easing = LinearOutSlowInEasing)
+            ) + fadeIn(animationSpec = tween(200)) with
+                    slideOutVertically(
+                        targetOffsetY = { -it / 3 },
+                        animationSpec = tween(200, easing = LinearOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(200))
+        },
+        label = "animatedCounter"
+    ) { value ->
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.displaySmall.copy(fontSize = 32.sp),
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
     }
 }
 

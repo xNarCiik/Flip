@@ -1,15 +1,13 @@
 package com.dms.flip.ui.history
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +40,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dms.flip.R
-import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.history.component.WeekNavigationHeader
 import com.dms.flip.ui.history.component.WeeklyPleasuresList
@@ -127,19 +124,10 @@ private fun HistoryContent(
         val history = weeklyDays.mapNotNull { it.historyEntry }
         val completedCount = history.count { it.completed }
 
-        AnimatedContent(
-            targetState = Pair(completedCount, streakDays),
-            transitionSpec = {
-                fadeIn(animationSpec = tween(250)) togetherWith
-                        fadeOut(animationSpec = tween(200))
-            },
-            label = "HistoryStatsTransition"
-        ) { (count, streak) ->
-            WeeklyStatsGrid(
-                pleasuresCount = count,
-                streakDays = streak
-            )
-        }
+        WeeklyStatsGrid(
+            pleasuresCount = completedCount,
+            streakDays = streakDays
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
