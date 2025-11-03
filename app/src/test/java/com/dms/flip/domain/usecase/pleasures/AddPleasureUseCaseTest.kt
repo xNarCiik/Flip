@@ -27,7 +27,7 @@ class AddPleasureUseCaseTest {
         // Given
         val title = "Yoga"
         val description = "Relaxing morning routine"
-        val category = PleasureCategory.BODY
+        val category = PleasureCategory.OUTDOOR
         val pleasureCaptor = argumentCaptor<Pleasure>()
 
         // When

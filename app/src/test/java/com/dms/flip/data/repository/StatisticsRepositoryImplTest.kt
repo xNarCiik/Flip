@@ -3,8 +3,8 @@ package com.dms.flip.data.repository
 import com.dms.flip.ui.settings.statistics.CategoryStat
 import com.dms.flip.ui.settings.statistics.DetailedStats
 import com.dms.flip.ui.settings.statistics.MonthlyProgress
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy

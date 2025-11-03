@@ -27,7 +27,7 @@ class GetRandomPleasureUseCaseTest {
     @Test
     fun `invoke returns random pleasure from repository`() = runTest {
         // Given
-        val category = PleasureCategory.BODY
+        val category = PleasureCategory.FOOD
         val pleasure = Pleasure(id = "42")
         whenever(pleasureRepository.getRandomPleasure(category)).thenReturn(flowOf(pleasure))
 
