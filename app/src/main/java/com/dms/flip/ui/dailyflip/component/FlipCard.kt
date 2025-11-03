@@ -1,13 +1,6 @@
 package com.dms.flip.ui.dailyflip.component
 
-import android.R.attr.rotation
-import android.content.Context
-import android.media.MediaPlayer
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -44,8 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,11 +47,9 @@ import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.theme.flipGradients
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewDailyPleasure
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
+@Composable 
 fun PleasureCard(
     modifier: Modifier = Modifier,
     pleasure: Pleasure?,
@@ -69,9 +58,6 @@ fun PleasureCard(
     onCardFlipped: () -> Unit,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val isPreview = LocalInspectionMode.current
-
     var isFlipped by remember { mutableStateOf(flipped) }
     var shouldAnimate by remember { mutableStateOf(false) }
 
@@ -93,13 +79,12 @@ fun PleasureCard(
 
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = if (shouldAnimate) tween(durationRotation, easing = LinearOutSlowInEasing)
+        animationSpec = if (shouldAnimate) tween(durationRotation, easing = FastOutLinearInEasing)
         else tween(0),
         label = "rotationAnim",
         finishedListener = { value ->
             if (value == 180f && !flipped) {
                 onCardFlipped()
-                if (!isPreview) playFlipFeedback(context)
             }
         }
     )
@@ -127,29 +112,6 @@ fun PleasureCard(
             }
         }
     }
-}
-
-private fun playFlipFeedback(context: Context) {
-    try {
-        val mp = MediaPlayer.create(context, R.raw.done)
-        mp?.apply {
-            setOnCompletionListener { release() }
-            start()
-        }
-
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        }
-
-        vibrator?.vibrate(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-            else @Suppress("DEPRECATION") VibrationEffect.createOneShot(500, 1)
-        )
-    } catch (_: Exception) { }
 }
 
 @Composable

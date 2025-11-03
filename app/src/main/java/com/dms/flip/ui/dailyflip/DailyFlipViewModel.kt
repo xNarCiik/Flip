@@ -11,7 +11,9 @@ import com.dms.flip.domain.usecase.history.GetTodayHistoryEntryUseCase
 import com.dms.flip.domain.usecase.history.SaveHistoryEntryUseCase
 import com.dms.flip.domain.usecase.pleasures.GetPleasuresUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
+import com.dms.flip.ui.util.FlipFeedbackPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +36,8 @@ class DailyFlipViewModel @Inject constructor(
     private val getRandomPleasureUseCase: GetRandomPleasureUseCase,
     private val saveHistoryEntryUseCase: SaveHistoryEntryUseCase,
     private val getTodayHistoryEntryUseCase: GetTodayHistoryEntryUseCase,
-    private val getUserInfoUseCase: GetUserInfoUseCase
+    private val getUserInfoUseCase: GetUserInfoUseCase,
+    private val flipFeedbackPlayer: FlipFeedbackPlayer
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyFlipUiState())
@@ -73,7 +76,7 @@ class DailyFlipViewModel @Inject constructor(
                     else -> DailyFlipUiState(
                         screenState = DailyFlipScreenState.Ready(
                             availableCategories = PleasureCategory.entries,
-                            dailyPleasure = todayHistory?.toPleasureOrNull(), // TODO LET HISTORY ?
+                            dailyPleasure = todayHistory?.toPleasureOrNull(),
                             isCardFlipped = todayHistory != null
                         ),
                         headerMessage = if (todayHistory == null)
@@ -139,6 +142,7 @@ class DailyFlipViewModel @Inject constructor(
         if (current is DailyFlipScreenState.Ready) {
             current.dailyPleasure?.let {
                 saveHistoryEntryUseCase(it)
+                flipFeedbackPlayer.playFlipFeedback()
             }
         }
     }
@@ -157,5 +161,10 @@ class DailyFlipViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        flipFeedbackPlayer.release()
     }
 }

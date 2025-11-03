@@ -8,6 +8,7 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,7 +46,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -83,27 +84,27 @@ fun DailyFlipContent(
 ) {
     val scope = rememberCoroutineScope()
 
-    var showConfettiAnimation by rememberSaveable { mutableStateOf(false) }
+    var showConfettiAnimation by remember { mutableStateOf(false) }
     var showCategoryDialog by rememberSaveable { mutableStateOf(false) }
 
     // --- Lottie confetti
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
-    val confettiIsPlaying by rememberUpdatedState(showConfettiAnimation)
     val confettiProgress by animateLottieCompositionAsState(
         composition = confettiComposition,
-        isPlaying = confettiIsPlaying,
+        isPlaying = showConfettiAnimation,
         restartOnPlay = false
     )
 
     LaunchedEffect(confettiProgress) {
         if (showConfettiAnimation && confettiProgress >= 1f) {
-            delay(250)
             showConfettiAnimation = false
         }
     }
 
     // --- Hint animation
-    val (hintOffsetX, hintRotation) = swipeHintAnimation()
+    val (hintOffsetX, hintRotation) =
+        if (uiState.isCardFlipped) swipeHintAnimation()
+        else Pair(0.0f, 0.0f)
 
     // --- Swipe physics
     val animatedOffsetX = remember { Animatable(0f) }
@@ -210,17 +211,17 @@ fun DailyFlipContent(
                     modifier = Modifier
                         .padding(horizontal = 42.dp)
                         .offset(
-                            x = (animatedOffsetX.value + if (uiState.isCardFlipped) hintOffsetX else 0f).dp
+                            x = (animatedOffsetX.value + hintOffsetX).dp
                         )
                         .graphicsLayer {
                             rotationZ =
-                                animatedRotationZ.value + if (uiState.isCardFlipped) hintRotation else 0f
+                                animatedRotationZ.value + hintRotation
                             alpha = 1f - (abs(animatedOffsetX.value) / 900f).coerceIn(0f, 1f)
                         }
                         .semantics { contentDescription = cardContentDescription },
                     pleasure = uiState.dailyPleasure,
                     flipped = uiState.isCardFlipped,
-                    durationRotation = 1300,
+                    durationRotation = 1200,
                     onCardFlipped = {
                         showConfettiAnimation = true
                         onEvent(DailyFlipEvent.OnCardFlipped)
@@ -265,13 +266,15 @@ fun DailyFlipContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        if (showConfettiAnimation) {
-            LottieAnimation(
-                modifier = Modifier.fillMaxWidth(),
-                composition = confettiComposition,
-                progress = { confettiProgress }
-            )
-        }
+        LottieAnimation(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = if (showConfettiAnimation) 1f else 0f
+                },
+            composition = confettiComposition,
+            progress = { confettiProgress }
+        )
     }
 }
 
@@ -280,8 +283,7 @@ fun DailyFlipContent(
  */
 @Composable
 fun swipeHintAnimation(): Pair<Float, Float> {
-    val infinite =
-        androidx.compose.animation.core.rememberInfiniteTransition(label = "swipeHint")
+    val infinite = rememberInfiniteTransition(label = "swipeHint")
     val hintOffsetX by infinite.animateFloat(
         initialValue = 0f,
         targetValue = 18f,
