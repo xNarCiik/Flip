@@ -1,12 +1,17 @@
 package com.dms.flip.ui.dailyflip
 
+import android.R.attr.label
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +43,7 @@ import com.dms.flip.ui.dailyflip.component.DailyFlipSetupContent
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewDailyPleasure
+import com.google.android.play.integrity.internal.u
 
 @Composable
 fun DailyFlipScreen(
@@ -69,80 +75,83 @@ fun DailyFlipScreen(
             )
         )
 
-        if (screenState is DailyFlipScreenState.Loading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
+        when (screenState) {
+            is DailyFlipScreenState.Error -> {
+                ErrorState(message = uiState.screenState.message) {
+                    onEvent(DailyFlipEvent.Reload)
+                }
+            }
+
+            is DailyFlipScreenState.Loading -> {
                 LoadingState(modifier = Modifier.fillMaxSize())
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(vertical = 24.dp)
-            ) {
-                // Header Message
-                AnimatedVisibility(
-                    visible = uiState.headerMessage.isNotBlank(),
-                    enter = fadeIn(animationSpec = tween(250)) +
-                            slideInVertically(
-                                animationSpec = tween(250),
-                                initialOffsetY = { -it / 6 }),
-                    exit = fadeOut(animationSpec = tween(200)) +
-                            slideOutVertically(
-                                animationSpec = tween(200),
-                                targetOffsetY = { -it / 6 }),
-                    modifier = Modifier.zIndex(0f)
-                ) {
-                    HeaderMessage(message = uiState.headerMessage)
+
+            is DailyFlipScreenState.Completed -> {
+                DailyFlipCompletedContent(modifier = Modifier.fillMaxSize())
+            }
+
+            else -> {
+                ContentWithHeader(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    navigateToManagePleasures = navigateToManagePleasures
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContentWithHeader(
+    modifier: Modifier = Modifier, uiState: DailyFlipUiState,
+    onEvent: (DailyFlipEvent) -> Unit = {},
+    navigateToManagePleasures: () -> Unit = {}
+) {
+    Column(modifier = modifier.padding(vertical = 24.dp)) {
+        // Header Message
+        AnimatedContent(
+            modifier = Modifier.zIndex(0f),
+            targetState = uiState.headerMessage,
+            transitionSpec = {
+                (fadeIn(
+                    tween(
+                        500,
+                        delayMillis = 100
+                    )
+                ) + scaleIn(initialScale = 0.95f)) togetherWith
+                        (fadeOut(tween(500)) + scaleOut(targetScale = 1.05f))
+            },
+            label = "HeaderMessageContent"
+        ) { animatedText ->
+            HeaderMessage(message = animatedText)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .zIndex(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            when (uiState.screenState) {
+                is DailyFlipScreenState.SetupRequired -> {
+                    DailyFlipSetupContent(
+                        currentPleasureCount = uiState.screenState.pleasureCount,
+                        requiredCount = MinimumPleasuresCount,
+                        onConfigureClick = navigateToManagePleasures
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .zIndex(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (screenState) {
-                        is DailyFlipScreenState.Error -> {
-                            ErrorState(message = screenState.message) {
-                                onEvent(DailyFlipEvent.Reload)
-                            }
-                        }
-
-                        is DailyFlipScreenState.SetupRequired -> {
-                            DailyFlipSetupContent(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                currentPleasureCount = screenState.pleasureCount,
-                                requiredCount = MinimumPleasuresCount,
-                                onConfigureClick = navigateToManagePleasures
-                            )
-                        }
-
-                        is DailyFlipScreenState.Ready -> {
-                            DailyFlipContent(
-                                modifier = Modifier.fillMaxSize(),
-                                uiState = screenState,
-                                onEvent = onEvent
-                            )
-                        }
-
-                        is DailyFlipScreenState.Completed -> {
-                            DailyFlipCompletedContent(
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                        }
-
-                        else -> Unit
-                    }
+                is DailyFlipScreenState.Ready -> {
+                    DailyFlipContent(
+                        uiState = uiState.screenState,
+                        onEvent = onEvent
+                    )
                 }
+
+                else -> Unit
             }
         }
     }
@@ -162,16 +171,29 @@ private fun HeaderMessage(
     ) {
         Text(
             text = message,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            lineHeight = MaterialTheme.typography.headlineMedium.lineHeight * 1.2
+            textAlign = TextAlign.Center
         )
     }
 }
 
 // ========== PREVIEWS ==========
+@LightDarkPreview
+@Composable
+fun DailyFlipErrorScreenPreview() {
+    FlipTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            DailyFlipScreen(
+                uiState = DailyFlipUiState(
+                    screenState = DailyFlipScreenState.Error(message = stringResource(R.string.generic_error_message))
+                )
+            )
+        }
+    }
+}
+
 @LightDarkPreview
 @Composable
 fun DailyFlipSetupScreenPreview() {
@@ -233,7 +255,6 @@ fun DailyFlipCompletedScreenPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             DailyFlipScreen(
                 uiState = DailyFlipUiState(
-                    headerMessage = "Félicitations pour cette belle journée ! 🎉",
                     screenState = DailyFlipScreenState.Completed
                 )
             )

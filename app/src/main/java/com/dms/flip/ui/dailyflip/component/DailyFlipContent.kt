@@ -1,12 +1,5 @@
 package com.dms.flip.ui.dailyflip.component
 
-import android.content.Context
-import android.media.AudioAttributes
-import android.media.SoundPool
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOut
@@ -47,7 +40,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,10 +55,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -89,38 +81,10 @@ fun DailyFlipContent(
     uiState: DailyFlipScreenState.Ready,
     onEvent: (DailyFlipEvent) -> Unit
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var showConfettiAnimation by rememberSaveable { mutableStateOf(false) }
     var showCategoryDialog by rememberSaveable { mutableStateOf(false) }
-
-    // --- Vibrator
-    val vibrator = remember(context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val manager =
-                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            manager.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-    }
-
-    // --- SoundPool
-    val (soundPool, soundId) = remember(context) {
-        val attrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-        val sp = SoundPool.Builder().setMaxStreams(1).setAudioAttributes(attrs).build()
-        val id = sp.load(context, R.raw.done, 1)
-        sp to id
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { soundPool.release() }
-    }
 
     // --- Lottie confetti
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
@@ -130,24 +94,6 @@ fun DailyFlipContent(
         isPlaying = confettiIsPlaying,
         restartOnPlay = false
     )
-
-    LaunchedEffect(confettiIsPlaying) {
-        if (confettiIsPlaying) {
-            soundPool.setVolume(soundId, 0.25f, 0.25f)
-            soundPool.play(soundId, 0.25f, 0.25f, 1, 0, 1f)
-
-            if (vibrator.hasVibrator()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(
-                        VibrationEffect.createOneShot(220L, VibrationEffect.DEFAULT_AMPLITUDE)
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    vibrator.vibrate(220L)
-                }
-            }
-        }
-    }
 
     LaunchedEffect(confettiProgress) {
         if (showConfettiAnimation && confettiProgress >= 1f) {
@@ -210,10 +156,9 @@ fun DailyFlipContent(
                             scope.launch {
                                 val threshold = 180f
                                 val offset = animatedOffsetX.value
-                                val v = velocity
 
                                 val shouldComplete =
-                                    offset > threshold || (v > 2500f && offset > 0f)
+                                    offset > threshold || (velocity > 2500f && offset > 0f)
 
                                 if (shouldComplete) {
                                     val target = 1200f
