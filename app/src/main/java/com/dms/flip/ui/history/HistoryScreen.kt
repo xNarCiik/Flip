@@ -2,8 +2,10 @@ package com.dms.flip.ui.history
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -24,9 +26,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -157,25 +162,39 @@ private fun HistoryContent(
                     textAlign = TextAlign.Center
                 )
             } else {
-                AnimatedContent(
-                    targetState = weeklyDays,
-                    transitionSpec = {
-                        (slideInVertically(
+                var shouldAnimateList by rememberSaveable { mutableStateOf(true) }
+
+                if (shouldAnimateList) {
+                    val visibleState = remember { MutableTransitionState(false) }
+                    LaunchedEffect(Unit) {
+                        visibleState.targetState = true
+                    }
+                    this@Column.AnimatedVisibility(
+                        visibleState = visibleState,
+                        enter = slideInVertically(
                             animationSpec = tween(350),
                             initialOffsetY = { fullHeight -> fullHeight / 8 }
-                        ) + fadeIn(animationSpec = tween(350))) togetherWith
-                                (slideOutVertically(
-                                    animationSpec = tween(250),
-                                    targetOffsetY = { fullHeight -> -fullHeight / 8 }
-                                ) + fadeOut(animationSpec = tween(200)))
-                    },
-                    label = "HistoryListTransition"
-                ) { days ->
+                        ) + fadeIn(animationSpec = tween(350)),
+                        exit = ExitTransition.None
+                    ) {
+                        WeeklyPleasuresList(
+                            items = weeklyDays,
+                            onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                            onDiscoverTodayClicked = navigateToDailyFlip
+                        )
+                    }
+                } else {
                     WeeklyPleasuresList(
-                        items = days,
+                        items = weeklyDays,
                         onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
                         onDiscoverTodayClicked = navigateToDailyFlip
                     )
+                }
+
+                LaunchedEffect(isLoading) {
+                    if (shouldAnimateList && !isLoading) {
+                        shouldAnimateList = false
+                    }
                 }
 
                 this@Column.AnimatedVisibility(

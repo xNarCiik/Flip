@@ -1,5 +1,6 @@
 package com.dms.flip.data.repository
 
+import android.system.Os.close
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.data.model.PleasureDto
 import com.dms.flip.data.model.PleasureHistoryDto
@@ -96,19 +97,23 @@ class PleasureRepositoryImpl @Inject constructor(
             .document(pleasureHistory.id).set(pleasureHistory.toDto(), SetOptions.merge()).await()
     }
 
-    override suspend fun getPleasureHistory(id: String): PleasureHistory? {
-        val snapshot = firestore.collection("users")
-            .document(userId)
+    override fun getPleasureHistory(id: String): Flow<PleasureHistory?> = callbackFlow {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            trySend(null); close(); return@callbackFlow
+        }
+
+        val reg = firestore.collection("users")
+            .document(uid)
             .collection("history")
-            .whereEqualTo("id", id)
-            .limit(1)
-            .get()
-            .await()
+            .document(id)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    close(err); return@addSnapshotListener
+                }
+                trySend(snap?.toObject(PleasureHistoryDto::class.java)?.toDomain())
+            }
 
-        val doc = snapshot.documents.firstOrNull() ?: return null
-
-        val dto = doc.toObject(PleasureHistoryDto::class.java) ?: return null
-
-        return dto.toDomain()
+        awaitClose { reg.remove() }
     }
 }

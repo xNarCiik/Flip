@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dms.flip.domain.model.RootNavigationState
@@ -60,10 +61,10 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         setContent {
-            val rootNavigationState by mainViewModel.rootNavigationState.collectAsState()
+            val rootNavigationState by mainViewModel.rootNavigationState.collectAsStateWithLifecycle()
 
             val settingsViewModel: SettingsViewModel = hiltViewModel()
-            val settingsUiState by settingsViewModel.uiState.collectAsState()
+            val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
             val useDarkTheme = when (settingsUiState.theme) {
                 Theme.LIGHT -> false
                 Theme.DARK -> true

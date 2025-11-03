@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +48,7 @@ import com.dms.flip.ui.navigation.WeeklyRoute
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 
+@Immutable
 data class TabBarItem(
     val title: String,
     val icon: ImageVector,
