@@ -67,7 +67,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -192,7 +191,7 @@ fun DailyFlipContent(
         stringResource(R.string.daily_flip_card_front_description)
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -322,16 +321,11 @@ fun DailyFlipContent(
         }
 
         if (showConfettiAnimation) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                LottieAnimation(
-                    modifier = Modifier.fillMaxWidth(),
-                    composition = confettiComposition,
-                    progress = { confettiProgress }
-                )
-            }
+            LottieAnimation(
+                modifier = Modifier.fillMaxWidth(),
+                composition = confettiComposition,
+                progress = { confettiProgress }
+            )
         }
     }
 }
@@ -392,7 +386,8 @@ private fun CategorySelector(
     TextButton(
         onClick = onClick,
         modifier = modifier.semantics {
-            contentDescription = context.getString(R.string.daily_flip_category_selector_content_description)
+            contentDescription =
+                context.getString(R.string.daily_flip_category_selector_content_description)
         },
         shape = RoundedCornerShape(50.dp),
         colors = ButtonDefaults.textButtonColors(
@@ -450,7 +445,8 @@ private fun ShareButton(
                 pressedElevation = 2.dp
             ),
             modifier = Modifier.semantics {
-                contentDescription = context.getString(R.string.daily_flip_share_button_content_description)
+                contentDescription =
+                    context.getString(R.string.daily_flip_share_button_content_description)
             }
         ) {
             Row(

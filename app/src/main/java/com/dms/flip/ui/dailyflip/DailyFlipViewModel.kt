@@ -122,29 +122,23 @@ class DailyFlipViewModel @Inject constructor(
         if (current is DailyFlipScreenState.Ready && current.dailyPleasure == null) {
             try {
                 val randomPleasure = getRandomPleasureUseCase(current.selectedCategory).first()
-                saveHistoryEntryUseCase(randomPleasure)
                 _uiState.update {
                     it.copy(screenState = current.copy(dailyPleasure = randomPleasure))
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _uiState.value = DailyFlipUiState(
-                    screenState = DailyFlipScreenState.Error(
-                        "Impossible de tirer une carte : ${e.message}"
-                    ),
+                    screenState = DailyFlipScreenState.Error(resources.getString(R.string.generic_error_message)),
                     userInfo = _uiState.value.userInfo
                 )
             }
         }
     }
 
-    private fun handleCardFlipped() {
+    private fun handleCardFlipped() = viewModelScope.launch {
         val current = _uiState.value.screenState
         if (current is DailyFlipScreenState.Ready) {
-            _uiState.update {
-                it.copy(
-                    screenState = current.copy(isCardFlipped = true),
-                    headerMessage = resources.getString(R.string.your_flip_daily)
-                )
+            current.dailyPleasure?.let {
+                saveHistoryEntryUseCase(it)
             }
         }
     }
@@ -155,17 +149,10 @@ class DailyFlipViewModel @Inject constructor(
             try {
                 current.dailyPleasure?.let { pleasure ->
                     saveHistoryEntryUseCase(pleasure, markAsCompleted = true)
-                    _uiState.value = DailyFlipUiState(
-                        screenState = DailyFlipScreenState.Completed,
-                        headerMessage = "",
-                        userInfo = _uiState.value.userInfo
-                    )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _uiState.value = DailyFlipUiState(
-                    screenState = DailyFlipScreenState.Error(
-                        "Erreur lors de la validation du plaisir : ${e.message}"
-                    ),
+                    screenState = DailyFlipScreenState.Error(resources.getString(R.string.generic_error_message)),
                     userInfo = _uiState.value.userInfo
                 )
             }
