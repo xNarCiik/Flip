@@ -13,11 +13,14 @@ class SaveHistoryEntryUseCase @Inject constructor(
         val dayIdentifier = getTodayDayIdentifier()
         val existingEntry = pleasureRepository.getPleasureHistory(dayIdentifier).firstOrNull()
 
-        val entryToUpsert = existingEntry?.copy(
-            completedAt = if (markAsCompleted) System.currentTimeMillis() else null,
-            completed = markAsCompleted
-        ) ?: pleasure.toPleasureHistory(id = dayIdentifier)
-
-        pleasureRepository.upsertPleasureHistory(entryToUpsert)
+        if (existingEntry == null) {
+            val entry = pleasure.toPleasureHistory(id = dayIdentifier)
+            pleasureRepository.createPleasureHistoryEntry(entry)
+            if (markAsCompleted) {
+                pleasureRepository.markPleasureHistoryCompleted(dayIdentifier)
+            }
+        } else if (markAsCompleted && !existingEntry.completed) {
+            pleasureRepository.markPleasureHistoryCompleted(existingEntry.id)
+        }
     }
 }

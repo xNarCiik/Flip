@@ -1,14 +1,16 @@
 package com.dms.flip.data.repository
 
-import com.dms.flip.data.model.PleasureHistoryDto
+import com.dms.flip.data.firebase.mapper.toPleasureHistoryDto
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.repository.HistoryRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import java.util.Date
 import javax.inject.Inject
 
 class HistoryRepositoryImpl @Inject constructor(
@@ -30,9 +32,12 @@ class HistoryRepositoryImpl @Inject constructor(
                 .document(uid)
                 .collection("history")
 
+            val startTimestamp = Timestamp(Date(startDate))
+            val endTimestamp = Timestamp(Date(endDate))
+
             val query = ref
-                .whereGreaterThanOrEqualTo("dateDrawn", startDate)
-                .whereLessThan("dateDrawn", endDate)
+                .whereGreaterThanOrEqualTo("dateDrawn", startTimestamp)
+                .whereLessThan("dateDrawn", endTimestamp)
                 .orderBy("dateDrawn")
 
             val registration = query.addSnapshotListener { snap, err ->
@@ -41,10 +46,11 @@ class HistoryRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
 
-                val list = snap?.documents?.mapNotNull { doc ->
-                    val dto = doc.toObject(PleasureHistoryDto::class.java)
-                    dto?.toDomain() ?: return@mapNotNull null
-                }.orEmpty().sortedBy { it.dateDrawn }
+                val list = snap?.documents
+                    ?.mapNotNull { doc -> doc.toPleasureHistoryDto()?.toDomain() }
+                    ?.filter { it.dateDrawn != 0L }
+                    ?.sortedBy { it.dateDrawn }
+                    .orEmpty()
 
                 trySend(list).isSuccess
             }

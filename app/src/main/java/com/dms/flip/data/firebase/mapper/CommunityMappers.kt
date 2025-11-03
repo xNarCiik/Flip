@@ -30,7 +30,7 @@ fun PostDto.toDomain(
     id = id,
     friend = author,
     content = content,
-    timestamp = timestamp,
+    timestamp = timestamp?.time ?: 0L,
     likesCount = likes_count,
     commentsCount = comments_count,
     isLiked = isLiked,
@@ -46,7 +46,7 @@ fun CommentDto.toDomain(id: String): PostComment = PostComment(
     userHandle = userHandle,
     avatarUrl = avatarUrl,
     content = content,
-    timestamp = timestamp
+    timestamp = timestamp?.time ?: 0L
 )
 
 fun FriendDto.toDomain(id: String): Friend = Friend(
@@ -62,7 +62,7 @@ fun RequestDto.toPendingReceived(id: String): FriendRequest = FriendRequest(
     username = username,
     handle = handle,
     avatarUrl = avatarUrl,
-    requestedAt = requestedAt,
+    requestedAt = requestedAt?.time ?: 0L,
     source = FriendRequestSource.SEARCH
 )
 
@@ -72,7 +72,7 @@ fun RequestDto.toPendingSent(id: String): FriendRequest = FriendRequest(
     username = username,
     handle = handle,
     avatarUrl = avatarUrl,
-    requestedAt = requestedAt,
+    requestedAt = requestedAt?.time ?: 0L,
     source = FriendRequestSource.SEARCH
 )
 
@@ -107,7 +107,7 @@ fun RecentActivityDto.toDomain(id: String): RecentActivity? {
         id = id,
         pleasureTitle = pleasureTitle,
         category = categoryEnum,
-        completedAt = completedAt,
+        completedAt = completedAt?.time ?: 0L,
         isCompleted = isCompleted
     )
 }

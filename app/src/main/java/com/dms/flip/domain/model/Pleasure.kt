@@ -11,7 +11,6 @@ data class Pleasure(
 ) {
     fun toPleasureHistory(id: String) = PleasureHistory(
         id = id,
-        dateDrawn = System.currentTimeMillis(),
         pleasureTitle = title,
         pleasureDescription = description,
         pleasureCategory = category

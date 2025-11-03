@@ -12,6 +12,7 @@ interface PleasureRepository {
     suspend fun insert(pleasure: Pleasure)
     suspend fun update(pleasure: Pleasure)
     suspend fun delete(pleasuresId: List<String>)
-    suspend fun upsertPleasureHistory(pleasureHistory: PleasureHistory)
+    suspend fun createPleasureHistoryEntry(entry: PleasureHistory)
+    suspend fun markPleasureHistoryCompleted(id: String)
     fun getPleasureHistory(id: String): Flow<PleasureHistory?>
 }

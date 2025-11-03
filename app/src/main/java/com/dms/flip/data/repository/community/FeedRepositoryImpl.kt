@@ -78,8 +78,7 @@ class FeedRepositoryImpl @Inject constructor(
             username = profile?.username ?: "",
             userHandle = profile?.handle ?: "",
             avatarUrl = profile?.avatarUrl,
-            content = content,
-            timestamp = System.currentTimeMillis()
+            content = content
         )
         val (id, dto) = feedSource.addComment(postId, comment)
         return dto.toDomain(id)

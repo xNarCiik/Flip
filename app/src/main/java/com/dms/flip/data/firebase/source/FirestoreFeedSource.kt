@@ -1,12 +1,14 @@
 package com.dms.flip.data.firebase.source
 
 import com.dms.flip.data.firebase.dto.CommentDto
-import com.dms.flip.data.firebase.dto.PostDto
+import com.dms.flip.data.firebase.mapper.toCommentDto
+import com.dms.flip.data.firebase.mapper.toPostDto
 import com.dms.flip.domain.model.community.Paged
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -53,7 +55,7 @@ class FirestoreFeedSource @Inject constructor(
                 }
                 if (snapshot == null) return@addSnapshotListener
                 val documents = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(PostDto::class.java)?.let { dto ->
+                    doc.toPostDto()?.let { dto ->
                         FeedSource.PostDocument(id = doc.id, data = dto)
                     }
                 }
@@ -88,11 +90,12 @@ class FirestoreFeedSource @Inject constructor(
             .document(postId)
             .collection("comments")
         val document = commentsCollection.document()
-        document.set(comment).await()
+        document.set(comment, SetOptions.merge()).await()
+        val saved = document.get().await().toCommentDto() ?: comment
         firestore.collection("posts").document(postId)
             .update("comments_count", FieldValue.increment(1))
             .await()
-        return document.id to comment
+        return document.id to saved
     }
 
     override suspend fun getComments(postId: String, limit: Int): List<Pair<String, CommentDto>> {
@@ -104,7 +107,7 @@ class FirestoreFeedSource @Inject constructor(
             .get()
             .await()
         return snapshot.documents.mapNotNull { doc ->
-            doc.toObject(CommentDto::class.java)?.let { doc.id to it }
+            doc.toCommentDto()?.let { dto -> doc.id to dto }
         }
     }
 

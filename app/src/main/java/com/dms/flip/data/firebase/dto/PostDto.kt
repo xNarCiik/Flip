@@ -1,9 +1,12 @@
 package com.dms.flip.data.firebase.dto
 
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 data class PostDto(
     val authorId: String = "",
     val content: String = "",
-    val timestamp: Long = 0L,
+    @ServerTimestamp var timestamp: Date? = null,
     val pleasureCategory: String? = null,
     val pleasureTitle: String? = null,
     val likes_count: Int = 0,

@@ -1,8 +1,11 @@
 package com.dms.flip.data.firebase.source
 
 import com.dms.flip.data.firebase.dto.RequestDto
+import com.dms.flip.data.firebase.mapper.toRequestDto
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -29,7 +32,7 @@ class FirestoreRequestsSource @Inject constructor(
                 }
                 if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(RequestDto::class.java)?.let { dto -> doc.id to dto }
+                    doc.toRequestDto()?.let { dto -> doc.id to dto }
                 }
                 trySend(items)
             }
@@ -53,7 +56,7 @@ class FirestoreRequestsSource @Inject constructor(
                 }
                 if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(RequestDto::class.java)?.let { dto -> doc.id to dto }
+                    doc.toRequestDto()?.let { dto -> doc.id to dto }
                 }
                 trySend(items)
             }
@@ -71,16 +74,16 @@ class FirestoreRequestsSource @Inject constructor(
             .document(requestId)
         val snapshot = requestRef.get().await()
         if (!snapshot.exists()) return
-        val dto = snapshot.toObject(RequestDto::class.java) ?: return
+        val dto = snapshot.toRequestDto() ?: return
         val otherUserId = dto.userId
-        val timestamp = System.currentTimeMillis()
+        val timestampField = FieldValue.serverTimestamp()
         val batch = firestore.batch()
         val currentUserFriendsRef = firestore.collection("users").document(uid)
             .collection("friends").document(otherUserId)
         val otherUserFriendsRef = firestore.collection("users").document(otherUserId)
             .collection("friends").document(uid)
-        batch.set(currentUserFriendsRef, mapOf("since" to timestamp))
-        batch.set(otherUserFriendsRef, mapOf("since" to timestamp))
+        batch.set(currentUserFriendsRef, mapOf("since" to timestampField), SetOptions.merge())
+        batch.set(otherUserFriendsRef, mapOf("since" to timestampField), SetOptions.merge())
         batch.delete(requestRef)
         val otherUserRequestRef = firestore.collection("users")
             .document(uid)
@@ -149,29 +152,28 @@ class FirestoreRequestsSource @Inject constructor(
             userId = uid,
             username = senderProfile.getString("username") ?: "",
             handle = senderProfile.getString("handle") ?: "",
-            avatarUrl = senderProfile.getString("avatar_url"),
-            requestedAt = System.currentTimeMillis()
+            avatarUrl = senderProfile.getString("avatar_url")
         )
         val receiverDto = RequestDto(
             userId = toUserId,
             username = targetProfile.getString("username") ?: "",
             handle = targetProfile.getString("handle") ?: "",
-            avatarUrl = targetProfile.getString("avatar_url"),
-            requestedAt = System.currentTimeMillis()
+            avatarUrl = targetProfile.getString("avatar_url")
         )
         val currentUserSent = firestore.collection("users")
             .document(uid)
             .collection("friend_requests_sent")
         val document = currentUserSent.document()
         val batch = firestore.batch()
-        batch.set(document, receiverDto)
+        batch.set(document, receiverDto, SetOptions.merge())
         val receiverCollection = firestore.collection("users")
             .document(toUserId)
             .collection("friend_requests_received")
             .document(document.id)
-        batch.set(receiverCollection, senderDto)
+        batch.set(receiverCollection, senderDto, SetOptions.merge())
         batch.commit().await()
-        return document.id to receiverDto
+        val saved = document.get().await().toRequestDto() ?: receiverDto
+        return document.id to saved
     }
 
     override suspend fun getPendingReceivedIds(uid: String): Set<String> {

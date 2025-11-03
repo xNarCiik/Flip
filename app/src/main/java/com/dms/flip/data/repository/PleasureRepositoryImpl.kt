@@ -1,14 +1,15 @@
 package com.dms.flip.data.repository
 
-import android.system.Os.close
+import com.dms.flip.data.firebase.mapper.toPleasureHistoryDto
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.data.model.PleasureDto
-import com.dms.flip.data.model.PleasureHistoryDto
 import com.dms.flip.data.model.toDto
+import com.dms.flip.data.model.toFirestoreCreateData
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.repository.PleasureRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
@@ -92,9 +93,27 @@ class PleasureRepositoryImpl @Inject constructor(
         batch.commit().await()
     }
 
-    override suspend fun upsertPleasureHistory(pleasureHistory: PleasureHistory) {
-        firestore.collection("users").document(userId).collection("history")
-            .document(pleasureHistory.id).set(pleasureHistory.toDto(), SetOptions.merge()).await()
+    override suspend fun createPleasureHistoryEntry(entry: PleasureHistory) {
+        val document = firestore.collection("users")
+            .document(userId)
+            .collection("history")
+            .document(entry.id)
+
+        document.set(entry.toFirestoreCreateData(), SetOptions.merge()).await()
+    }
+
+    override suspend fun markPleasureHistoryCompleted(id: String) {
+        val document = firestore.collection("users")
+            .document(userId)
+            .collection("history")
+            .document(id)
+
+        document.update(
+            mapOf(
+                "completed" to true,
+                "completedAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
     }
 
     override fun getPleasureHistory(id: String): Flow<PleasureHistory?> = callbackFlow {
@@ -111,7 +130,7 @@ class PleasureRepositoryImpl @Inject constructor(
                 if (err != null) {
                     close(err); return@addSnapshotListener
                 }
-                trySend(snap?.toObject(PleasureHistoryDto::class.java)?.toDomain())
+                trySend(snap?.toPleasureHistoryDto()?.toDomain())
             }
 
         awaitClose { reg.remove() }

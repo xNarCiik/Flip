@@ -2,9 +2,11 @@ package com.dms.flip.data.firebase.source
 
 import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RecentActivityDto
+import com.dms.flip.data.firebase.mapper.toRecentActivityDto
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,7 +36,7 @@ class FirestoreProfileSource @Inject constructor(
             .get()
             .await()
         val activities = snapshot.documents.mapNotNull { doc ->
-            doc.toObject(RecentActivityDto::class.java)?.let { dto -> doc.id to dto }
+            doc.toRecentActivityDto()?.let { dto -> doc.id to dto }
         }
         return if (activities.isNotEmpty()) {
             activities
@@ -45,9 +47,24 @@ class FirestoreProfileSource @Inject constructor(
 
     private fun generateFallbackActivities(limit: Int): List<Pair<String, RecentActivityDto>> {
         val templates = listOf(
-            RecentActivityDto("Méditation guidée", "WELLNESS", System.currentTimeMillis(), true),
-            RecentActivityDto("Balade en nature", "OUTDOOR", System.currentTimeMillis() - 86_400_000L, true),
-            RecentActivityDto("Lecture inspirante", "CREATIVE", System.currentTimeMillis() - 172_800_000L, false)
+            RecentActivityDto(
+                pleasureTitle = "Méditation guidée",
+                category = "WELLNESS",
+                completedAt = Date(System.currentTimeMillis()),
+                isCompleted = true
+            ),
+            RecentActivityDto(
+                pleasureTitle = "Balade en nature",
+                category = "OUTDOOR",
+                completedAt = Date(System.currentTimeMillis() - 86_400_000L),
+                isCompleted = true
+            ),
+            RecentActivityDto(
+                pleasureTitle = "Lecture inspirante",
+                category = "CREATIVE",
+                completedAt = Date(System.currentTimeMillis() - 172_800_000L),
+                isCompleted = false
+            )
         )
         return templates.take(limit).mapIndexed { index, dto ->
             "fallback_$index" to dto
