@@ -18,8 +18,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.coEvery
-import org.mockito.kotlin.coVerify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -82,7 +80,7 @@ class ManagePleasuresViewModelTest {
             )
         )
         whenever(getPleasuresUseCase.invoke()).thenReturn(flowOf(pleasures))
-        coEvery { updatePleasureUseCase.invoke(any()) } returns Unit
+        whenever(updatePleasureUseCase.invoke(any())).thenReturn(Unit)
 
         val viewModel = createViewModel()
 
@@ -93,7 +91,7 @@ class ManagePleasuresViewModelTest {
         advanceUntilIdle()
 
         val updatedPleasure = pleasures.first().copy(isEnabled = false)
-        coVerify { updatePleasureUseCase.invoke(updatedPleasure) }
+        verify(updatePleasureUseCase).invoke(updatedPleasure)
         assertThat(viewModel.uiState.value.pleasures).containsExactly(updatedPleasure)
     }
 
@@ -115,7 +113,7 @@ class ManagePleasuresViewModelTest {
     @Test
     fun `saving valid pleasure delegates to use case and resets form`() = runTest {
         whenever(getPleasuresUseCase.invoke()).thenReturn(flowOf(emptyList()))
-        coEvery { addPleasureUseCase.invoke(any(), any(), any()) } returns Unit
+        whenever(addPleasureUseCase.invoke(any(), any(), any())).thenReturn(Unit)
 
         val viewModel = createViewModel()
 
@@ -130,7 +128,7 @@ class ManagePleasuresViewModelTest {
 
         advanceUntilIdle()
 
-        coVerify { addPleasureUseCase.invoke("Yoga", "Morning session", PleasureCategory.WELLNESS) }
+        verify(addPleasureUseCase).invoke("Yoga", "Morning session", PleasureCategory.WELLNESS)
         val state = viewModel.uiState.value
         assertThat(state.showAddDialog).isFalse()
         assertThat(state.newPleasureTitle).isEmpty()
