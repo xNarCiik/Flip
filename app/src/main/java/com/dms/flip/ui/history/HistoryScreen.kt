@@ -76,22 +76,18 @@ fun HistoryScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        FlipTopBar(title = stringResource(id = R.string.history_title))
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            HistoryContent(
-                weeklyDays = uiState.weeklyDays,
-                weekTitle = uiState.weekTitle,
-                weekDates = uiState.weekDates,
-                streakDays = uiState.streakDays,
-                canNavigateToNextWeek = uiState.canNavigateToNextWeek,
-                isLoading = uiState.isLoading,
-                error = uiState.error,
-                onEvent = onEvent,
-                navigateToDailyFlip = navigateToDailyFlip
-            )
-        }
+    Box(modifier = modifier.fillMaxSize()) {
+        HistoryContent(
+            weeklyDays = uiState.weeklyDays,
+            weekTitle = uiState.weekTitle,
+            weekDates = uiState.weekDates,
+            streakDays = uiState.streakDays,
+            canNavigateToNextWeek = uiState.canNavigateToNextWeek,
+            isLoading = uiState.isLoading,
+            error = uiState.error,
+            onEvent = onEvent,
+            navigateToDailyFlip = navigateToDailyFlip
+        )
     }
 }
 
