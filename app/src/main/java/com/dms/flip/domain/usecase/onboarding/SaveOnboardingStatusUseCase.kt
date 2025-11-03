@@ -13,11 +13,12 @@ class SaveOnboardingStatusUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         username: String,
+        avatarUrl: String? = null,
         pleasures: List<Pleasure>,
         notificationEnabled: Boolean,
         reminderTime: String
     ) {
-        onboardingRepository.saveOnboardingStatus(username = username, pleasures = pleasures)
+        onboardingRepository.saveOnboardingStatus(username = username, avatarUrl = avatarUrl, pleasures = pleasures)
         setDailyReminderStateUseCase(notificationEnabled)
         setReminderTimeUseCase(reminderTime)
     }

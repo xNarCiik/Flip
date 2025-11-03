@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dms.flip.ui.community.component.FriendListItem
+import com.dms.flip.ui.component.dialog.UploadingDialog
 import com.dms.flip.ui.onboarding.component.OnboardingNavigation
 import com.dms.flip.ui.onboarding.component.OnboardingProgressBar
 import com.dms.flip.ui.onboarding.component.step.NotificationPermissionStep
@@ -29,6 +33,9 @@ import com.dms.flip.ui.onboarding.component.step.PleasuresStep
 import com.dms.flip.ui.onboarding.component.step.ReminderTimeStep
 import com.dms.flip.ui.onboarding.component.step.UsernameStep
 import com.dms.flip.ui.onboarding.component.step.WelcomeScreen
+import com.dms.flip.ui.theme.FlipTheme
+import com.dms.flip.ui.util.LightDarkPreview
+import com.dms.flip.ui.util.previewFriends
 
 @Composable
 fun OnboardingScreen(
@@ -36,6 +43,10 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    UploadingDialog(
+        isVisible = uiState.isUploadingAvatar
+    )
 
     AnimatedContent(
         targetState = uiState.showWelcome,
@@ -49,20 +60,27 @@ fun OnboardingScreen(
             true -> {
                 WelcomeScreen(
                     modifier = modifier,
-                    onStartClick = viewModel::onStartClick
+                    onStartClick = { viewModel.onEvent(OnboardingEvent.OnStartClick) }
                 )
             }
 
             else -> {
-                OnboardingContent(modifier = modifier, viewModel = viewModel)
+                OnboardingContent(
+                    modifier = modifier,
+                    uiState = uiState,
+                    onEvent = viewModel::onEvent
+                )
             }
         }
     }
 }
 
 @Composable
-private fun OnboardingContent(modifier: Modifier, viewModel: OnboardingViewModel) {
-    val uiState by viewModel.uiState.collectAsState()
+private fun OnboardingContent(
+    modifier: Modifier = Modifier,
+    uiState: OnboardingUiState,
+    onEvent: (OnboardingEvent) -> Unit
+) {
     val totalSteps = if (uiState.notificationInitiallyEnabled) 3 else 4
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -117,24 +135,38 @@ private fun OnboardingContent(modifier: Modifier, viewModel: OnboardingViewModel
                 when (step) {
                     OnboardingStep.USERNAME -> UsernameStep(
                         username = uiState.username,
-                        onUsernameChange = viewModel::updateUsername
+                        usernameError = uiState.usernameError,
+                        isCheckingUsername = uiState.isCheckingUsername,
+                        avatarUrl = uiState.avatarUrl,
+                        onUsernameChange = { username ->
+                            onEvent(OnboardingEvent.UpdateUsername(username))
+                        },
+                        onAvatarSelected = { uri ->
+                            onEvent(OnboardingEvent.OnAvatarSelected(uri))
+                        }
                     )
 
                     OnboardingStep.PLEASURES -> PleasuresStep(
                         pleasures = uiState.availablePleasures,
-                        onTogglePleasure = viewModel::togglePleasure
+                        onTogglePleasure = { onEvent(OnboardingEvent.TogglePleasure(it)) }
                     )
 
                     OnboardingStep.NOTIFICATIONS -> NotificationPermissionStep(
                         notificationEnabled = uiState.notificationEnabled,
-                        onNotificationToggle = viewModel::updateNotificationEnabled,
+                        onNotificationToggle = {
+                            onEvent(
+                                OnboardingEvent.UpdateNotificationEnabled(
+                                    it
+                                )
+                            )
+                        },
                         showSkipWarning = uiState.showNotificationSkipWarning,
-                        onDismissWarning = viewModel::dismissNotificationWarning
+                        onDismissWarning = { onEvent(OnboardingEvent.DismissNotificationWarning) }
                     )
 
                     OnboardingStep.REMINDER_TIME -> ReminderTimeStep(
                         reminderTime = uiState.reminderTime,
-                        onTimeChange = viewModel::updateReminderTime
+                        onTimeChange = { onEvent(OnboardingEvent.UpdateReminderTime(it)) }
                     )
                 }
             }
@@ -144,8 +176,8 @@ private fun OnboardingContent(modifier: Modifier, viewModel: OnboardingViewModel
         OnboardingNavigation(
             currentStep = uiState.currentStep,
             canGoNext = canGoNext(uiState = uiState),
-            onPrevious = viewModel::previousStep,
-            onNext = viewModel::nextStep
+            onPrevious = { onEvent(OnboardingEvent.PreviousStep) },
+            onNext = { onEvent(OnboardingEvent.NextStep) }
         )
     }
 }
@@ -156,5 +188,18 @@ private fun canGoNext(uiState: OnboardingUiState): Boolean {
         OnboardingStep.PLEASURES -> uiState.availablePleasures.any { it.isEnabled }
         OnboardingStep.NOTIFICATIONS -> true
         OnboardingStep.REMINDER_TIME -> true
+    }
+}
+
+@LightDarkPreview
+@Composable
+private fun OnboardingContentPreview() {
+    FlipTheme {
+        Surface {
+            OnboardingContent(
+                uiState = OnboardingUiState(),
+                onEvent = {}
+            )
+        }
     }
 }

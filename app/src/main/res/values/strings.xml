@@ -17,6 +17,21 @@
 
     <!-- Onboarding -->
     <string name="onboarding_progress_step">Étape %1$d sur %2$d</string>
+
+    <!-- Username validation errors -->
+    <string name="error_username_empty">Le nom d\'utilisateur ne peut pas être vide</string>
+    <string name="error_username_too_short">Minimum %d caractères requis</string>
+    <string name="error_username_too_long">Maximum %d caractères autorisés</string>
+    <string name="error_username_invalid_characters">Seuls les lettres, chiffres, _ et - sont autorisés</string>
+    <string name="error_username_already_taken">Ce nom d\'utilisateur est déjà pris</string>
+
+    <!-- Username success -->
+    <string name="username_available">Nom d\'utilisateur disponible</string>
+    <string name="username_requirements">%d à %d caractères (lettres, chiffres, _ et -)</string>
+
+    <!-- Upload -->
+    <string name="uploading_avatar">Upload en cours…</string>
+
     <!-- Welcome Step -->
     <string name="onboarding_welcome_title">Bienvenue dans Flip</string>
     <string name="onboarding_welcome_subtitle">Configurons ensemble votre expérience pour profiter pleinement de vos plaisirs quotidiens.</string>

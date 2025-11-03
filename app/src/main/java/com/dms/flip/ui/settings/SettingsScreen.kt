@@ -72,6 +72,7 @@ import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TimePicker
 import com.dms.flip.ui.component.TopBarIcon
+import com.dms.flip.ui.component.dialog.UploadingDialog
 import com.dms.flip.ui.settings.component.dialog.AvatarSourceBottomSheet
 import com.dms.flip.ui.settings.component.dialog.CameraPermissionDialog
 import com.dms.flip.ui.settings.component.dialog.NotificationPermissionDialog
@@ -179,6 +180,10 @@ fun SettingsScreen(
             cameraLauncher.launch(uri)
         }
     }
+
+    UploadingDialog(
+        isVisible = uiState.isUploading
+    )
 
     if (showThemeDialog) {
         ThemeDialog(

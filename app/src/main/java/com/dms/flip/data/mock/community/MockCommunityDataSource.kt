@@ -1,6 +1,7 @@
 package com.dms.flip.data.mock.community
 
 import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.data.repository.AuthRepository
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendPost
 import com.dms.flip.domain.model.community.FriendPleasure
@@ -13,6 +14,7 @@ import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.UserSearchResult
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,10 +25,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MockCommunityDataSource @Inject constructor() {
+class MockCommunityDataSource @Inject constructor(
+    auth: FirebaseAuth
+) {
 
     private val currentUser = Friend(
-        id = "O9v4fig59HWnnA2J0HeDC6gpwWZ2",
+        id = auth.currentUser?.uid ?: "id",
         username = "Camille Martin",
         handle = "@camille",
         avatarUrl = "https://firebasestorage.googleapis.com/v0/b/daily-joy-16ce8.firebasestorage.app/o/avatars%2FO9v4fig59HWnnA2J0HeDC6gpwWZ2%2F1762194156609.jpg?alt=media&token=fe22e453-f3b2-4300-8060-621626b86c11",

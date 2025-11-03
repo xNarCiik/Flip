@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
+
+// TODO REMOVE ??
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CommunityAvatar(
