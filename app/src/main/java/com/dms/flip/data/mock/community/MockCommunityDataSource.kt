@@ -26,10 +26,10 @@ import javax.inject.Singleton
 class MockCommunityDataSource @Inject constructor() {
 
     private val currentUser = Friend(
-        id = "user_camille",
+        id = "O9v4fig59HWnnA2J0HeDC6gpwWZ2",
         username = "Camille Martin",
         handle = "@camille",
-        avatarUrl = "https://example.com/avatar/camille.png",
+        avatarUrl = "https://firebasestorage.googleapis.com/v0/b/daily-joy-16ce8.firebasestorage.app/o/avatars%2FO9v4fig59HWnnA2J0HeDC6gpwWZ2%2F1762194156609.jpg?alt=media&token=fe22e453-f3b2-4300-8060-621626b86c11",
         streak = 18,
         isOnline = true,
         currentPleasure = FriendPleasure(
@@ -245,8 +245,16 @@ class MockCommunityDataSource @Inject constructor() {
                 pleasureCategory = PleasureCategory.WELLNESS,
                 pleasureTitle = "Fumer un pet.. ou deux",
                 comments = listOf(
-                    commentFrom("friend_emma", "Bravo pour ta constance !", now - TimeUnit.HOURS.toMillis(1)),
-                    commentFrom("friend_kimy", "On se fait une séance ensemble demain ?", now - TimeUnit.MINUTES.toMillis(45))
+                    commentFrom(
+                        "friend_emma",
+                        "Bravo pour ta constance !",
+                        now - TimeUnit.HOURS.toMillis(1)
+                    ),
+                    commentFrom(
+                        "friend_kimy",
+                        "On se fait une séance ensemble demain ?",
+                        now - TimeUnit.MINUTES.toMillis(45)
+                    )
                 )
             ),
             FriendPost(
@@ -259,9 +267,21 @@ class MockCommunityDataSource @Inject constructor() {
                 pleasureCategory = PleasureCategory.SPORT,
                 pleasureTitle = "Session de sport avec Ugo \uD83C\uDF51",
                 comments = listOf(
-                    commentFrom("friend_dams", "Je note pour ma prochaine lecture.", now - TimeUnit.HOURS.toMillis(4)),
-                    commentFrom("friend_claire", "Tu vas adorer la suite !", now - TimeUnit.HOURS.toMillis(3)),
-                    commentFrom(currentUser.id, "Merci pour l'inspiration, je l'ajoute à ma liste !", now - TimeUnit.HOURS.toMillis(2))
+                    commentFrom(
+                        "friend_dams",
+                        "Je note pour ma prochaine lecture.",
+                        now - TimeUnit.HOURS.toMillis(4)
+                    ),
+                    commentFrom(
+                        "friend_claire",
+                        "Tu vas adorer la suite !",
+                        now - TimeUnit.HOURS.toMillis(3)
+                    ),
+                    commentFrom(
+                        currentUser.id,
+                        "Merci pour l'inspiration, je l'ajoute à ma liste !",
+                        now - TimeUnit.HOURS.toMillis(2)
+                    )
                 )
             ),
             FriendPost(
@@ -274,7 +294,11 @@ class MockCommunityDataSource @Inject constructor() {
                 pleasureCategory = PleasureCategory.OUTDOOR,
                 pleasureTitle = "Un week end à l'étranger",
                 comments = listOf(
-                    commentFrom("friend_thomas", "Tu es prêt pour le semi-marathon !", now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1))
+                    commentFrom(
+                        "friend_thomas",
+                        "Tu es prêt pour le semi-marathon !",
+                        now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1)
+                    )
                 )
             ),
             FriendPost(
@@ -287,7 +311,11 @@ class MockCommunityDataSource @Inject constructor() {
                 pleasureCategory = PleasureCategory.OUTDOOR,
                 pleasureTitle = "Ce soir: 3 litres de vodka",
                 comments = listOf(
-                    commentFrom("friend_thomas", "Tu es prêt pour le semi-marathon !", now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1))
+                    commentFrom(
+                        "friend_thomas",
+                        "Tu es prêt pour le semi-marathon !",
+                        now - TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1)
+                    )
                 )
             )
         )
@@ -341,7 +369,7 @@ class MockCommunityDataSource @Inject constructor() {
                 ),
                 RecentActivity(
                     id = "activity_alex_tasting",
-                    pleasureTitle = "Dégustation de cafés", 
+                    pleasureTitle = "Dégustation de cafés",
                     category = PleasureCategory.FOOD,
                     completedAt = now - TimeUnit.DAYS.toMillis(2),
                     isCompleted = true
@@ -461,7 +489,8 @@ class MockCommunityDataSource @Inject constructor() {
         _feedPosts.update { posts ->
             posts.map { post ->
                 if (post.id == postId) {
-                    val targetLikes = if (like) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
+                    val targetLikes =
+                        if (like) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
                     post.copy(
                         isLiked = like,
                         likesCount = targetLikes
@@ -482,6 +511,27 @@ class MockCommunityDataSource @Inject constructor() {
                         comments = updatedComments,
                         commentsCount = updatedComments.size
                     )
+                } else {
+                    post
+                }
+            }
+        }
+    }
+
+    fun removeCommentFromPost(postId: String, commentId: String, userId: String) {
+        _feedPosts.update { posts ->
+            posts.map { post ->
+                if (post.id == postId) {
+                    val targetComment = post.comments.firstOrNull { it.id == commentId }
+                    if (targetComment == null || targetComment.userId != userId) {
+                        post
+                    } else {
+                        val updatedComments = post.comments.filterNot { it.id == commentId }
+                        post.copy(
+                            comments = updatedComments,
+                            commentsCount = updatedComments.size
+                        )
+                    }
                 } else {
                     post
                 }

@@ -1,6 +1,7 @@
 package com.dms.flip.ui.community.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +38,10 @@ import com.dms.flip.ui.util.formatTimestamp
 @Composable
 fun CommentsSection(
     comments: List<PostComment>,
+    currentUserId: String?,
     onAddComment: (String) -> Unit,
+    onCommentClick: (PostComment) -> Unit,
+    onOwnCommentLongPress: (PostComment) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -49,7 +53,17 @@ fun CommentsSection(
         CommentInput(onAddComment = onAddComment)
 
         comments.forEach { comment ->
-            CommentItem(comment = comment)
+            val isOwnComment = comment.userId == currentUserId
+            CommentItem(
+                comment = comment,
+                isOwnComment = isOwnComment,
+                onClick = { onCommentClick(comment) },
+                onLongClick = if (isOwnComment) {
+                    { onOwnCommentLongPress(comment) }
+                } else {
+                    null
+                }
+            )
         }
     }
 }
@@ -117,10 +131,18 @@ private fun CommentInput(
 @Composable
 private fun CommentItem(
     comment: PostComment,
+    isOwnComment: Boolean,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -139,7 +161,11 @@ private fun CommentItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = comment.username,
+                    text = if (isOwnComment) {
+                        stringResource(id = R.string.community_comment_author_me)
+                    } else {
+                        comment.username
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -188,7 +214,10 @@ private fun CommentsSectionPreview() {
                         timestamp = System.currentTimeMillis() - 3_600_000
                     )
                 ),
-                onAddComment = {}
+                currentUserId = "user1",
+                onAddComment = {},
+                onCommentClick = {},
+                onOwnCommentLongPress = {}
             )
         }
     }

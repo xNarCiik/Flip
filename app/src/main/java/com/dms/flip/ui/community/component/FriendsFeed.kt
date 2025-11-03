@@ -53,6 +53,7 @@ import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.formatTimestamp
@@ -64,8 +65,10 @@ private val FireStreakColor = Color(0xFFFF6B35)
 fun FriendsFeedContent(
     posts: List<FriendPost>,
     expandedPostId: String?,
+    currentUserId: String?,
     onEvent: (CommunityEvent) -> Unit,
     onPostMenuClick: (FriendPost) -> Unit,
+    onOwnCommentLongPress: (String, PostComment) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -82,7 +85,14 @@ fun FriendsFeedContent(
                 onFriendClick = { onEvent(CommunityEvent.OnFriendClicked(post.friend)) },
                 onAddComment = { comment ->
                     onEvent(CommunityEvent.OnAddComment(post.id, comment))
-                }
+                },
+                onCommentUserClick = { comment ->
+                    onEvent(CommunityEvent.OnViewProfile(comment.userId))
+                },
+                onOwnCommentLongPress = { comment ->
+                    onOwnCommentLongPress(post.id, comment)
+                },
+                currentUserId = currentUserId
             )
         }
     }
@@ -98,6 +108,9 @@ fun FriendPostCard(
     onMenu: () -> Unit,
     onFriendClick: () -> Unit,
     onAddComment: (String) -> Unit,
+    onCommentUserClick: (PostComment) -> Unit,
+    onOwnCommentLongPress: (PostComment) -> Unit,
+    currentUserId: String?,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
@@ -296,7 +309,13 @@ fun FriendPostCard(
 
         if (isExpanded) {
             Spacer(modifier = Modifier.height(16.dp))
-            CommentsSection(comments = post.comments, onAddComment = onAddComment)
+            CommentsSection(
+                comments = post.comments,
+                currentUserId = currentUserId,
+                onAddComment = onAddComment,
+                onCommentClick = onCommentUserClick,
+                onOwnCommentLongPress = onOwnCommentLongPress
+            )
         }
     }
 }
@@ -391,8 +410,10 @@ private fun FriendsFeedPreview(
             FriendsFeedContent(
                 posts = posts,
                 expandedPostId = posts.firstOrNull()?.id,
+                currentUserId = posts.firstOrNull()?.friend?.id,
                 onEvent = {},
-                onPostMenuClick = {}
+                onPostMenuClick = {},
+                onOwnCommentLongPress = { _, _ -> }
             )
         }
     }

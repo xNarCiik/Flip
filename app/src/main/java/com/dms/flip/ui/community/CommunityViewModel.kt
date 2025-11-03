@@ -26,6 +26,8 @@ import com.dms.flip.domain.usecase.community.RemoveFriendUseCase
 import com.dms.flip.domain.usecase.community.SearchUsersUseCase
 import com.dms.flip.domain.usecase.community.SendFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.ToggleLikeUseCase
+import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
+import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,7 @@ class CommunityViewModel @Inject constructor(
     private val observeFriendsFeedUseCase: ObserveFriendsFeedUseCase,
     private val toggleLikeUseCase: ToggleLikeUseCase,
     private val addCommentUseCase: AddCommentUseCase,
+    private val deleteCommentUseCase: DeleteCommentUseCase,
     private val observeFriendsUseCase: ObserveFriendsUseCase,
     private val removeFriendUseCase: RemoveFriendUseCase,
     private val observePendingReceivedUseCase: ObservePendingReceivedUseCase,
@@ -54,7 +57,8 @@ class CommunityViewModel @Inject constructor(
     private val observeSuggestionsUseCase: ObserveSuggestionsUseCase,
     private val hideSuggestionUseCase: HideSuggestionUseCase,
     private val searchUsersUseCase: SearchUsersUseCase,
-    private val getPublicProfileUseCase: GetPublicProfileUseCase
+    private val getPublicProfileUseCase: GetPublicProfileUseCase,
+    getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CommunityUiState())
@@ -67,6 +71,11 @@ class CommunityViewModel @Inject constructor(
 
     init {
         refresh()
+        viewModelScope.launch {
+            getUserInfoUseCase().collect { userInfo ->
+                _uiState.update { it.copy(currentUserId = userInfo?.id) }
+            }
+        }
     }
 
     fun refresh() {
@@ -93,6 +102,7 @@ class CommunityViewModel @Inject constructor(
             is CommunityEvent.OnSearchQueryChanged -> handleSearchQuery(event.query)
             is CommunityEvent.OnAddUserFromSearch -> addUserFromSearch(event.userId)
             is CommunityEvent.OnRetryClicked -> refresh()
+            is CommunityEvent.OnDeleteComment -> deleteComment(event.postId, event.commentId)
             else -> Unit
         }
     }
@@ -209,6 +219,27 @@ class CommunityViewModel @Inject constructor(
                                 it.copy(
                                     comments = it.comments + comment,
                                     commentsCount = it.commentsCount + 1
+                                )
+                            }
+                        )
+                    }
+                }
+                is Result.Err -> handleError(result.throwable)
+            }
+        }
+    }
+
+    private fun deleteComment(postId: String, commentId: String) {
+        viewModelScope.launch {
+            when (val result = deleteCommentUseCase(postId, commentId)) {
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            friendsPosts = state.friendsPosts.updatePost(postId) { post ->
+                                val updatedComments = post.comments.filterNot { it.id == commentId }
+                                post.copy(
+                                    comments = updatedComments,
+                                    commentsCount = updatedComments.size
                                 )
                             }
                         )

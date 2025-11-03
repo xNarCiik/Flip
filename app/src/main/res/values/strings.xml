@@ -241,6 +241,10 @@
     <string name="community_post_options_title">Options du post</string>
     <string name="community_post_view_profile">Voir le profil de %1$s</string>
     <string name="community_post_report">Signaler le post</string>
+    <string name="community_comment_author_me">Moi</string>
+    <string name="community_comment_options_title">Votre commentaire</string>
+    <string name="community_comment_delete">Supprimer le commentaire</string>
+    <string name="community_comment_delete_description">Ce commentaire sera supprimé définitivement.</string>
 
     <!-- Friends List -->
     <string name="friends_list_title">Mes Amis</string>

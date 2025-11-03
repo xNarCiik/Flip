@@ -16,6 +16,7 @@ data class CommunityUiState(
 
     val friendsPosts: List<FriendPost> = emptyList(),
     val expandedPostId: String? = null,
+    val currentUserId: String? = null,
     val friends: List<Friend> = emptyList(),
     val suggestions: List<FriendSuggestion> = emptyList(),
     val pendingRequests: List<FriendRequest> = emptyList(),
@@ -52,6 +53,8 @@ sealed interface CommunityEvent {
     data class OnAddUserFromSearch(val userId: String) : CommunityEvent
 
     data class OnViewProfile(val userId: String) : CommunityEvent
+
+    data class OnDeleteComment(val postId: String, val commentId: String) : CommunityEvent
 
     data object OnRetryClicked : CommunityEvent
 }

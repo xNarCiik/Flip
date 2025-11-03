@@ -24,4 +24,6 @@ interface FeedSource {
     suspend fun getComments(postId: String, limit: Int = 50): List<Pair<String, CommentDto>>
 
     suspend fun isPostLiked(postId: String, uid: String): Boolean
+
+    suspend fun deleteComment(postId: String, commentId: String, uid: String)
 }

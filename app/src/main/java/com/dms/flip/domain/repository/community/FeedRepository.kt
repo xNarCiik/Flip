@@ -9,4 +9,5 @@ interface FeedRepository {
     fun observeFriendsFeed(limit: Int, cursor: String? = null): Flow<Paged<FriendPost>>
     suspend fun toggleLike(postId: String, like: Boolean)
     suspend fun addComment(postId: String, content: String): PostComment
+    suspend fun deleteComment(postId: String, commentId: String)
 }

@@ -38,3 +38,15 @@ class AddCommentUseCase @Inject constructor(
             onFailure = { Result.Err(it) }
         )
 }
+
+class DeleteCommentUseCase @Inject constructor(
+    private val feedRepository: FeedRepository
+) {
+    suspend operator fun invoke(postId: String, commentId: String): Result<Unit> =
+        runCatching {
+            feedRepository.deleteComment(postId, commentId)
+        }.fold(
+            onSuccess = { Result.Ok(Unit) },
+            onFailure = { Result.Err(it) }
+        )
+}

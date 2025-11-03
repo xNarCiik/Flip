@@ -86,7 +86,8 @@ fun PublicProfileScreen(
                     CommunityAvatar(
                         imageUrl = profile.avatarUrl,
                         fallbackText = profile.username.firstOrNull()?.uppercase() ?: "?",
-                        size = 120.dp
+                        size = 120.dp,
+                        textStyle = MaterialTheme.typography.headlineLarge
                     )
 
                     Spacer(Modifier.height(16.dp))

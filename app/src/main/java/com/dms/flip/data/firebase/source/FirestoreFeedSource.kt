@@ -120,4 +120,22 @@ class FirestoreFeedSource @Inject constructor(
             .await()
         return doc.exists()
     }
+
+    override suspend fun deleteComment(postId: String, commentId: String, uid: String) {
+        val postRef = firestore.collection("posts").document(postId)
+        val commentRef = postRef.collection("comments").document(commentId)
+
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(commentRef)
+            val commentDto = snapshot.toCommentDto()
+                ?: throw IllegalStateException("Comment not found")
+
+            if (commentDto.userId != uid) {
+                throw IllegalAccessException("Cannot delete another user's comment")
+            }
+
+            transaction.delete(commentRef)
+            transaction.update(postRef, mapOf("comments_count" to FieldValue.increment(-1)))
+        }.await()
+    }
 }

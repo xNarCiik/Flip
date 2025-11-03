@@ -22,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
 import com.dms.flip.ui.community.component.FriendsFeedContent
 import com.dms.flip.ui.community.component.PostOptionsDialog
+import com.dms.flip.ui.community.component.CommentOptionsDialog
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.theme.FlipTheme
@@ -48,6 +50,9 @@ fun CommunityScreen(
     onEvent: (CommunityEvent) -> Unit
 ) {
     var selectedPost by remember { mutableStateOf<FriendPost?>(null) }
+    var selectedComment by remember {
+        mutableStateOf<Pair<String, PostComment>?>(null)
+    }
 
     Column(
         modifier = modifier
@@ -105,8 +110,12 @@ fun CommunityScreen(
                         FriendsFeedContent(
                             posts = uiState.friendsPosts,
                             expandedPostId = uiState.expandedPostId,
+                            currentUserId = uiState.currentUserId,
                             onEvent = onEvent,
-                            onPostMenuClick = { selectedPost = it }
+                            onPostMenuClick = { selectedPost = it },
+                            onOwnCommentLongPress = { postId, comment ->
+                                selectedComment = postId to comment
+                            }
                         )
                     }
                 }
@@ -123,6 +132,16 @@ fun CommunityScreen(
                 selectedPost = null
             },
             onDelete = { selectedPost = null }
+        )
+    }
+
+    selectedComment?.let { (postId, comment) ->
+        CommentOptionsDialog(
+            onDismiss = { selectedComment = null },
+            onDelete = {
+                onEvent(CommunityEvent.OnDeleteComment(postId, comment.id))
+                selectedComment = null
+            }
         )
     }
 }

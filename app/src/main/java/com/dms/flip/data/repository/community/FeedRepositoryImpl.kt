@@ -83,4 +83,9 @@ class FeedRepositoryImpl @Inject constructor(
         val (id, dto) = feedSource.addComment(postId, comment)
         return dto.toDomain(id)
     }
+
+    override suspend fun deleteComment(postId: String, commentId: String) {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        feedSource.deleteComment(postId, commentId, uid)
+    }
 }

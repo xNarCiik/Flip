@@ -21,10 +21,10 @@ import com.bumptech.glide.integration.compose.GlideImage
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CommunityAvatar(
+    modifier: Modifier = Modifier,
     imageUrl: String?,
     fallbackText: String,
     textStyle: TextStyle = MaterialTheme.typography.titleMedium,
-    modifier: Modifier = Modifier,
     size: Dp = 48.dp
 ) {
     Box(

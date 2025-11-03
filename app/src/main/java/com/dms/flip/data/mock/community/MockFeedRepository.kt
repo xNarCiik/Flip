@@ -34,4 +34,9 @@ class MockFeedRepository @Inject constructor(
         dataSource.addCommentToPost(postId, comment)
         return comment
     }
+
+    override suspend fun deleteComment(postId: String, commentId: String) {
+        val userId = dataSource.getCurrentUser().id
+        dataSource.removeCommentFromPost(postId, commentId, userId)
+    }
 }

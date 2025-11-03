@@ -99,6 +99,12 @@ fun CommunityNavHost(
                             )
                         }
 
+                        is CommunityEvent.OnViewProfile -> {
+                            navController.navigate(
+                                CommunityRoute.Profile.createRoute(event.userId)
+                            )
+                        }
+
                         else -> viewModel.onEvent(event)
                     }
                 }
