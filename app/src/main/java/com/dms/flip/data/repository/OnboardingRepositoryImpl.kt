@@ -1,5 +1,6 @@
 package com.dms.flip.data.repository
 
+import android.R.attr.handle
 import com.dms.flip.data.model.toDto
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.repository.onboarding.OnboardingRepository
@@ -48,15 +49,12 @@ class OnboardingRepositoryImpl(
     ) {
         val user = firebaseAuth.currentUser ?: return
         val userDoc = firestore.collection("users").document(user.uid)
-        val usernamesCollection = firestore.collection("usernames")
 
         firestore.runBatch { batch ->
-            val usernameRef = usernamesCollection.document(username)
-            batch.set(usernameRef, mapOf("uid" to user.uid))
-
             batch.set(
                 userDoc, mapOf(
                     "username" to username,
+                    "handle" to username,
                     "avatar_url" to avatarUrl,
                     "onboarding_completed" to true
                 )
