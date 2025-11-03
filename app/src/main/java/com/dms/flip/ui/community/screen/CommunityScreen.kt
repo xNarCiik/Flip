@@ -38,7 +38,7 @@ private sealed interface CommunityContentState {
     data object Loading : CommunityContentState
     data object Empty : CommunityContentState
     data class Error(val messageRes: Int) : CommunityContentState
-    data class Content(val posts: List<FriendPost>) : CommunityContentState
+    data object Content : CommunityContentState
 }
 
 @Composable
@@ -65,7 +65,7 @@ fun CommunityScreen(
                 uiState.error != null -> CommunityContentState.Error(uiState.error)
                 uiState.isLoading && uiState.friendsPosts.isEmpty() -> CommunityContentState.Loading
                 uiState.friendsPosts.isEmpty() -> CommunityContentState.Empty
-                else -> CommunityContentState.Content(uiState.friendsPosts)
+                else -> CommunityContentState.Content
             }
 
             AnimatedContent(
@@ -103,7 +103,7 @@ fun CommunityScreen(
 
                     is CommunityContentState.Content -> {
                         FriendsFeedContent(
-                            posts = state.posts,
+                            posts = uiState.friendsPosts,
                             expandedPostId = uiState.expandedPostId,
                             onEvent = onEvent,
                             onPostMenuClick = { selectedPost = it }
