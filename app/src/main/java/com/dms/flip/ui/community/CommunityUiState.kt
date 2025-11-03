@@ -7,7 +7,6 @@ import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.PostComment
-import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
 
@@ -55,6 +54,10 @@ sealed interface CommunityEvent {
     data class OnViewProfile(val userId: String) : CommunityEvent
 
     data class OnDeleteComment(val postId: String, val commentId: String) : CommunityEvent
+    data class OnDeletePost(val postId: String) : CommunityEvent
+
+    data class OnAcceptFriendRequestFromProfile(val userId: String) : CommunityEvent
+    data class OnRemoveFriendFromProfile(val userId: String) : CommunityEvent
 
     data object OnRetryClicked : CommunityEvent
 }

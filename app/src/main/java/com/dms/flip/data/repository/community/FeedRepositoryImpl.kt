@@ -88,4 +88,9 @@ class FeedRepositoryImpl @Inject constructor(
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         feedSource.deleteComment(postId, commentId, uid)
     }
+
+    override suspend fun deletePost(postId: String) {
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        feedSource.deletePost(postId, uid)
+    }
 }

@@ -48,7 +48,10 @@ import com.dms.flip.ui.util.previewPublicProfile
 fun PublicProfileScreen(
     modifier: Modifier = Modifier,
     profile: PublicProfile,
+    isCurrentUser: Boolean,
     onAddFriend: () -> Unit,
+    onAcceptFriendRequest: () -> Unit,
+    onOptionsClick: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     Column(
@@ -63,13 +66,17 @@ fun PublicProfileScreen(
                 contentDescription = stringResource(R.string.navigate_back),
                 onClick = onNavigateBack
             ),
-            endTopBarIcons = listOf(
-                TopBarIcon(
-                    icon = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.friend_options),
-                    onClick = {}
+            endTopBarIcons = if (!isCurrentUser && profile.relationshipStatus == RelationshipStatus.FRIEND) {
+                listOf(
+                    TopBarIcon(
+                        icon = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.friend_options),
+                        onClick = onOptionsClick
+                    )
                 )
-            )
+            } else {
+                emptyList()
+            }
         )
 
         LazyColumn(
@@ -117,32 +124,53 @@ fun PublicProfileScreen(
             }
 
             // Add Friend Button
-            item {
-                val (buttonText, enabled) = when (profile.relationshipStatus) {
-                    RelationshipStatus.FRIEND -> stringResource(R.string.community_already_friends) to false
-                    RelationshipStatus.PENDING_SENT -> stringResource(R.string.status_pending) to false
-                    RelationshipStatus.PENDING_RECEIVED -> stringResource(R.string.button_accept) to true
-                    else -> stringResource(R.string.button_add_friend) to true
-                }
+            if (!isCurrentUser) {
+                item {
+                    val (buttonText, enabled, action) = when (profile.relationshipStatus) {
+                        RelationshipStatus.FRIEND -> Triple(
+                            stringResource(R.string.community_already_friends),
+                            false,
+                            null
+                        )
 
-                Button(
-                    onClick = onAddFriend,
-                    enabled = enabled,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    contentPadding = PaddingValues(vertical = 16.dp)
-                ) {
-                    Text(
-                        text = buttonText,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        RelationshipStatus.PENDING_SENT -> Triple(
+                            stringResource(R.string.status_pending),
+                            false,
+                            null
+                        )
+
+                        RelationshipStatus.PENDING_RECEIVED -> Triple(
+                            stringResource(R.string.button_accept),
+                            true,
+                            onAcceptFriendRequest
+                        )
+
+                        else -> Triple(
+                            stringResource(R.string.button_add_friend),
+                            true,
+                            onAddFriend
+                        )
+                    }
+
+                    Button(
+                        onClick = { action?.invoke() },
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        contentPadding = PaddingValues(vertical = 16.dp)
+                    ) {
+                        Text(
+                            text = buttonText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -265,7 +293,10 @@ private fun PublicProfileScreenPreview() {
         Surface {
             PublicProfileScreen(
                 profile = previewPublicProfile,
+                isCurrentUser = false,
                 onAddFriend = {},
+                onAcceptFriendRequest = {},
+                onOptionsClick = {},
                 onNavigateBack = {}
             )
         }

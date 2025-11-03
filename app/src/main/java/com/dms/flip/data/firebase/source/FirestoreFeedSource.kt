@@ -1,17 +1,15 @@
 package com.dms.flip.data.firebase.source
 
 import com.dms.flip.data.firebase.dto.CommentDto
-import com.dms.flip.data.firebase.mapper.toCommentDto
-import com.dms.flip.data.firebase.mapper.toPostDto
+import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.domain.model.community.Paged
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -27,61 +25,78 @@ class FirestoreFeedSource @Inject constructor(
         limit: Int,
         cursor: String?
     ): Flow<Paged<FeedSource.PostDocument>> = callbackFlow {
-        val feedCollection =
-            firestore.collection("users")
-                .document(uid)
-                .collection("feed")
+        // 🔹 Get friend IDs + self
+        val friendsSnapshot = firestore
+            .collection("users")
+            .document(uid)
+            .collection("friends")
+            .get()
+            .await()
+        val friendIds = friendsSnapshot.documents.map { it.id } + uid
 
-        suspend fun buildQuery(): Query {
-            var query: Query = feedCollection
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(limit.toLong())
-            if (cursor != null) {
-                val cursorSnapshot = feedCollection.document(cursor).get().await()
-                if (cursorSnapshot.exists()) {
-                    query = query.startAfter(cursorSnapshot)
-                }
-            }
-            return query
+        // 🔹 Split into chunks of 10 (Firestore limit)
+        val chunks = friendIds.chunked(10)
+
+        if (chunks.isEmpty()) {
+            trySend(Paged(emptyList(), null))
+            close()
+            return@callbackFlow
         }
 
-        var registration: ListenerRegistration? = null
-        val job = launch {
-            val query = buildQuery()
-            registration = query.addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                if (snapshot == null) return@addSnapshotListener
-                val documents = snapshot.documents.mapNotNull { doc ->
-                    doc.toPostDto()?.let { dto ->
-                        FeedSource.PostDocument(id = doc.id, data = dto)
+        // 🔹 Create one Flow per chunk
+        val chunkFlows = chunks.map { chunkIds ->
+            callbackFlow {
+                val query = firestore.collection("posts")
+                    .whereIn("authorId", chunkIds)
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+
+                val registration = query.addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error)
+                        return@addSnapshotListener
                     }
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val docs = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(PostDto::class.java)?.let { dto ->
+                            FeedSource.PostDocument(id = doc.id, data = dto)
+                        }
+                    }
+                    trySend(docs)
                 }
-                val nextCursor =
-                    if (documents.size < limit) null else snapshot.documents.lastOrNull()?.id
-                trySend(Paged(documents, nextCursor))
+
+                awaitClose { registration.remove() }
             }
         }
 
-        awaitClose {
-            registration?.remove()
-            job.cancel()
+        // 🔹 Combine all chunk flows
+        val combinedFlow = combine(chunkFlows) { chunkResults ->
+            chunkResults.toList().flatten()
+                .distinctBy { it.id } // remove duplicates
+                .sortedByDescending { it.data.timestamp }
+                .take(limit)
         }
+
+        // 🔹 Collect and emit merged pages
+        val job = launch {
+            combinedFlow.collect { posts ->
+                val nextCursor = posts.lastOrNull()?.id
+                trySend(Paged(posts, nextCursor))
+            }
+        }
+
+        awaitClose { job.cancel() }
     }
 
     override suspend fun toggleLike(postId: String, uid: String, like: Boolean) {
         val likesCollection = firestore.collection("posts").document(postId).collection("likes")
         val postRef = firestore.collection("posts").document(postId)
         firestore.runTransaction { transaction ->
-            val likesCountField = FieldValue.increment(if (like) 1 else -1)
-            if (like) {
-                transaction.set(likesCollection.document(uid), mapOf("liked" to true))
-            } else {
-                transaction.delete(likesCollection.document(uid))
-            }
-            transaction.update(postRef, mapOf("likes_count" to likesCountField))
+            val increment = if (like) 1 else -1
+            if (like) transaction.set(likesCollection.document(uid), mapOf("liked" to true))
+            else transaction.delete(likesCollection.document(uid))
+            transaction.update(postRef, "likes_count", FieldValue.increment(increment.toLong()))
         }.await()
     }
 
@@ -89,13 +104,12 @@ class FirestoreFeedSource @Inject constructor(
         val commentsCollection = firestore.collection("posts")
             .document(postId)
             .collection("comments")
-        val document = commentsCollection.document()
-        document.set(comment, SetOptions.merge()).await()
-        val saved = document.get().await().toCommentDto() ?: comment
+        val doc = commentsCollection.document()
+        doc.set(comment).await()
         firestore.collection("posts").document(postId)
             .update("comments_count", FieldValue.increment(1))
             .await()
-        return document.id to saved
+        return doc.id to comment
     }
 
     override suspend fun getComments(postId: String, limit: Int): List<Pair<String, CommentDto>> {
@@ -107,7 +121,7 @@ class FirestoreFeedSource @Inject constructor(
             .get()
             .await()
         return snapshot.documents.mapNotNull { doc ->
-            doc.toCommentDto()?.let { dto -> doc.id to dto }
+            doc.toObject(CommentDto::class.java)?.let { dto -> doc.id to dto }
         }
     }
 
@@ -121,21 +135,28 @@ class FirestoreFeedSource @Inject constructor(
         return doc.exists()
     }
 
-    override suspend fun deleteComment(postId: String, commentId: String, uid: String) {
+    override suspend fun deletePost(postId: String, uid: String) {
         val postRef = firestore.collection("posts").document(postId)
-        val commentRef = postRef.collection("comments").document(commentId)
+        val postSnapshot = postRef.get().await()
+        val postAuthor = postSnapshot.getString("authorId")
 
-        firestore.runTransaction { transaction ->
-            val snapshot = transaction.get(commentRef)
-            val commentDto = snapshot.toCommentDto()
-                ?: throw IllegalStateException("Comment not found")
+        if (postAuthor != uid) throw IllegalAccessException("You can only delete your own posts.")
+        postRef.delete().await()
+    }
 
-            if (commentDto.userId != uid) {
-                throw IllegalAccessException("Cannot delete another user's comment")
-            }
+    override suspend fun deleteComment(postId: String, commentId: String, uid: String) {
+        val commentRef = firestore.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .document(commentId)
 
-            transaction.delete(commentRef)
-            transaction.update(postRef, mapOf("comments_count" to FieldValue.increment(-1)))
-        }.await()
+        val snapshot = commentRef.get().await()
+        val commentUserId = snapshot.getString("userId")
+        if (commentUserId != uid) throw IllegalAccessException("Cannot delete someone else's comment.")
+
+        commentRef.delete().await()
+        firestore.collection("posts").document(postId)
+            .update("comments_count", FieldValue.increment(-1))
+            .await()
     }
 }

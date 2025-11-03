@@ -9,6 +9,7 @@ import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
+import java.util.Date
 
 class CommunityMappersTest {
 
@@ -18,7 +19,7 @@ class CommunityMappersTest {
         val dto = PostDto(
             authorId = friend.id,
             content = "Hello",
-            timestamp = 10L,
+            timestamp = Date(),
             pleasureCategory = "WELLNESS",
             pleasureTitle = "Yoga",
             likes_count = 2,
@@ -29,7 +30,7 @@ class CommunityMappersTest {
             username = "Bob",
             userHandle = "@bob",
             content = "Nice!",
-            timestamp = 20L
+            timestamp = Date()
         )
 
         val post = dto.toDomain(
@@ -51,7 +52,7 @@ class CommunityMappersTest {
         val dto = RecentActivityDto(
             pleasureTitle = "Test",
             category = "UNKNOWN",
-            completedAt = 0L,
+            completedAt = Date(),
             isCompleted = false
         )
 
@@ -73,7 +74,7 @@ class CommunityMappersTest {
             RecentActivityDto(
                 pleasureTitle = "Yoga",
                 category = "WELLNESS",
-                completedAt = 1L,
+                completedAt = Date(),
                 isCompleted = true
             ).toDomain("recent")
         )

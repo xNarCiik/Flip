@@ -29,7 +29,7 @@ import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
 import com.dms.flip.ui.community.component.FriendsFeedContent
 import com.dms.flip.ui.community.component.PostOptionsDialog
-import com.dms.flip.ui.community.component.CommentOptionsDialog
+import com.dms.flip.ui.community.component.DeleteConfirmationDialog
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.theme.FlipTheme
@@ -53,6 +53,7 @@ fun CommunityScreen(
     var selectedComment by remember {
         mutableStateOf<Pair<String, PostComment>?>(null)
     }
+    var postPendingDeletion by remember { mutableStateOf<FriendPost?>(null) }
 
     Column(
         modifier = modifier
@@ -115,6 +116,9 @@ fun CommunityScreen(
                             onPostMenuClick = { selectedPost = it },
                             onOwnCommentLongPress = { postId, comment ->
                                 selectedComment = postId to comment
+                            },
+                            onOwnPostLongPress = { post ->
+                                postPendingDeletion = post
                             }
                         )
                     }
@@ -136,12 +140,24 @@ fun CommunityScreen(
     }
 
     selectedComment?.let { (postId, comment) ->
-        CommentOptionsDialog(
-            onDismiss = { selectedComment = null },
-            onDelete = {
+        DeleteConfirmationDialog(
+            confirmText = stringResource(id = R.string.community_comment_delete),
+            onConfirm = {
                 onEvent(CommunityEvent.OnDeleteComment(postId, comment.id))
                 selectedComment = null
-            }
+            },
+            onDismiss = { selectedComment = null }
+        )
+    }
+
+    postPendingDeletion?.let { post ->
+        DeleteConfirmationDialog(
+            confirmText = stringResource(id = R.string.community_post_delete),
+            onConfirm = {
+                onEvent(CommunityEvent.OnDeletePost(post.id))
+                postPendingDeletion = null
+            },
+            onDismiss = { postPendingDeletion = null }
         )
     }
 }
