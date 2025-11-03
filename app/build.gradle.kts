@@ -24,7 +24,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("Boolean", "USE_MOCK_COMMUNITY_DATA", "true")
+            buildConfigField("Boolean", "USE_MOCK_COMMUNITY_DATA", "false")
         }
         release {
             isMinifyEnabled = false

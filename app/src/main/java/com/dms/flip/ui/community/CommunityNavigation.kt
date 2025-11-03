@@ -281,8 +281,17 @@ fun CommunityNavHost(
                 if (profile != null) {
                     PublicProfileScreen(
                         profile = profile,
+                        isCurrentUser = profile.id == uiState.currentUserId,
                         onAddFriend = {
                             viewModel.onEvent(CommunityEvent.OnAddUserFromSearch(userId))
+                            navController.navigateUp()
+                        },
+                        onAcceptFriendRequest = {
+                            viewModel.onEvent(CommunityEvent.OnAcceptFriendRequestFromProfile(userId))
+                            navController.navigateUp()
+                        },
+                        onOptionsClick = {
+                            viewModel.onEvent(CommunityEvent.OnRemoveFriendFromProfile(userId))
                             navController.navigateUp()
                         },
                         onNavigateBack = { navController.navigateUp() }

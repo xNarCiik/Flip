@@ -25,14 +25,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MockCommunityDataSource @Inject constructor(
-    auth: FirebaseAuth
-) {
+class MockCommunityDataSource @Inject constructor() {
 
     private val currentUser = Friend(
-        id = auth.currentUser?.uid ?: "id",
-        username = "Camille Martin",
-        handle = "@camille",
+        id = "UVavanPylhSnMnH6oGJI9isqypN2",
+        username = "Damien Legagnoux",
+        handle = "@dams_lgx",
         avatarUrl = "https://firebasestorage.googleapis.com/v0/b/daily-joy-16ce8.firebasestorage.app/o/avatars%2FO9v4fig59HWnnA2J0HeDC6gpwWZ2%2F1762194156609.jpg?alt=media&token=fe22e453-f3b2-4300-8060-621626b86c11",
         streak = 18,
         isOnline = true,
@@ -240,7 +238,7 @@ class MockCommunityDataSource @Inject constructor(
         listOf(
             FriendPost(
                 id = "post_lea_morning_yoga",
-                friend = knownUsers.getValue("friend_dams"),
+                friend = currentUser,
                 content = "Séance de méditation terminé \uD83D\uDCA8",
                 timestamp = now - TimeUnit.HOURS.toMillis(2),
                 likesCount = 18,
@@ -539,6 +537,17 @@ class MockCommunityDataSource @Inject constructor(
                 } else {
                     post
                 }
+            }
+        }
+    }
+
+    fun removePost(postId: String, userId: String) {
+        _feedPosts.update { posts ->
+            val target = posts.firstOrNull { it.id == postId }
+            if (target?.friend?.id != userId) {
+                posts
+            } else {
+                posts.filterNot { it.id == postId }
             }
         }
     }

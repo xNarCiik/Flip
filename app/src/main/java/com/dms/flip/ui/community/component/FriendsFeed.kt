@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.pointerInput
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.dms.flip.R
@@ -69,6 +71,7 @@ fun FriendsFeedContent(
     onEvent: (CommunityEvent) -> Unit,
     onPostMenuClick: (FriendPost) -> Unit,
     onOwnCommentLongPress: (String, PostComment) -> Unit,
+    onOwnPostLongPress: (FriendPost) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -76,9 +79,11 @@ fun FriendsFeedContent(
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         items(items = posts, key = { it.id }) { post ->
+            val isOwnPost = post.friend.id == currentUserId
             FriendPostCard(
                 post = post,
                 isExpanded = post.id == expandedPostId,
+                isOwnPost = isOwnPost,
                 onLike = { onEvent(CommunityEvent.OnPostLiked(post.id)) },
                 onComment = { onEvent(CommunityEvent.OnToggleComments(post.id)) },
                 onMenu = { onPostMenuClick(post) },
@@ -92,6 +97,11 @@ fun FriendsFeedContent(
                 onOwnCommentLongPress = { comment ->
                     onOwnCommentLongPress(post.id, comment)
                 },
+                onOwnPostLongPress = if (isOwnPost) {
+                    { onOwnPostLongPress(post) }
+                } else {
+                    null
+                },
                 currentUserId = currentUserId
             )
         }
@@ -103,6 +113,7 @@ fun FriendsFeedContent(
 fun FriendPostCard(
     post: FriendPost,
     isExpanded: Boolean,
+    isOwnPost: Boolean,
     onLike: () -> Unit,
     onComment: () -> Unit,
     onMenu: () -> Unit,
@@ -110,10 +121,23 @@ fun FriendPostCard(
     onAddComment: (String) -> Unit,
     onCommentUserClick: (PostComment) -> Unit,
     onOwnCommentLongPress: (PostComment) -> Unit,
+    onOwnPostLongPress: (() -> Unit)?,
     currentUserId: String?,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
+    val pressModifier = if (isOwnPost && onOwnPostLongPress != null) {
+        Modifier.pointerInput(Unit) {
+            detectTapGestures(
+                onLongPress = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onOwnPostLongPress()
+                }
+            )
+        }
+    } else {
+        Modifier
+    }
     val likeScale by animateFloatAsState(
         targetValue = if (post.isLiked) 1.1f else 1f,
         label = "likeScale"
@@ -129,6 +153,7 @@ fun FriendPostCard(
 
     Column(
         modifier = modifier
+            .then(pressModifier)
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
@@ -162,8 +187,13 @@ fun FriendPostCard(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val displayName = if (isOwnPost) {
+                            stringResource(id = R.string.community_comment_author_me)
+                        } else {
+                            post.friend.username
+                        }
                         Text(
-                            text = post.friend.username,
+                            text = displayName,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
@@ -413,7 +443,8 @@ private fun FriendsFeedPreview(
                 currentUserId = posts.firstOrNull()?.friend?.id,
                 onEvent = {},
                 onPostMenuClick = {},
-                onOwnCommentLongPress = { _, _ -> }
+                onOwnCommentLongPress = { _, _ -> },
+                onOwnPostLongPress = {}
             )
         }
     }

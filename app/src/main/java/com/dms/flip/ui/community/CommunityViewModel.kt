@@ -1,5 +1,7 @@
 package com.dms.flip.ui.community
 
+import android.util.Log
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
@@ -27,6 +29,7 @@ import com.dms.flip.domain.usecase.community.SearchUsersUseCase
 import com.dms.flip.domain.usecase.community.SendFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.ToggleLikeUseCase
 import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
+import com.dms.flip.domain.usecase.community.DeletePostUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -46,6 +49,7 @@ class CommunityViewModel @Inject constructor(
     private val toggleLikeUseCase: ToggleLikeUseCase,
     private val addCommentUseCase: AddCommentUseCase,
     private val deleteCommentUseCase: DeleteCommentUseCase,
+    private val deletePostUseCase: DeletePostUseCase,
     private val observeFriendsUseCase: ObserveFriendsUseCase,
     private val removeFriendUseCase: RemoveFriendUseCase,
     private val observePendingReceivedUseCase: ObservePendingReceivedUseCase,
@@ -103,6 +107,10 @@ class CommunityViewModel @Inject constructor(
             is CommunityEvent.OnAddUserFromSearch -> addUserFromSearch(event.userId)
             is CommunityEvent.OnRetryClicked -> refresh()
             is CommunityEvent.OnDeleteComment -> deleteComment(event.postId, event.commentId)
+            is CommunityEvent.OnDeletePost -> deletePost(event.postId)
+            is CommunityEvent.OnAcceptFriendRequestFromProfile ->
+                acceptFriendRequestFromProfile(event.userId)
+            is CommunityEvent.OnRemoveFriendFromProfile -> removeFriendFromProfile(event.userId)
             else -> Unit
         }
     }
@@ -250,6 +258,33 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
+    private fun deletePost(postId: String) {
+        val previousPosts = _uiState.value.friendsPosts
+        val previousExpanded = _uiState.value.expandedPostId
+
+        _uiState.update { state ->
+            state.copy(
+                friendsPosts = state.friendsPosts.filterNot { it.id == postId },
+                expandedPostId = state.expandedPostId.takeUnless { it == postId }
+            )
+        }
+
+        viewModelScope.launch {
+            when (val result = deletePostUseCase(postId)) {
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            friendsPosts = previousPosts,
+                            expandedPostId = previousExpanded,
+                            error = R.string.error_delete_post
+                        )
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
     private fun removeFriend(friend: Friend) {
         viewModelScope.launch {
             when (val result = removeFriendUseCase(friend.id)) {
@@ -257,6 +292,11 @@ class CommunityViewModel @Inject constructor(
                 else -> Unit
             }
         }
+    }
+
+    private fun removeFriendFromProfile(userId: String) {
+        val friend = _uiState.value.friends.firstOrNull { it.id == userId } ?: return
+        removeFriend(friend)
     }
 
     private fun addSuggestion(suggestion: FriendSuggestion) {
@@ -294,6 +334,12 @@ class CommunityViewModel @Inject constructor(
                 else -> Unit
             }
         }
+    }
+
+    private fun acceptFriendRequestFromProfile(userId: String) {
+        val request = _uiState.value.pendingRequests.firstOrNull { it.userId == userId }
+            ?: return
+        acceptFriendRequest(request)
     }
 
     private fun declineFriendRequest(request: FriendRequest) {
@@ -358,11 +404,16 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    private fun handleError(throwable: Throwable) {
+    private fun handleError(
+        throwable: Throwable,
+        @StringRes messageRes: Int = R.string.error_load_friends
+    ) {
+        // TODO TIMBER
+        Log.e("CommunityViewModel", "handleError: ", throwable)
         _uiState.update { state ->
             state.copy(
                 isLoading = false,
-                error = R.string.error_load_friends
+                error = messageRes
             )
         }
     }

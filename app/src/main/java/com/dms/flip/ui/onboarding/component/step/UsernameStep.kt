@@ -187,7 +187,6 @@ fun UsernameStep(
 
         AvatarPicker(
             avatarUrl = avatarUrl,
-            fallbackText = username.firstOrNull()?.toString() ?: "",
             size = 120.dp,
             onClick = { showAvatarSourceBottomSheet = true }
         )
@@ -208,6 +207,7 @@ fun UsernameStep(
                     username.isNotBlank() && !isCheckingUsername -> {
                         MaterialTheme.colorScheme.primary
                     }
+
                     else -> MaterialTheme.colorScheme.outline
                 },
                 unfocusedBorderColor = when {
@@ -234,6 +234,7 @@ fun UsernameStep(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+
                     usernameError != null -> {
                         Icon(
                             imageVector = Icons.Outlined.Error,
@@ -241,6 +242,7 @@ fun UsernameStep(
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
+
                     username.length >= ValidateUsernameFormatUseCase.MIN_LENGTH -> {
                         Icon(
                             imageVector = Icons.Outlined.CheckCircle,
@@ -260,6 +262,7 @@ fun UsernameStep(
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+
                         UsernameError.TOO_SHORT -> {
                             Text(
                                 text = stringResource(
@@ -269,6 +272,7 @@ fun UsernameStep(
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+
                         UsernameError.TOO_LONG -> {
                             Text(
                                 text = stringResource(
@@ -278,18 +282,21 @@ fun UsernameStep(
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+
                         UsernameError.INVALID_CHARACTERS -> {
                             Text(
                                 text = stringResource(R.string.error_username_invalid_characters),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+
                         UsernameError.ALREADY_TAKEN -> {
                             Text(
                                 text = stringResource(R.string.error_username_already_taken),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
+
                         null -> {
                             if (username.isNotBlank() && !isCheckingUsername) {
                                 Row(

@@ -12,17 +12,14 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 
@@ -38,104 +35,55 @@ import com.dms.flip.ui.util.LightDarkPreview
 fun AvatarPicker(
     modifier: Modifier = Modifier,
     avatarUrl: String? = null,
-    fallbackText: String = "",
     size: Dp = 120.dp,
     onClick: () -> Unit = {}
 ) {
+    // Avatar
     Box(
         modifier = modifier
             .size(size)
-            .clip(CircleShape)
-            .clickable(onClick = onClick)
-            .background(
-                color = if (avatarUrl == null) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    Color.Transparent
-                }
-            ),
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        when {
-            // Si une URL est fournie, afficher l'image
-            !avatarUrl.isNullOrBlank() -> {
-                GlideImage(
-                    model = avatarUrl,
-                    contentDescription = "Avatar",
-                    modifier = Modifier.size(size),
-                    contentScale = ContentScale.Crop
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            if (avatarUrl != null) {
+                CommunityAvatar(
+                    imageUrl = avatarUrl,
+                    fallbackText = "",
+                    textStyle = MaterialTheme.typography.headlineLarge,
+                    size = size
                 )
-                
-                // Overlay avec icône caméra
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(size * 0.3f)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Changer l'avatar",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(size * 0.18f)
-                    )
-                }
-            }
-            
-            // Si un texte fallback existe (initiale)
-            fallbackText.isNotBlank() -> {
-                Text(
-                    text = fallbackText.uppercase(),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                
-                // Overlay avec icône caméra
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(size * 0.3f)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Ajouter un avatar",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(size * 0.18f)
-                    )
-                }
-            }
-            
-            // Sinon, afficher l'icône par défaut
-            else -> {
+            } else {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Avatar par défaut",
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(size * 0.5f)
                 )
-                
-                // Overlay avec icône "ajouter"
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(size * 0.3f)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddAPhoto,
-                        contentDescription = "Ajouter un avatar",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(size * 0.18f)
-                    )
-                }
             }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomEnd)
+                .size(size * 0.3f)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.AddAPhoto,
+                contentDescription = "Ajouter un avatar",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(size * 0.18f)
+            )
         }
     }
 }
@@ -147,7 +95,6 @@ private fun AvatarPickerEmptyPreview() {
         Surface {
             AvatarPicker(
                 avatarUrl = null,
-                fallbackText = "",
                 size = 120.dp
             )
         }
@@ -161,7 +108,6 @@ private fun AvatarPickerWithInitialPreview() {
         Surface {
             AvatarPicker(
                 avatarUrl = null,
-                fallbackText = "M",
                 size = 120.dp
             )
         }

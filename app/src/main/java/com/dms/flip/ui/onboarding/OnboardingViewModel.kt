@@ -6,6 +6,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
+import com.dms.flip.domain.usecase.onboarding.InitOnboardingStatusUseCase
 import com.dms.flip.domain.usecase.onboarding.SaveOnboardingStatusUseCase
 import com.dms.flip.domain.usecase.pleasures.GetLocalPleasuresUseCase
 import com.dms.flip.domain.usecase.storage.UploadAvatarUseCase
@@ -30,6 +31,7 @@ import javax.inject.Inject
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val application: Application,
+    private val initOnboardingStatusUseCase: InitOnboardingStatusUseCase,
     private val saveOnboardingStatusUseCase: SaveOnboardingStatusUseCase,
     getLocalPleasuresUseCase: GetLocalPleasuresUseCase,
     private val validateUsernameFormatUseCase: ValidateUsernameFormatUseCase,
@@ -54,6 +56,8 @@ class OnboardingViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
+            initOnboardingStatusUseCase()
+
             usernameFlow
                 .debounce(500)
                 .distinctUntilChanged()
@@ -71,6 +75,7 @@ class OnboardingViewModel @Inject constructor(
 
                             if (isAvailable) null else UsernameError.ALREADY_TAKEN
                         }
+
                         is UsernameValidationResult.Invalid -> formatResult.error
                     }
                 }
@@ -116,6 +121,7 @@ class OnboardingViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(usernameError = result.error)
                         return@launch
                     }
+
                     is UsernameValidationResult.Valid -> {
                         _uiState.value = _uiState.value.copy(isCheckingUsername = true)
                         val isAvailable = try {
@@ -123,14 +129,16 @@ class OnboardingViewModel @Inject constructor(
                         } catch (e: Exception) {
                             _uiState.value = _uiState.value.copy(
                                 isCheckingUsername = false,
-                                error = e.message ?: application.getString(R.string.generic_error_message)
+                                error = e.message
+                                    ?: application.getString(R.string.generic_error_message)
                             )
                             return@launch
                         }
                         _uiState.value = _uiState.value.copy(isCheckingUsername = false)
 
                         if (!isAvailable) {
-                            _uiState.value = _uiState.value.copy(usernameError = UsernameError.ALREADY_TAKEN)
+                            _uiState.value =
+                                _uiState.value.copy(usernameError = UsernameError.ALREADY_TAKEN)
                             return@launch
                         }
                     }

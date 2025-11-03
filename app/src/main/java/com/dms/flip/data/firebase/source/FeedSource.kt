@@ -26,4 +26,6 @@ interface FeedSource {
     suspend fun isPostLiked(postId: String, uid: String): Boolean
 
     suspend fun deleteComment(postId: String, commentId: String, uid: String)
+
+    suspend fun deletePost(postId: String, uid: String)
 }

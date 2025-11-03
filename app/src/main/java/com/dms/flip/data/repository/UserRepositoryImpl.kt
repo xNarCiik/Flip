@@ -25,7 +25,7 @@ class UserRepositoryImpl @Inject constructor(
         private const val USERNAMES_COLLECTION = "usernames"
         private const val FIELD_USERNAME = "username"
         private const val FIELD_EMAIL = "email"
-        private const val FIELD_AVATAR_URL = "avatarUrl"
+        private const val FIELD_AVATAR_URL = "avatar_url"
         private const val FIELD_UID = "uid"
     }
 
@@ -42,12 +42,13 @@ class UserRepositoryImpl @Inject constructor(
             .document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    trySend(null)
                     return@addSnapshotListener
                 }
 
                 val userInfo = snapshot?.let {
                     UserInfo(
+                        id = userId, // TODO REPLACE BY username ?
                         username = it.getString(FIELD_USERNAME) ?: "",
                         email = it.getString(FIELD_EMAIL) ?: "",
                         avatarUrl = it.getString(FIELD_AVATAR_URL)

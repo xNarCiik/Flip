@@ -28,6 +28,19 @@ class OnboardingRepositoryImpl(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun initOnboardingStatus() {
+        val user = firebaseAuth.currentUser ?: return
+        val userDoc = firestore.collection("users").document(user.uid)
+
+        firestore.runBatch { batch ->
+            batch.set(
+                userDoc, mapOf(
+                    "onboarding_completed" to false
+                )
+            )
+        }.await()
+    }
+
     override suspend fun saveOnboardingStatus(
         username: String,
         avatarUrl: String?,
@@ -35,8 +48,12 @@ class OnboardingRepositoryImpl(
     ) {
         val user = firebaseAuth.currentUser ?: return
         val userDoc = firestore.collection("users").document(user.uid)
+        val usernamesCollection = firestore.collection("usernames")
 
         firestore.runBatch { batch ->
+            val usernameRef = usernamesCollection.document(username)
+            batch.set(usernameRef, mapOf("uid" to user.uid))
+
             batch.set(
                 userDoc, mapOf(
                     "username" to username,

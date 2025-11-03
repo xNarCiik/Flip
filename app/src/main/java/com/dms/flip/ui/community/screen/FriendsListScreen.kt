@@ -70,7 +70,7 @@ fun FriendsListScreen(
                         title = stringResource(id = R.string.community_empty_friends_title),
                         description = stringResource(id = R.string.community_empty_friends_description),
                         actionText = stringResource(id = R.string.community_empty_friends_action),
-                        onActionClick = { onEvent(CommunityEvent.OnInvitationsClicked) }
+                        onActionClick = { onEvent(CommunityEvent.OnSearchClicked) }
                     )
                 }
 
