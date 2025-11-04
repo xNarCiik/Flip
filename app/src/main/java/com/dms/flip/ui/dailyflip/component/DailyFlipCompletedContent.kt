@@ -77,8 +77,9 @@ fun DailyFlipCompletedContent(
 ) {
     val scrollState = rememberScrollState()
     var hasPlayed by rememberSaveable { mutableStateOf(false) }
-    var playAnimation by remember { mutableStateOf(false) }
-    var showContent by remember { mutableStateOf(false) }
+    var playAnimation by rememberSaveable { mutableStateOf(false) }
+    var showContent by rememberSaveable { mutableStateOf(false) }
+    var confettiOnce by rememberSaveable { mutableStateOf(false) }
 
     val checkmarkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.checkmark))
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
@@ -90,11 +91,14 @@ fun DailyFlipCompletedContent(
         speed = 0.7f
     )
 
-    LaunchedEffect(Unit) {
-        delay(200)
-        playAnimation = true
-        delay(600)
-        showContent = true
+    LaunchedEffect(hasPlayed) {
+        if (!hasPlayed) {
+            delay(200)
+            playAnimation = true
+            delay(600)
+            showContent = true
+            hasPlayed = true
+        }
     }
 
     val categoryColor = completedPleasure?.category?.iconTint ?: MaterialTheme.colorScheme.primary
@@ -139,19 +143,22 @@ fun DailyFlipCompletedContent(
                     )
             )
 
-            // Animation check
             LottieAnimation(
                 composition = checkmarkComposition,
-                progress = { checkmarkProgress },
+                progress = { if (hasPlayed) 1f else checkmarkProgress },
                 modifier = Modifier.size(110.dp)
             )
 
-            if (hasPlayed || checkmarkProgress > 0.9f) {
+            if (playAnimation && !confettiOnce && checkmarkProgress > 0.9f) {
                 LottieAnimation(
                     composition = confettiComposition,
                     iterations = 1,
                     modifier = Modifier.fillMaxSize()
                 )
+
+                LaunchedEffect(Unit) {
+                    confettiOnce = true
+                }
             }
         }
 
@@ -356,10 +363,17 @@ private fun NextDrawInfoCard() {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                RoundedCornerShape(16.dp)
+            )
             .padding(14.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
                     .size(42.dp)
