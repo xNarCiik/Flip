@@ -40,8 +40,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dms.flip.R
+import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.ui.component.LoadingState
-import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
 import com.dms.flip.ui.history.component.WeekNavigationHeader
 import com.dms.flip.ui.history.component.WeeklyPleasuresList
 import com.dms.flip.ui.history.component.WeeklyStatsGrid
@@ -54,7 +54,8 @@ fun HistoryScreen(
     modifier: Modifier = Modifier,
     uiState: HistoryUiState,
     onEvent: (HistoryEvent) -> Unit,
-    navigateToDailyFlip: () -> Unit
+    navigateToDailyFlip: () -> Unit,
+    navigateToPleasureDetail: (PleasureHistory) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val hasResumedOnce = remember { mutableStateOf(false) }
@@ -74,18 +75,6 @@ fun HistoryScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Show pleasure detail screen if requested
-    if (uiState.showPleasureDetail && uiState.selectedPleasureHistory != null) {
-        val pleasure = uiState.selectedPleasureHistory.toPleasureOrNull()
-        pleasure?.let {
-            PleasureDetailScreen(
-                pleasure = it,
-                onBackClick = { onEvent(HistoryEvent.OnPleasureDetailDismissed) }
-            )
-            return
-        }
-    }
-
     Box(modifier = modifier.fillMaxSize()) {
         HistoryContent(
             weeklyDays = uiState.weeklyDays,
@@ -96,7 +85,8 @@ fun HistoryScreen(
             isLoading = uiState.isLoading,
             error = uiState.error,
             onEvent = onEvent,
-            navigateToDailyFlip = navigateToDailyFlip
+            navigateToDailyFlip = navigateToDailyFlip,
+            navigateToPleasureDetail = navigateToPleasureDetail
         )
     }
 }
@@ -112,7 +102,8 @@ private fun HistoryContent(
     isLoading: Boolean,
     error: String?,
     onEvent: (HistoryEvent) -> Unit,
-    navigateToDailyFlip: () -> Unit
+    navigateToDailyFlip: () -> Unit,
+    navigateToPleasureDetail: (PleasureHistory) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -176,14 +167,18 @@ private fun HistoryContent(
                     ) {
                         WeeklyPleasuresList(
                             items = weeklyDays,
-                            onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                            onCardClicked = { item ->
+                                navigateToPleasureDetail(item)
+                            },
                             onDiscoverTodayClicked = navigateToDailyFlip
                         )
                     }
                 } else {
                     WeeklyPleasuresList(
                         items = weeklyDays,
-                        onCardClicked = { item -> onEvent(HistoryEvent.OnCardClicked(item)) },
+                        onCardClicked = { item ->
+                            navigateToPleasureDetail(item)
+                        },
                         onDiscoverTodayClicked = navigateToDailyFlip
                     )
                 }
@@ -245,7 +240,8 @@ private fun HistoryScreenPreview() {
             HistoryScreen(
                 uiState = HistoryUiState(weeklyDays = previewWeeklyDays),
                 onEvent = {},
-                navigateToDailyFlip = {}
+                navigateToDailyFlip = {},
+                navigateToPleasureDetail = {} // Add empty lambda for preview
             )
         }
     }

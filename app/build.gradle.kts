@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlin.parcelize)
     kotlin("kapt")
 }
 
@@ -63,6 +64,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icon)
     implementation(libs.androidx.navigation)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.dagger.hilt)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.firebase.storage)
@@ -74,7 +77,7 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
+    implementation(libs.kotlinx.collections.immutable)
 
     // Datastore
     implementation(libs.androidx.datastore.preferences)

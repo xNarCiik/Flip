@@ -1,6 +1,6 @@
 package com.dms.flip.domain.model
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 
 data class Pleasure(
     val id: String,

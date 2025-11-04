@@ -2,7 +2,7 @@ package com.dms.flip.data.local
 
 import android.content.res.Resources
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import javax.inject.Inject
 

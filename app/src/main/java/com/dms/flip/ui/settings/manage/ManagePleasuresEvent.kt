@@ -1,6 +1,6 @@
 package com.dms.flip.ui.settings.manage
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 
 sealed interface ManagePleasuresEvent {

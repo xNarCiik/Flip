@@ -4,7 +4,7 @@ import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.usecase.pleasures.AddPleasureUseCase
 import com.dms.flip.domain.usecase.pleasures.DeletePleasuresUseCase

@@ -2,7 +2,7 @@ package com.dms.flip.ui.settings.manage
 
 import android.content.res.Resources
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.usecase.pleasures.AddPleasureUseCase
 import com.dms.flip.domain.usecase.pleasures.DeletePleasuresUseCase

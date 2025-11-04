@@ -1,9 +1,11 @@
 package com.dms.flip.ui.navigation
 
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,12 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.ui.community.CommunityNavHost
 import com.dms.flip.ui.dailyflip.DailyFlipScreen
 import com.dms.flip.ui.dailyflip.DailyFlipViewModel
+import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
 import com.dms.flip.ui.history.HistoryScreen
 import com.dms.flip.ui.history.HistoryViewModel
 import com.dms.flip.ui.login.LoginScreen
@@ -36,6 +42,9 @@ import com.dms.flip.ui.settings.manage.ManagePleasuresViewModel
 import com.dms.flip.ui.settings.statistics.StatisticsScreen
 import com.dms.flip.ui.settings.statistics.StatisticsViewModel
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlin.jvm.java
+import kotlin.reflect.typeOf
 
 @Serializable
 object RootRoute
@@ -58,6 +67,9 @@ object ManagePleasuresRoute
 @Serializable
 object StatisticsRoute
 
+@Serializable
+data class PleasureDetailRoute(val pleasureHistory: PleasureHistory)
+
 private val navRouteOrder = listOf(
     WeeklyRoute::class.qualifiedName,
     DailyPleasureRoute::class.qualifiedName,
@@ -66,6 +78,32 @@ private val navRouteOrder = listOf(
     .toMap()
 
 private enum class NavDirection { Forward, Backward }
+
+
+val PleasureHistoryType = object : NavType<PleasureHistory>(
+    isNullableAllowed = false
+) {
+    override fun get(bundle: Bundle, key: String): PleasureHistory? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getParcelable(key, PleasureHistory::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getParcelable(key)
+        }
+    }
+
+    override fun parseValue(value: String): PleasureHistory {
+        return Json.decodeFromString<PleasureHistory>(value)
+    }
+
+    override fun serializeAsValue(value: PleasureHistory): String {
+        return Uri.encode(Json.encodeToString(value))
+    }
+
+    override fun put(bundle: Bundle, key: String, value: PleasureHistory) {
+        bundle.putParcelable(key, value)
+    }
+}
 
 private fun navDirection(
     initialRoute: String?,
@@ -144,7 +182,8 @@ fun NavGraph(
         enterTransition = { navEnterTransition() },
         exitTransition = { navExitTransition() },
         popEnterTransition = { navEnterTransition() },
-        popExitTransition = { navExitTransition() }
+        popExitTransition = { navExitTransition() },
+        typeMap = mapOf(typeOf<PleasureHistory>() to PleasureHistoryType)
     ) {
         composable<RootRoute> {
             when (rootNavigationState) {
@@ -178,7 +217,12 @@ fun NavGraph(
                 uiState = dailyPleasureUiState,
                 onEvent = viewModel::onEvent,
                 navigateToManagePleasures = { navController.navigate(ManagePleasuresRoute) },
-                navigateToSettings = { navController.navigate(SettingsRoute) }
+                navigateToSettings = { navController.navigate(SettingsRoute) },
+                navigateToPleasureDetail = { pleasureHistory ->
+                    navController.navigate(
+                        PleasureDetailRoute(pleasureHistory)
+                    )
+                }
             )
         }
 
@@ -190,7 +234,12 @@ fun NavGraph(
                 modifier = modifierWithPaddingValues,
                 uiState = historyState,
                 onEvent = viewModel::onEvent,
-                navigateToDailyFlip = { navigateSingleTop(DailyPleasureRoute) }
+                navigateToDailyFlip = { navigateSingleTop(DailyPleasureRoute) },
+                navigateToPleasureDetail = { pleasureHistory ->
+                    navController.navigate(
+                        PleasureDetailRoute(pleasureHistory)
+                    )
+                }
             )
         }
 
@@ -232,6 +281,18 @@ fun NavGraph(
                 uiState = uiState,
                 onEvent = viewModel::onEvent,
                 onNavigateBack = navController::popBackStack
+            )
+        }
+
+        composable<PleasureDetailRoute>(
+            typeMap = mapOf(typeOf<PleasureHistory>() to PleasureHistoryType)
+        ) { backStackEntry ->
+            val pleasureHistory = backStackEntry.toRoute<PleasureDetailRoute>().pleasureHistory
+
+            PleasureDetailScreen(
+                modifier = modifierWithPaddingValues,
+                pleasureHistory = pleasureHistory,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

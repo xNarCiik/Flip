@@ -59,13 +59,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.RenderMode
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.label
 import com.dms.flip.ui.dailyflip.DailyFlipEvent
 import com.dms.flip.ui.dailyflip.DailyFlipScreenState
 import com.dms.flip.ui.theme.FlipTheme

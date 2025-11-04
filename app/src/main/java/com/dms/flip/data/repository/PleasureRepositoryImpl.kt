@@ -1,7 +1,7 @@
 package com.dms.flip.data.repository
 
 import com.dms.flip.data.firebase.mapper.toPleasureHistoryDto
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.data.model.PleasureDto
 import com.dms.flip.data.model.toDto
 import com.dms.flip.data.model.toFirestoreCreateData

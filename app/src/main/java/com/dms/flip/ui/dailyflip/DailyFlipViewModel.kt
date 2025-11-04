@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.usecase.GetRandomDailyMessageUseCase
 import com.dms.flip.domain.usecase.community.ShareMomentUseCase
 import com.dms.flip.domain.usecase.dailypleasure.GetRandomPleasureUseCase
@@ -118,8 +118,6 @@ class DailyFlipViewModel @Inject constructor(
             is DailyFlipEvent.OnSharePhotoSelected -> handleSharePhotoSelected(event.uri)
             is DailyFlipEvent.OnSharePhotoRemoved -> handleSharePhotoRemoved()
             is DailyFlipEvent.OnShareSubmit -> handleShareSubmit()
-            is DailyFlipEvent.OnPleasureDetailClicked -> handlePleasureDetailClicked()
-            is DailyFlipEvent.OnPleasureDetailDismissed -> handlePleasureDetailDismissed()
         }
     }
 
@@ -271,18 +269,6 @@ class DailyFlipViewModel @Inject constructor(
                     showShareBottomSheet = true // Reopen bottom sheet on error
                 )
             }
-        }
-    }
-
-    private fun handlePleasureDetailClicked() {
-        _uiState.update {
-            it.copy(showPleasureDetail = true)
-        }
-    }
-
-    private fun handlePleasureDetailDismissed() {
-        _uiState.update {
-            it.copy(showPleasureDetail = false)
         }
     }
 

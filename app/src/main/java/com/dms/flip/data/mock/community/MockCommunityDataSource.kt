@@ -1,6 +1,6 @@
 package com.dms.flip.data.mock.community
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendPleasure

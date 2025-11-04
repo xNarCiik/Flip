@@ -33,6 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dms.flip.R
+import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.FlipTopBar
@@ -41,11 +43,11 @@ import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.dailyflip.component.DailyFlipCompletedContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipSetupContent
-import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
 import com.dms.flip.ui.dailyflip.component.ShareLoadingDialog
 import com.dms.flip.ui.dailyflip.component.ShareMomentBottomSheet
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +56,8 @@ fun DailyFlipScreen(
     uiState: DailyFlipUiState,
     onEvent: (DailyFlipEvent) -> Unit = {},
     navigateToManagePleasures: () -> Unit = {},
-    navigateToSettings: () -> Unit = {}
+    navigateToSettings: () -> Unit = {},
+    navigateToPleasureDetail: (PleasureHistory) -> Unit = {}
 ) {
     val context = LocalContext.current
     val screenState = uiState.screenState
@@ -73,17 +76,6 @@ fun DailyFlipScreen(
                 message = context.getString(R.string.share_success)
             )
             onEvent(DailyFlipEvent.OnShareSnackbarShown)
-        }
-    }
-
-    // Show pleasure detail screen if requested
-    if (uiState.showPleasureDetail && screenState is DailyFlipScreenState.Completed) {
-        screenState.dailyPleasure?.let { pleasure ->
-            PleasureDetailScreen(
-                pleasure = pleasure,
-                onBackClick = { onEvent(DailyFlipEvent.OnPleasureDetailDismissed) }
-            )
-            return
         }
     }
 
@@ -123,7 +115,14 @@ fun DailyFlipScreen(
                         modifier = Modifier.fillMaxSize(),
                         completedPleasure = screenState.dailyPleasure,
                         onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) },
-                        onPleasureClick = { onEvent(DailyFlipEvent.OnPleasureDetailClicked) }
+                        onPleasureClick = {
+                            screenState.dailyPleasure?.let {
+                                navigateToPleasureDetail(
+                                    screenState.dailyPleasure.toPleasureHistory("")
+                                        .copy(completedAt = Date().time)
+                                )
+                            }
+                        }
                     )
                 }
 

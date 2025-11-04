@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.community.label
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.theme.flipGradients
 import com.dms.flip.ui.util.LightDarkPreview

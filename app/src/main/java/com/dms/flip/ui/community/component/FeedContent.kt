@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
@@ -67,9 +66,10 @@ import androidx.compose.ui.window.Dialog
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview

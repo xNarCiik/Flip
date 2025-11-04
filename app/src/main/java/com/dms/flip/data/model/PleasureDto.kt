@@ -1,6 +1,7 @@
 package com.dms.flip.data.model
 
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.community.PleasureCategory
 
 data class PleasureDto(
     val title: String = "",

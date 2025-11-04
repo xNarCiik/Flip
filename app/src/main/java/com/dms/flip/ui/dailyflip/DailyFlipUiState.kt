@@ -1,7 +1,7 @@
 package com.dms.flip.ui.dailyflip
 
 import android.net.Uri
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.UserInfo
 
@@ -14,8 +14,7 @@ data class DailyFlipUiState(
     val sharePhotoUri: Uri? = null,
     val isSharing: Boolean = false,
     val shareError: String? = null,
-    val lastShareCompleted: Boolean = false,
-    val showPleasureDetail: Boolean = false
+    val lastShareCompleted: Boolean = false
 )
 
 sealed interface DailyFlipScreenState {
@@ -47,6 +46,4 @@ sealed interface DailyFlipEvent {
     data class OnSharePhotoSelected(val uri: Uri) : DailyFlipEvent
     data object OnSharePhotoRemoved : DailyFlipEvent
     data object OnShareSubmit : DailyFlipEvent
-    data object OnPleasureDetailClicked : DailyFlipEvent
-    data object OnPleasureDetailDismissed : DailyFlipEvent
 }

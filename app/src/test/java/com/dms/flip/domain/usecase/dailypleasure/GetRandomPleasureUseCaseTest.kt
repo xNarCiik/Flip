@@ -1,6 +1,6 @@
 package com.dms.flip.domain.usecase.dailypleasure
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.repository.PleasureRepository
 import com.google.common.truth.Truth.assertThat

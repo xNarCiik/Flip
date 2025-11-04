@@ -63,6 +63,8 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewDailyPleasure
@@ -76,10 +78,13 @@ fun DailyFlipCompletedContent(
     onPleasureClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
-    var hasPlayed by rememberSaveable { mutableStateOf(false) }
-    var playAnimation by rememberSaveable { mutableStateOf(false) }
-    var showContent by rememberSaveable { mutableStateOf(false) }
-    var confettiOnce by rememberSaveable { mutableStateOf(false) }
+
+    var playAnimation by rememberSaveable { mutableStateOf(false) } // Pour le checkmark et le contenu
+    var showContent by rememberSaveable { mutableStateOf(false) }   // Pour le contenu textuel/cartes
+    var hasPlayedConfetti by rememberSaveable { mutableStateOf(false) } // Pour savoir si le confetti a déjà été joué
+
+    // État local (non sauvegardé) pour déclencher l'animation confetti
+    var playConfetti by remember { mutableStateOf(false) }
 
     val checkmarkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.checkmark))
     val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
@@ -91,13 +96,33 @@ fun DailyFlipCompletedContent(
         speed = 0.7f
     )
 
-    LaunchedEffect(hasPlayed) {
-        if (!hasPlayed) {
-            delay(200)
-            playAnimation = true
-            delay(600)
+    val confettiProgress by animateLottieCompositionAsState(
+        composition = confettiComposition,
+        isPlaying = playConfetti,
+        restartOnPlay = false,
+        speed = 1.0f
+    )
+
+    // Logique de déclenchement initiale et de navigation
+    LaunchedEffect(Unit) { // Se lance une seule fois à la composition initiale
+        if (hasPlayedConfetti) {
+            // Si l'animation confetti a déjà joué, on montre tout le contenu et le checkmark à la fin
             showContent = true
-            hasPlayed = true
+            playAnimation = true // Maintient l'animation du checkmark à la fin
+        } else if (!playAnimation) {
+            // Première entrée : lance l'animation du checkmark
+            delay(200) // Petit délai avant de commencer le checkmark
+            playAnimation = true
+            showContent = true // Commence à montrer le contenu textuel/cartes
+        }
+    }
+
+    // Effet pour écouter la fin de l'animation "checkmark" et lancer "confetti"
+    LaunchedEffect(checkmarkProgress) {
+        // Déclenche les confettis si le checkmark est presque fini ET que les confettis n'ont pas encore joués
+        if (checkmarkProgress > 0.95f && !hasPlayedConfetti) {
+            playConfetti = true
+            hasPlayedConfetti = true // Marque les confettis comme joués
         }
     }
 
@@ -143,22 +168,24 @@ fun DailyFlipCompletedContent(
                     )
             )
 
+            // Animation Checkmark
             LottieAnimation(
                 composition = checkmarkComposition,
-                progress = { if (hasPlayed) 1f else checkmarkProgress },
+                // Si l'anim a déjà joué, on la met à 1f (fin) pour qu'elle reste affichée
+                progress = { if (hasPlayedConfetti) 1f else checkmarkProgress },
                 modifier = Modifier.size(110.dp)
             )
 
-            if (playAnimation && !confettiOnce && checkmarkProgress > 0.9f) {
+            // Animation Confetti, affichée seulement quand playConfetti est vrai
+            this@Column.AnimatedVisibility(
+                visible = playConfetti, // N'affiche le composable Lottie que si on doit jouer le confetti
+                modifier = Modifier.fillMaxSize()
+            ) {
                 LottieAnimation(
                     composition = confettiComposition,
-                    iterations = 1,
+                    progress = { confettiProgress },
                     modifier = Modifier.fillMaxSize()
                 )
-
-                LaunchedEffect(Unit) {
-                    confettiOnce = true
-                }
             }
         }
 

@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,6 +61,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.dailyflip.MAX_SHARE_COMMENT_LENGTH
 
 @OptIn(ExperimentalMaterial3Api::class)

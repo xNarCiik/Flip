@@ -1,6 +1,6 @@
 package com.dms.flip.domain.repository
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
 import kotlinx.coroutines.flow.Flow

@@ -8,13 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -47,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dms.flip.R
 import com.dms.flip.domain.model.PleasureHistory
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.history.WeeklyDay
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.theme.flipGradients
@@ -169,7 +168,7 @@ private fun PleasureInfoCard(
     val historyEntry = weeklyDay.historyEntry ?: return
     val isCompleted = historyEntry.completed
     val category = historyEntry.pleasureCategory
-    val categoryColor = category?.iconTint ?: MaterialTheme.colorScheme.primary
+    val categoryColor = category.iconTint
 
     Box(
         modifier = Modifier
@@ -216,14 +215,12 @@ private fun PleasureInfoCard(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                category?.let {
-                    Icon(
-                        imageVector = category.icon,
-                        contentDescription = null,
-                        tint = categoryColor,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                Icon(
+                    imageVector = category.icon,
+                    contentDescription = null,
+                    tint = categoryColor,
+                    modifier = Modifier.size(28.dp)
+                )
             }
 
             // Contenu texte

@@ -2,6 +2,7 @@ package com.dms.flip.data.model
 
 import androidx.annotation.Keep
 import com.dms.flip.domain.model.PleasureHistory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.ServerTimestamp
@@ -26,7 +27,7 @@ data class PleasureHistoryDto(
         return PleasureHistory(
             id = id,
             pleasureTitle = pleasureTitle,
-            pleasureCategory = categoryEnum,
+            pleasureCategory = categoryEnum ?: PleasureCategory.OTHER,
             pleasureDescription = pleasureDescription,
             dateDrawn = dateDrawn?.time ?: 0L,
             completedAt = completedAt?.time,

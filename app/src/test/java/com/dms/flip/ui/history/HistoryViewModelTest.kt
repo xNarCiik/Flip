@@ -1,6 +1,6 @@
 package com.dms.flip.ui.history
 
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.usecase.weekly.GetWeeklyHistoryUseCase
 import com.dms.flip.testing.MainDispatcherRule

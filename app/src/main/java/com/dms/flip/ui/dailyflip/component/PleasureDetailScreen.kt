@@ -17,26 +17,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +47,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
-import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.model.PleasureHistory
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
+import com.dms.flip.domain.model.community.label
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewDailyPleasure
@@ -63,12 +59,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PleasureDetailScreen(
-    pleasure: Pleasure,
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pleasureHistory: PleasureHistory,
+    onNavigateBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var showContent by remember { mutableStateOf(false) }
@@ -78,121 +73,95 @@ fun PleasureDetailScreen(
         showContent = true
     }
 
-    val categoryColor = pleasure.category.iconTint
+    val categoryColor = pleasureHistory.pleasureCategory.iconTint
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.pleasure_detail_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Hero section with icon
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
+                    scaleIn(
+                        initialScale = 0.8f,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
+        ) {
+            HeroSection(
+                pleasureHistory = pleasureHistory,
+                categoryColor = categoryColor
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+
+        // Information cards
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(
+                spring(
+                    stiffness = Spring.StiffnessMediumLow,
+                    dampingRatio = Spring.DampingRatioMediumBouncy
+                )
+            ) + scaleIn(
+                initialScale = 0.9f,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow,
+                    dampingRatio = Spring.DampingRatioMediumBouncy
+                )
+            )
         ) {
-            // Hero section with icon
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
-                        scaleIn(
-                            initialScale = 0.8f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                        )
-            ) {
-                HeroSection(
-                    pleasure = pleasure,
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                InfoCard(
+                    icon = Icons.Default.Title,
+                    label = stringResource(R.string.pleasure_detail_title_label),
+                    value = pleasureHistory.pleasureTitle ?: "",
+                    categoryColor = categoryColor
+                )
+
+                InfoCard(
+                    icon = Icons.Default.Description,
+                    label = stringResource(R.string.pleasure_detail_description_label),
+                    value = pleasureHistory.pleasureDescription ?: "",
+                    categoryColor = categoryColor
+                )
+
+                InfoCard(
+                    icon = Icons.Default.Category,
+                    label = stringResource(R.string.pleasure_detail_category_label),
+                    value = stringResource(pleasureHistory.pleasureCategory.label),
+                    categoryColor = categoryColor
+                )
+
+                InfoCard(
+                    icon = Icons.Default.Event,
+                    label = stringResource(R.string.pleasure_detail_completed_date_label),
+                    value = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+                        .format(Date()), // TODO: Use actual completedAt from pleasure
                     categoryColor = categoryColor
                 )
             }
+        }
 
-            // Information cards
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(
-                    spring(
-                        stiffness = Spring.StiffnessMediumLow,
-                        dampingRatio = Spring.DampingRatioMediumBouncy
+        // Bottom decorative element
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(spring(stiffness = Spring.StiffnessLow)) +
+                    scaleIn(
+                        initialScale = 0.95f,
+                        animationSpec = spring(stiffness = Spring.StiffnessLow)
                     )
-                ) + scaleIn(
-                    initialScale = 0.9f,
-                    animationSpec = spring(
-                        stiffness = Spring.StiffnessMediumLow,
-                        dampingRatio = Spring.DampingRatioMediumBouncy
-                    )
-                )
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    InfoCard(
-                        icon = Icons.Default.Title,
-                        label = stringResource(R.string.pleasure_detail_title_label),
-                        value = pleasure.title,
-                        categoryColor = categoryColor
-                    )
-
-                    InfoCard(
-                        icon = Icons.Default.Description,
-                        label = stringResource(R.string.pleasure_detail_description_label),
-                        value = pleasure.description,
-                        categoryColor = categoryColor
-                    )
-
-                    InfoCard(
-                        icon = Icons.Default.Category,
-                        label = stringResource(R.string.pleasure_detail_category_label),
-                        value = stringResource(pleasure.category.label),
-                        categoryColor = categoryColor
-                    )
-
-                    InfoCard(
-                        icon = Icons.Default.Event,
-                        label = stringResource(R.string.pleasure_detail_completed_date_label),
-                        value = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-                            .format(Date()),
-                        categoryColor = categoryColor
-                    )
-                }
-            }
-
-            // Bottom decorative element
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(spring(stiffness = Spring.StiffnessLow)) +
-                        scaleIn(initialScale = 0.95f, animationSpec = spring(stiffness = Spring.StiffnessLow))
-            ) {
-                DecorativeQuote(categoryColor = categoryColor)
-            }
+        ) {
+            DecorativeQuote(categoryColor = categoryColor)
         }
     }
 }
 
 @Composable
 private fun HeroSection(
-    pleasure: Pleasure,
+    pleasureHistory: PleasureHistory,
     categoryColor: Color
 ) {
     Column(
@@ -215,13 +184,13 @@ private fun HeroSection(
                         colors = listOf(
                             categoryColor.copy(alpha = 0.3f),
                             categoryColor.copy(alpha = 0.1f)
-                        )
+                        ) + listOf(Color.Transparent)
                     )
                 ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = pleasure.category.icon,
+                imageVector = pleasureHistory.pleasureCategory.icon,
                 contentDescription = null,
                 tint = categoryColor,
                 modifier = Modifier.size(70.dp)
@@ -230,7 +199,7 @@ private fun HeroSection(
 
         // Title
         Text(
-            text = pleasure.title,
+            text = pleasureHistory.pleasureTitle ?: "",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -318,7 +287,7 @@ private fun DecorativeQuote(
                     colors = listOf(
                         categoryColor.copy(alpha = 0.1f),
                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    )
+                    ) + listOf(Color.Transparent) // Add transparent color to fill the gradient
                 )
             )
             .border(
@@ -354,8 +323,8 @@ private fun PleasureDetailScreenPreview() {
     FlipTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PleasureDetailScreen(
-                pleasure = previewDailyPleasure,
-                onBackClick = {}
+                pleasureHistory = previewDailyPleasure.toPleasureHistory(""),
+                onNavigateBack = {}
             )
         }
     }

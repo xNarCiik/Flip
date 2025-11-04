@@ -1,6 +1,5 @@
 package com.dms.flip.data.firebase.mapper
 
-import android.R.attr.handle
 import com.dms.flip.data.firebase.dto.CommentDto
 import com.dms.flip.data.firebase.dto.FriendDto
 import com.dms.flip.data.firebase.dto.PostDto
@@ -8,12 +7,12 @@ import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RecentActivityDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.dto.SuggestionDto
-import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity

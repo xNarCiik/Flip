@@ -37,6 +37,8 @@ import com.dms.flip.R
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.RelationshipStatus
+import com.dms.flip.domain.model.community.icon
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.community.component.CommunityAvatar

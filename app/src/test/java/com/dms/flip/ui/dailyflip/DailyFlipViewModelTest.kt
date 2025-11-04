@@ -2,7 +2,7 @@ package com.dms.flip.ui.dailyflip
 
 import android.content.res.Resources
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.model.UserInfo

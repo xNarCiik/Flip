@@ -2,7 +2,7 @@ package com.dms.flip.ui.util
 
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
-import com.dms.flip.data.model.PleasureCategory
+import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.ui.community.CommunityUiState
