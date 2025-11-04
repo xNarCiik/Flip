@@ -96,7 +96,7 @@ class FirestoreFeedSource @Inject constructor(
             val increment = if (like) 1 else -1
             if (like) transaction.set(likesCollection.document(uid), mapOf("liked" to true))
             else transaction.delete(likesCollection.document(uid))
-            transaction.update(postRef, "likes_count", FieldValue.increment(increment.toLong()))
+            transaction.update(postRef, "likeCount", FieldValue.increment(increment.toLong()))
         }.await()
     }
 
@@ -107,7 +107,7 @@ class FirestoreFeedSource @Inject constructor(
         val doc = commentsCollection.document()
         doc.set(comment).await()
         firestore.collection("posts").document(postId)
-            .update("comments_count", FieldValue.increment(1))
+            .update("commentsCount", FieldValue.increment(1))
             .await()
         return doc.id to comment
     }
@@ -156,7 +156,7 @@ class FirestoreFeedSource @Inject constructor(
 
         commentRef.delete().await()
         firestore.collection("posts").document(postId)
-            .update("comments_count", FieldValue.increment(-1))
+            .update("commentsCount", FieldValue.increment(-1))
             .await()
     }
 }

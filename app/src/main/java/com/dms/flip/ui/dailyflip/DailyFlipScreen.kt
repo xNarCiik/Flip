@@ -1,16 +1,12 @@
 package com.dms.flip.ui.dailyflip
 
-import android.R.attr.label
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,19 +15,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dms.flip.R
-import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.FlipTopBar
@@ -40,11 +41,11 @@ import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.dailyflip.component.DailyFlipCompletedContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipSetupContent
+import com.dms.flip.ui.dailyflip.component.ShareMomentBottomSheet
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
-import com.dms.flip.ui.util.previewDailyPleasure
-import com.google.android.play.integrity.internal.u
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyFlipScreen(
     modifier: Modifier = Modifier,
@@ -53,57 +54,104 @@ fun DailyFlipScreen(
     navigateToManagePleasures: () -> Unit = {},
     navigateToSettings: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val screenState = uiState.screenState
     val avatarFallback = uiState.userInfo?.username?.firstOrNull()?.uppercase() ?: "?"
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        // TopBar
-        FlipTopBar(
-            title = stringResource(R.string.app_name),
-            endTopBarIcons = listOf(
-                TopBarIcon(
-                    contentDescription = stringResource(R.string.settings_title),
-                    onClick = navigateToSettings,
-                    customContent = {
-                        CommunityAvatar(
-                            imageUrl = uiState.userInfo?.avatarUrl,
-                            fallbackText = avatarFallback,
-                            size = 40.dp
-                        )
-                    }
+    LaunchedEffect(uiState.isSharing, uiState.shareError, uiState.showShareBottomSheet) {
+        val justSharedSuccessfully =
+            !uiState.isSharing &&
+                    !uiState.showShareBottomSheet &&
+                    uiState.shareError == null &&
+                    uiState.shareComment.isEmpty() && uiState.lastShareCompleted
+
+        if (justSharedSuccessfully) {
+            snackbarHostState.showSnackbar(
+                message = context.getString(R.string.share_success)
+            )
+            // Remet le flag à false
+            onEvent(DailyFlipEvent.OnShareSnackbarShown)
+        }
+    }
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // TopBar
+            FlipTopBar(
+                title = stringResource(R.string.app_name),
+                endTopBarIcons = listOf(
+                    TopBarIcon(
+                        contentDescription = stringResource(R.string.settings_title),
+                        onClick = navigateToSettings,
+                        customContent = {
+                            CommunityAvatar(
+                                imageUrl = uiState.userInfo?.avatarUrl,
+                                fallbackText = avatarFallback,
+                                size = 40.dp
+                            )
+                        }
+                    )
                 )
             )
-        )
 
-        when (screenState) {
-            is DailyFlipScreenState.Error -> {
-                ErrorState(message = uiState.screenState.message) {
-                    onEvent(DailyFlipEvent.Reload)
+            when (screenState) {
+                is DailyFlipScreenState.Error -> {
+                    ErrorState(message = uiState.screenState.message) {
+                        onEvent(DailyFlipEvent.Reload)
+                    }
+                }
+
+                is DailyFlipScreenState.Loading -> {
+                    LoadingState(modifier = Modifier.fillMaxSize())
+                }
+
+                is DailyFlipScreenState.Completed -> {
+                    DailyFlipCompletedContent(
+                        modifier = Modifier.fillMaxSize(),
+                        onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) }  // ✅ AJOUT
+                    )
+                }
+
+                else -> {
+                    ContentWithHeader(
+                        uiState = uiState,
+                        onEvent = onEvent,
+                        navigateToManagePleasures = navigateToManagePleasures
+                    )
                 }
             }
-
-            is DailyFlipScreenState.Loading -> {
-                LoadingState(modifier = Modifier.fillMaxSize())
-            }
-
-            is DailyFlipScreenState.Completed -> {
-                DailyFlipCompletedContent(modifier = Modifier.fillMaxSize())
-            }
-
-            else -> {
-                ContentWithHeader(
-                    uiState = uiState,
-                    onEvent = onEvent,
-                    navigateToManagePleasures = navigateToManagePleasures
-                )
-            }
         }
+
+        if (screenState is DailyFlipScreenState.Completed) {
+            ShareMomentBottomSheet(
+                isVisible = uiState.showShareBottomSheet,
+                pleasure = screenState.dailyPleasure,
+                comment = uiState.shareComment,
+                photoUri = uiState.sharePhotoUri,
+                isSharing = uiState.isSharing,
+                error = uiState.shareError,
+                onDismiss = { onEvent(DailyFlipEvent.OnShareDismissed) },
+                onCommentChange = { onEvent(DailyFlipEvent.OnShareCommentChanged(it)) },
+                onPhotoSelected = { onEvent(DailyFlipEvent.OnSharePhotoSelected(it)) },
+                onPhotoRemoved = { onEvent(DailyFlipEvent.OnSharePhotoRemoved) },
+                onSubmit = { onEvent(DailyFlipEvent.OnShareSubmit) }
+            )
+        }
+
+        // Snackbar
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
     }
 }
 
 @Composable
 private fun ContentWithHeader(
-    modifier: Modifier = Modifier, uiState: DailyFlipUiState,
+    modifier: Modifier = Modifier,
+    uiState: DailyFlipUiState,
     onEvent: (DailyFlipEvent) -> Unit = {},
     navigateToManagePleasures: () -> Unit = {}
 ) {
@@ -213,49 +261,12 @@ fun DailyFlipSetupScreenPreview() {
 
 @LightDarkPreview
 @Composable
-fun DailyFlipNotFlippedScreenPreview() {
-    FlipTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            DailyFlipScreen(
-                uiState = DailyFlipUiState(
-                    screenState = DailyFlipScreenState.Ready(
-                        availableCategories = PleasureCategory.entries,
-                        dailyPleasure = null,
-                        isCardFlipped = false
-                    )
-                )
-            )
-        }
-    }
-}
-
-@LightDarkPreview
-@Composable
-fun DailyFlipFlippedScreenPreview() {
-    FlipTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            DailyFlipScreen(
-                uiState = DailyFlipUiState(
-                    headerMessage = "Votre plaisir du jour",
-                    screenState = DailyFlipScreenState.Ready(
-                        availableCategories = PleasureCategory.entries,
-                        dailyPleasure = previewDailyPleasure,
-                        isCardFlipped = true
-                    )
-                )
-            )
-        }
-    }
-}
-
-@LightDarkPreview
-@Composable
 fun DailyFlipCompletedScreenPreview() {
     FlipTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             DailyFlipScreen(
                 uiState = DailyFlipUiState(
-                    screenState = DailyFlipScreenState.Completed
+                    screenState = DailyFlipScreenState.Completed()
                 )
             )
         }

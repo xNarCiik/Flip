@@ -9,7 +9,7 @@ import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.dto.SuggestionDto
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
@@ -26,13 +26,15 @@ fun PostDto.toDomain(
     author: Friend,
     comments: List<PostComment> = emptyList(),
     isLiked: Boolean = false
-): FriendPost = FriendPost(
+): Post = Post(
     id = id,
     friend = author,
     content = content,
     timestamp = timestamp?.time ?: 0L,
-    likesCount = likes_count,
-    commentsCount = comments_count,
+    photoUrl = photoUrl,
+    photoUrlThumb = photoUrlThumb,
+    likesCount = likeCount,
+    commentsCount = commentsCount,
     isLiked = isLiked,
     pleasureCategory = pleasureCategory?.toPleasureCategoryOrNull(),
     pleasureTitle = pleasureTitle,

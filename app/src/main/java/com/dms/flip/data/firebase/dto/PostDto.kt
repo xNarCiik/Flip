@@ -9,6 +9,8 @@ data class PostDto(
     @ServerTimestamp var timestamp: Date? = null,
     val pleasureCategory: String? = null,
     val pleasureTitle: String? = null,
-    val likes_count: Int = 0,
-    val comments_count: Int = 0
+    val photoUrl: String? = null,
+    val photoUrlThumb: String? = null,
+    val likeCount: Int = 0,
+    val commentsCount: Int = 0
 )

@@ -2,9 +2,11 @@ package com.dms.flip.domain.model.community
 
 import com.dms.flip.data.model.PleasureCategory
 
-data class FriendPost(
+data class Post(
     val id: String,
     val friend: Friend,
+    val photoUrl: String? = null,
+    val photoUrlThumb: String? = null,
     val content: String,
     val timestamp: Long,
     val likesCount: Int,

@@ -25,7 +25,7 @@ class UserRepositoryImpl @Inject constructor(
         private const val USERNAMES_COLLECTION = "usernames"
         private const val FIELD_USERNAME = "username"
         private const val FIELD_EMAIL = "email"
-        private const val FIELD_AVATAR_URL = "avatar_url"
+        private const val FIELD_AVATAR_URL = "avatarUrl"
         private const val FIELD_UID = "uid"
     }
 

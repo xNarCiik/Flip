@@ -152,13 +152,13 @@ class FirestoreRequestsSource @Inject constructor(
             userId = uid,
             username = senderProfile.getString("username") ?: "",
             handle = senderProfile.getString("handle") ?: "",
-            avatarUrl = senderProfile.getString("avatar_url")
+            avatarUrl = senderProfile.getString("avatarUrl")
         )
         val receiverDto = RequestDto(
             userId = toUserId,
             username = targetProfile.getString("username") ?: "",
             handle = targetProfile.getString("handle") ?: "",
-            avatarUrl = targetProfile.getString("avatar_url")
+            avatarUrl = targetProfile.getString("avatarUrl")
         )
         val currentUserSent = firestore.collection("users")
             .document(uid)

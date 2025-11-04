@@ -191,7 +191,7 @@ fun DailyFlipCompletedContent(
                 .fillMaxWidth()
                 .height(56.dp)
                 .semantics {
-                    contentDescription = context.getString(R.string.daily_flip_completed_share_button)
+                    contentDescription = context.getString(R.string.share_moment_button)
                 },
             shape = RoundedCornerShape(50.dp),
             colors = ButtonDefaults.buttonColors(
@@ -204,7 +204,7 @@ fun DailyFlipCompletedContent(
             )
         ) {
             Text(
-                text = stringResource(R.string.daily_flip_completed_share_button),
+                text = stringResource(R.string.share_moment_button),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

@@ -23,7 +23,7 @@ class OnboardingRepositoryImpl(
                 return@addSnapshotListener
             }
 
-            val isCompleted = snapshot?.getBoolean("onboarding_completed") ?: false
+            val isCompleted = snapshot?.getBoolean("onboardingCompleted") ?: false
             trySend(isCompleted).isSuccess
         }
         awaitClose { listener.remove() }
@@ -36,7 +36,7 @@ class OnboardingRepositoryImpl(
         firestore.runBatch { batch ->
             batch.set(
                 userDoc, mapOf(
-                    "onboarding_completed" to false
+                    "onboardingCompleted" to false
                 )
             )
         }.await()
@@ -55,8 +55,8 @@ class OnboardingRepositoryImpl(
                 userDoc, mapOf(
                     "username" to username,
                     "handle" to username,
-                    "avatar_url" to avatarUrl,
-                    "onboarding_completed" to true
+                    "avatarUrl" to avatarUrl,
+                    "onboardingCompleted" to true
                 )
             )
 

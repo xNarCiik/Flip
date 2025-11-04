@@ -1,9 +1,8 @@
 package com.dms.flip.data.mock.community
 
 import com.dms.flip.data.model.PleasureCategory
-import com.dms.flip.data.repository.AuthRepository
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendPleasure
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
@@ -14,7 +13,6 @@ import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.UserSearchResult
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -236,7 +234,7 @@ class MockCommunityDataSource @Inject constructor() {
 
     private val _feedPosts = MutableStateFlow(
         listOf(
-            FriendPost(
+            Post(
                 id = "post_lea_morning_yoga",
                 friend = currentUser,
                 content = "Séance de méditation terminé \uD83D\uDCA8",
@@ -259,7 +257,7 @@ class MockCommunityDataSource @Inject constructor() {
                     )
                 )
             ),
-            FriendPost(
+            Post(
                 id = "post_alex_evening_reading",
                 friend = knownUsers.getValue("friend_emma"),
                 content = "Heureuseeeeee",
@@ -286,7 +284,7 @@ class MockCommunityDataSource @Inject constructor() {
                     )
                 )
             ),
-            FriendPost(
+            Post(
                 id = "post_kimy",
                 friend = knownUsers.getValue("friend_kimy"),
                 content = "Bon bah c'est repartie, au revoir les copainsss",
@@ -303,7 +301,7 @@ class MockCommunityDataSource @Inject constructor() {
                     )
                 )
             ),
-            FriendPost(
+            Post(
                 id = "post_anthony",
                 friend = knownUsers.getValue("friend_anthony"),
                 content = "Oh minceeee",
@@ -322,7 +320,7 @@ class MockCommunityDataSource @Inject constructor() {
             )
         )
     )
-    val feedPosts: StateFlow<List<FriendPost>> = _feedPosts.asStateFlow()
+    val feedPosts: StateFlow<List<Post>> = _feedPosts.asStateFlow()
 
     private val knownProfiles = mutableMapOf(
         currentUser.id to PublicProfile(
