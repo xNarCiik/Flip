@@ -1,6 +1,5 @@
 package com.dms.flip.ui.dailyflip
 
-import android.R.attr.category
 import android.content.res.Resources
 import android.net.Uri
 import androidx.lifecycle.ViewModel

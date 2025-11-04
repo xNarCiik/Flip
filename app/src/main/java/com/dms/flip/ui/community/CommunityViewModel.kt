@@ -11,6 +11,7 @@ import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.PublicProfile
+import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.util.Result
 import com.dms.flip.domain.usecase.community.AcceptFriendRequestUseCase
@@ -37,6 +38,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -71,9 +81,14 @@ class CommunityViewModel @Inject constructor(
     private val _publicProfiles = MutableStateFlow<Map<String, PublicProfile>>(emptyMap())
     val publicProfiles: StateFlow<Map<String, PublicProfile>> = _publicProfiles.asStateFlow()
 
-    private val observationJobs = mutableListOf<Job>()
+    private val searchQuery = MutableStateFlow("")
+    private var observationJob: Job? = null
+    private var searchJob: Job? = null
+    private var isLoadingMoreFeed = false
+    private val loadingProfiles = mutableSetOf<String>()
 
     init {
+        observeSearch()
         refresh()
         viewModelScope.launch {
             getUserInfoUseCase().collect { userInfo ->
@@ -82,14 +97,13 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun refresh() {
-        cancelObservations()
-        _uiState.update { it.copy(isLoading = true, error = null) }
-        observationJobs += launchFeedObservation()
-        observationJobs += launchFriendsObservation()
-        observationJobs += launchSuggestionsObservation()
-        observationJobs += launchPendingReceivedObservation()
-        observationJobs += launchPendingSentObservation()
+    fun refresh(force: Boolean = false) {
+        _uiState.update { it.copy(isLoading = true, isLoadingMorePosts = false, error = null) }
+        if (force) {
+            restartObservations()
+        } else {
+            ensureObservationsStarted()
+        }
     }
 
     fun onEvent(event: CommunityEvent) {
@@ -105,7 +119,8 @@ class CommunityViewModel @Inject constructor(
             is CommunityEvent.OnCancelSentRequest -> cancelFriendRequest(event.request)
             is CommunityEvent.OnSearchQueryChanged -> handleSearchQuery(event.query)
             is CommunityEvent.OnAddUserFromSearch -> addUserFromSearch(event.userId)
-            is CommunityEvent.OnRetryClicked -> refresh()
+            is CommunityEvent.OnLoadMorePosts -> loadMorePosts()
+            is CommunityEvent.OnRetryClicked -> refresh(force = true)
             is CommunityEvent.OnDeleteComment -> deleteComment(event.postId, event.commentId)
             is CommunityEvent.OnDeletePost -> deletePost(event.postId)
             is CommunityEvent.OnAcceptFriendRequestFromProfile ->
@@ -117,61 +132,115 @@ class CommunityViewModel @Inject constructor(
 
     fun loadPublicProfile(userId: String) {
         if (_publicProfiles.value.containsKey(userId)) return
+        val shouldLoad = synchronized(loadingProfiles) {
+            if (loadingProfiles.contains(userId)) {
+                false
+            } else {
+                loadingProfiles.add(userId)
+                true
+            }
+        }
+        if (!shouldLoad) return
         viewModelScope.launch {
-            when (val result = getPublicProfileUseCase(userId)) {
-                is Result.Ok -> {
-                    _publicProfiles.update { current -> current + (userId to result.data) }
+            try {
+                when (val result = getPublicProfileUseCase(userId)) {
+                    is Result.Ok -> {
+                        _publicProfiles.update { current -> current + (userId to result.data) }
+                    }
+                    is Result.Err -> {
+                        _uiState.update { it.copy(error = R.string.error_load_friends) }
+                    }
                 }
-                is Result.Err -> {
-                    _uiState.update { it.copy(error = R.string.error_load_friends) }
+            } finally {
+                synchronized(loadingProfiles) {
+                    loadingProfiles.remove(userId)
                 }
             }
         }
     }
 
-    private fun launchFeedObservation(): Job = viewModelScope.launch {
-        observeFriendsFeedUseCase(FEED_PAGE_SIZE)
-            .catch { handleError(it) }
-            .collect { page ->
-                _uiState.update { state ->
-                    state.copy(
-                        friendsPosts = page.items,
-                        isLoading = false
-                    )
+    private fun ensureObservationsStarted() {
+        if (observationJob != null) return
+
+        val feedFlow = observeFriendsFeedUseCase(FEED_PAGE_SIZE)
+            .catch { throwable ->
+                handleError(throwable)
+                val currentState = _uiState.value
+                emit(Paged(currentState.friendsPosts, currentState.feedNextCursor))
+            }
+
+        val friendsFlow = observeFriendsUseCase()
+            .catch { throwable ->
+                handleError(throwable)
+                emit(emptyList())
+            }
+            .onStart { emit(emptyList()) }
+
+        val pendingReceivedFlow = observePendingReceivedUseCase()
+            .catch { throwable ->
+                handleError(throwable)
+                emit(emptyList())
+            }
+            .onStart { emit(emptyList()) }
+
+        val pendingSentFlow = observePendingSentUseCase()
+            .catch { throwable ->
+                handleError(throwable)
+                emit(emptyList())
+            }
+            .onStart { emit(emptyList()) }
+
+        val suggestionsFlow = observeSuggestionsUseCase()
+            .catch { throwable ->
+                handleError(throwable)
+                emit(emptyList())
+            }
+            .onStart { emit(emptyList()) }
+
+        observationJob = combine(
+            feedFlow,
+            friendsFlow,
+            pendingReceivedFlow,
+            pendingSentFlow,
+            suggestionsFlow
+        ) { feedPage, friends, pendingReceived, pendingSent, suggestions ->
+            _uiState.update { state ->
+                val mergedPosts = mergeFeedPosts(state.friendsPosts, feedPage.items)
+                state.copy(
+                    friendsPosts = mergedPosts,
+                    feedNextCursor = feedPage.nextCursor,
+                    friends = friends,
+                    pendingRequests = pendingReceived,
+                    sentRequests = pendingSent,
+                    suggestions = suggestions,
+                    isLoading = false,
+                    error = null
+                )
+            }
+        }
+            .launchIn(viewModelScope)
+            .also { job ->
+                job.invokeOnCompletion {
+                    if (observationJob == job) {
+                        observationJob = null
+                    }
                 }
             }
     }
 
-    private fun launchFriendsObservation(): Job = viewModelScope.launch {
-        observeFriendsUseCase()
-            .catch { handleError(it) }
-            .collect { friends ->
-                _uiState.update { it.copy(friends = friends, isLoading = false) }
-            }
+    private fun restartObservations() {
+        cancelObservations()
+        ensureObservationsStarted()
     }
 
-    private fun launchPendingReceivedObservation(): Job = viewModelScope.launch {
-        observePendingReceivedUseCase()
-            .catch { handleError(it) }
-            .collect { requests ->
-                _uiState.update { it.copy(pendingRequests = requests, isLoading = false) }
-            }
-    }
-
-    private fun launchPendingSentObservation(): Job = viewModelScope.launch {
-        observePendingSentUseCase()
-            .catch { handleError(it) }
-            .collect { requests ->
-                _uiState.update { it.copy(sentRequests = requests, isLoading = false) }
-            }
-    }
-
-    private fun launchSuggestionsObservation(): Job = viewModelScope.launch {
-        observeSuggestionsUseCase()
-            .catch { handleError(it) }
-            .collect { suggestions ->
-                _uiState.update { it.copy(suggestions = suggestions, isLoading = false) }
-            }
+    private fun mergeFeedPosts(
+        existing: List<Post>,
+        incoming: List<Post>
+    ): List<Post> {
+        if (incoming.isEmpty()) return emptyList()
+        val incomingIds = incoming.map { it.id }.toSet()
+        val preserved = existing.filterNot { it.id in incomingIds }
+        return incoming + preserved
     }
 
     private fun togglePostLike(postId: String) {
@@ -270,7 +339,7 @@ class CommunityViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            when (val result = deletePostUseCase(postId)) {
+            when (deletePostUseCase(postId)) {
                 is Result.Err -> {
                     _uiState.update { state ->
                         state.copy(
@@ -364,20 +433,8 @@ class CommunityViewModel @Inject constructor(
         _uiState.update { it.copy(searchQuery = query) }
         if (query.isBlank()) {
             _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
-            return
         }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSearching = true) }
-            when (val result = searchUsersUseCase(query)) {
-                is Result.Ok -> _uiState.update {
-                    it.copy(searchResults = result.data, isSearching = false)
-                }
-                is Result.Err -> {
-                    _uiState.update { it.copy(isSearching = false) }
-                    handleError(result.throwable)
-                }
-            }
-        }
+        searchQuery.value = query
     }
 
     private fun addUserFromSearch(userId: String) {
@@ -394,6 +451,64 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
+    private fun observeSearch() {
+        searchJob?.cancel()
+        searchJob = searchQuery
+            .debounce(300)
+            .distinctUntilChanged()
+            .onEach { query ->
+                if (query.isBlank()) {
+                    _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+                }
+            }
+            .filter { it.isNotBlank() }
+            .mapLatest { query ->
+                _uiState.update { it.copy(isSearching = true) }
+                searchUsersUseCase(query)
+            }
+            .onEach { result ->
+                when (result) {
+                    is Result.Ok -> _uiState.update {
+                        it.copy(searchResults = result.data, isSearching = false)
+                    }
+                    is Result.Err -> {
+                        _uiState.update { it.copy(isSearching = false) }
+                        handleError(result.throwable, shouldStopLoading = false)
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun loadMorePosts() {
+        val cursor = _uiState.value.feedNextCursor ?: return
+        if (isLoadingMoreFeed) return
+
+        isLoadingMoreFeed = true
+        _uiState.update { it.copy(isLoadingMorePosts = true) }
+        viewModelScope.launch {
+            try {
+                val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE, cursor).first()
+                _uiState.update { state ->
+                    val updatedPosts = LinkedHashMap<String, Post>().apply {
+                        state.friendsPosts.forEach { put(it.id, it) }
+                        page.items.forEach { put(it.id, it) }
+                    }.values.toList()
+                    state.copy(
+                        friendsPosts = updatedPosts,
+                        feedNextCursor = page.nextCursor,
+                        isLoadingMorePosts = false
+                    )
+                }
+            } catch (throwable: Throwable) {
+                _uiState.update { it.copy(isLoadingMorePosts = false) }
+                handleError(throwable, shouldStopLoading = false)
+            } finally {
+                isLoadingMoreFeed = false
+            }
+        }
+    }
+
     private fun updateSearchResultStatus(userId: String, status: RelationshipStatus) {
         _uiState.update { state ->
             state.copy(
@@ -406,21 +521,24 @@ class CommunityViewModel @Inject constructor(
 
     private fun handleError(
         throwable: Throwable,
-        @StringRes messageRes: Int = R.string.error_load_friends
+        @StringRes messageRes: Int = R.string.error_load_friends,
+        shouldStopLoading: Boolean = true
     ) {
         // TODO TIMBER
         Log.e("CommunityViewModel", "handleError: ", throwable)
         _uiState.update { state ->
             state.copy(
-                isLoading = false,
+                isLoading = if (shouldStopLoading) false else state.isLoading,
                 error = messageRes
             )
         }
     }
 
     private fun cancelObservations() {
-        observationJobs.forEach { it.cancel() }
-        observationJobs.clear()
+        observationJob?.cancel()
+        observationJob = null
+        isLoadingMoreFeed = false
+        _uiState.update { it.copy(isLoadingMorePosts = false) }
     }
 
     private fun List<Post>.updatePost(
@@ -431,5 +549,7 @@ class CommunityViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         cancelObservations()
+        searchJob?.cancel()
+        searchJob = null
     }
 }

@@ -1,8 +1,13 @@
 package com.dms.flip.ui.community.component
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -11,21 +16,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,29 +48,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
-import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
+import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.formatTimestamp
@@ -83,7 +90,8 @@ fun FeedContent(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(items = posts, key = { it.id }) { post ->
             val isOwnPost = post.friend.id == currentUserId
@@ -109,7 +117,21 @@ fun FeedContent(
                 } else {
                     null
                 },
-                currentUserId = currentUserId
+                currentUserId = currentUserId,
+                modifier = Modifier.animateItem(
+                    fadeInSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    fadeOutSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    placementSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
             )
         }
     }
@@ -147,239 +169,339 @@ fun PostCard(
     var showFullImage by remember { mutableStateOf(false) }
 
     val likeScale by animateFloatAsState(
-        targetValue = if (post.isLiked) 1.1f else 1f,
+        targetValue = if (post.isLiked) 1.2f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
         label = "likeScale"
     )
+
     val likeColor by animateColorAsState(
-        targetValue = if (post.isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (post.isLiked) MaterialTheme.colorScheme.error else
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        animationSpec = tween(150),
         label = "likeColor"
     )
+
     val commentColor by animateColorAsState(
-        targetValue = if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isExpanded) MaterialTheme.colorScheme.primary else
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        animationSpec = tween(150),
         label = "commentColor"
     )
 
+    val categoryColor = post.pleasureCategory?.iconTint ?: MaterialTheme.colorScheme.primary
+
+    // Main card container with glassmorphism effect
     Column(
         modifier = modifier
             .then(pressModifier)
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        // --- HEADER AUTEUR
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClick = onFriendClick)
-            ) {
-                if (post.friend.avatarUrl != null) {
-                    GlideImage(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape),
-                        model = post.friend.avatarUrl,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null
+            .shadow(
+                elevation = 0.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = Color.Black.copy(alpha = 0.05f),
+                spotColor = Color.Black.copy(alpha = 0.05f)
+            )
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                     )
-                } else {
-                    PlaceholderAvatar(name = post.friend.username)
-                }
+                ),
+                shape = RoundedCornerShape(24.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(24.dp)
+            )
+            .clip(RoundedCornerShape(24.dp))
+    ) {
+        // Image with overlay header
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Main image
+            if (!post.photoUrl.isNullOrEmpty()) {
+                GlideImage(
+                    model = post.photoUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4f / 3f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable { showFullImage = true }
+                )
+            }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Overlay header with glassmorphism
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.6f),
+                                Color.Transparent
+                            )
+                        ),
+                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Avatar and user info
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(onClick = onFriendClick)
                     ) {
-                        val displayName = if (isOwnPost) {
-                            stringResource(id = R.string.community_comment_author_me)
-                        } else post.friend.username
-
-                        Text(
-                            text = displayName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (post.friend.streak > 0) {
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(FireStreakColor.copy(alpha = 0.15f))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.LocalFireDepartment,
-                                    contentDescription = null,
-                                    tint = FireStreakColor,
-                                    modifier = Modifier.size(10.dp)
+                        // Avatar with category-colored border
+                        Box {
+                            if (post.friend.avatarUrl != null) {
+                                GlideImage(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .border(
+                                            width = 2.dp,
+                                            color = categoryColor.copy(alpha = 0.6f),
+                                            shape = CircleShape
+                                        )
+                                        .padding(2.dp)
+                                        .clip(CircleShape)
+                                        .shadow(4.dp, CircleShape),
+                                    model = post.friend.avatarUrl,
+                                    contentScale = ContentScale.Crop,
+                                    contentDescription = null
                                 )
-                                Text(
-                                    text = post.friend.streak.toString(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = FireStreakColor
+                            } else {
+                                PlaceholderAvatar(
+                                    name = post.friend.username,
+                                    borderColor = categoryColor
                                 )
                             }
                         }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val displayName = if (isOwnPost) {
+                                    stringResource(id = R.string.community_comment_author_me)
+                                } else post.friend.username
+
+                                Text(
+                                    text = displayName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White.copy(alpha = 0.95f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                if (post.friend.streak > 0) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocalFireDepartment,
+                                            contentDescription = null,
+                                            tint = FireStreakColor,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = post.friend.streak.toString(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = FireStreakColor
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = formatTimestamp(post.timestamp),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     }
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = post.friend.handle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatTimestamp(post.timestamp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    // Category badge
+                    post.pleasureCategory?.let { category ->
+                        Row(
+                            modifier = Modifier
+                                .background(
+                                    color = categoryColor.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = category.icon,
+                                contentDescription = null,
+                                tint = categoryColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = post.pleasureTitle ?: "",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
-
-            IconButton(onClick = onMenu, modifier = Modifier.size(48.dp)) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.community_post_menu),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // --- PLAISIR ASSOCIÉ
-        if (post.pleasureCategory != null && post.pleasureTitle != null) {
-            PleasureCard(category = post.pleasureCategory, title = post.pleasureTitle)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (!post.photoUrl.isNullOrEmpty()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(post.photoUrl)
-                    .placeholderMemoryCacheKey(post.photoUrlThumb)
-                    .crossfade(true)
-                    .allowHardware(false)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 60.dp, end = 8.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .height(240.dp)
-                    .clickable { showFullImage = true }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // --- TEXTE DU POST
+        // Post content text
         if (post.content.isNotBlank()) {
             Text(
                 text = post.content,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 60.dp, end = 8.dp)
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4f
+                ),
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.87f),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // --- ACTIONS : LIKE / COMMENT
+        // Subtle divider
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
+        )
+
+        // Actions bar (Like, Comment, Menu)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 60.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                .height(48.dp)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Like and Comment buttons
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        if (!post.isLiked) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLike()
-                    }
-                    .padding(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = if (post.isLiked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                    contentDescription = stringResource(R.string.community_like),
-                    tint = likeColor,
+                // Like button
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .size(20.dp)
-                        .scale(likeScale)
-                )
-                Text(
-                    text = post.likesCount.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (post.isLiked) FontWeight.SemiBold else FontWeight.Normal,
-                    color = likeColor
-                )
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            if (!post.isLiked) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                            onLike()
+                        }
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (post.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = stringResource(R.string.community_like),
+                        tint = likeColor,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .scale(likeScale)
+                    )
+                    Text(
+                        text = post.likesCount.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (post.isLiked) FontWeight.Medium else FontWeight.Normal,
+                        color = likeColor
+                    )
+                }
+
+                // Comment button
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onComment)
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = stringResource(R.string.community_comment),
+                        tint = commentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = post.commentsCount.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isExpanded) FontWeight.Medium else FontWeight.Normal,
+                        color = commentColor
+                    )
+                }
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onComment)
-                    .padding(4.dp)
+            // Menu button
+            IconButton(
+                onClick = onMenu,
+                modifier = Modifier.size(40.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ChatBubbleOutline,
-                    contentDescription = stringResource(R.string.community_comment),
-                    tint = commentColor,
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = post.commentsCount.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isExpanded) FontWeight.SemiBold else FontWeight.Normal,
-                    color = commentColor
                 )
             }
         }
 
-        // --- SECTION COMMENTAIRES
+        // Comments section with smooth expand animation
         if (isExpanded) {
-            Spacer(modifier = Modifier.height(16.dp))
-            CommentsSection(
-                comments = post.comments,
-                currentUserId = currentUserId,
-                onAddComment = onAddComment,
-                onCommentClick = onCommentUserClick,
-                onOwnCommentLongPress = onOwnCommentLongPress
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    )
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerLowest,
+                        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                CommentsSection(
+                    comments = post.comments,
+                    currentUserId = currentUserId,
+                    onAddComment = onAddComment,
+                    onCommentClick = onCommentUserClick,
+                    onOwnCommentLongPress = onOwnCommentLongPress
+                )
+            }
         }
     }
 
-    // --- DIALOG IMAGE PLEIN ÉCRAN
+    // Full screen image dialog
     if (showFullImage && !post.photoUrl.isNullOrEmpty()) {
         Dialog(onDismissRequest = { showFullImage = false }) {
             Box(
@@ -403,11 +525,21 @@ fun PostCard(
 }
 
 @Composable
-private fun PlaceholderAvatar(name: String) {
+private fun PlaceholderAvatar(
+    name: String,
+    borderColor: Color = Color.Transparent
+) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(40.dp)
+            .border(
+                width = 2.dp,
+                color = borderColor.copy(alpha = 0.6f),
+                shape = CircleShape
+            )
+            .padding(2.dp)
             .clip(CircleShape)
+            .shadow(4.dp, CircleShape)
             .background(
                 Brush.linearGradient(
                     colors = listOf(
@@ -424,53 +556,6 @@ private fun PlaceholderAvatar(name: String) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-    }
-}
-
-@Composable
-private fun PleasureCard(
-    category: PleasureCategory,
-    title: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 60.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(category.iconTint.copy(alpha = 0.08f))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(category.iconTint.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = category.icon,
-                contentDescription = null,
-                tint = category.iconTint.copy(alpha = 0.8f),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.bodySmall,
-                color = category.iconTint,
-                fontWeight = FontWeight.Medium
-            )
-        }
     }
 }
 

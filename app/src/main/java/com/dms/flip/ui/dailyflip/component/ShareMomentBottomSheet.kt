@@ -1,6 +1,5 @@
 package com.dms.flip.ui.dailyflip.component
 
-import android.R.attr.category
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
