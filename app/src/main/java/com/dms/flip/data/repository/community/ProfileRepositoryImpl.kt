@@ -23,12 +23,12 @@ class ProfileRepositoryImpl @Inject constructor(
         val currentUid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         val profileDto = profileSource.getPublicProfile(userId)
             ?: throw IllegalStateException("Profile not found")
-        val activities = profileSource.getRecentActivities(userId)
-            .mapNotNull { (id, dto) -> dto.toDomain(id) }
+        //val activities = profileSource.getRecentActivities(userId) // TODO RULES
+        //    .mapNotNull { (id, dto) -> dto.toDomain(id) }
         val relationship = determineRelationship(currentUid, userId)
         return profileDto.toDomain(
             id = userId,
-            recentActivities = activities,
+            recentActivities = listOf(),
             relationshipStatus = relationship
         )
     }

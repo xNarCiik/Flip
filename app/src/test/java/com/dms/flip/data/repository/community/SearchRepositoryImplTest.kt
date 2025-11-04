@@ -78,10 +78,10 @@ class SearchRepositoryImplTest {
         var pendingSent: Set<String> = emptySet()
         override fun observePendingReceived(uid: String) = flowOf(emptyList<Pair<String, RequestDto>>())
         override fun observePendingSent(uid: String) = flowOf(emptyList<Pair<String, RequestDto>>())
-        override suspend fun accept(uid: String, requestId: String) {}
-        override suspend fun decline(uid: String, requestId: String) {}
-        override suspend fun cancelSent(uid: String, requestId: String) {}
-        override suspend fun send(uid: String, toUserId: String) = "" to RequestDto()
+        override suspend fun accept(userId: String, requestId: String) {}
+        override suspend fun decline(userId: String, requestId: String) {}
+        override suspend fun cancelSent(fromUserId: String, requestId: String) {}
+        override suspend fun send(fromUserId: String, toUserId: String) = "" to RequestDto()
         override suspend fun getPendingReceivedIds(uid: String): Set<String> = pendingReceived
         override suspend fun getPendingSentIds(uid: String): Set<String> = pendingSent
     }

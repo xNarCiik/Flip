@@ -96,7 +96,7 @@ fun DailyFlipScreen(
 
             when (screenState) {
                 is DailyFlipScreenState.Error -> {
-                    ErrorState(message = uiState.screenState.message) {
+                    ErrorState(message = screenState.message) {
                         onEvent(DailyFlipEvent.Reload)
                     }
                 }
@@ -108,7 +108,8 @@ fun DailyFlipScreen(
                 is DailyFlipScreenState.Completed -> {
                     DailyFlipCompletedContent(
                         modifier = Modifier.fillMaxSize(),
-                        onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) }  // ✅ AJOUT
+                        completedPleasure = screenState.dailyPleasure,
+                        onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) }
                     )
                 }
 

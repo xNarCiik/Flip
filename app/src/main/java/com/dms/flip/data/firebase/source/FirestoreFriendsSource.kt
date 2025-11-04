@@ -3,6 +3,7 @@ package com.dms.flip.data.firebase.source
 import com.dms.flip.data.firebase.dto.FriendDto
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -13,7 +14,8 @@ import javax.inject.Singleton
 
 @Singleton
 class FirestoreFriendsSource @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions
 ) : FriendsSource {
 
     override fun observeFriends(uid: String): Flow<List<Pair<String, FriendDto>>> = callbackFlow {
@@ -42,15 +44,11 @@ class FirestoreFriendsSource @Inject constructor(
         }
     }
 
-    override suspend fun removeFriend(uid: String, friendId: String) {
-        val batch = firestore.batch()
-        val userFriendRef = firestore.collection("users").document(uid)
-            .collection("friends").document(friendId)
-        val friendFriendRef = firestore.collection("users").document(friendId)
-            .collection("friends").document(uid)
-        batch.delete(userFriendRef)
-        batch.delete(friendFriendRef)
-        batch.commit().await()
+    override suspend fun removeFriend(friendId: String) {
+        functions
+            .getHttpsCallable("removeFriend")
+            .call(mapOf("friendId" to friendId))
+            .await()
     }
 
     override suspend fun getFriendIds(uid: String): Set<String> {

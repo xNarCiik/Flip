@@ -32,6 +32,7 @@ import com.dms.flip.domain.repository.community.RequestsRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,23 +50,33 @@ object CommunityModule {
 
     @Provides
     @Singleton
-    fun provideFriendsSource(firestore: FirebaseFirestore): FriendsSource = FirestoreFriendsSource(firestore)
+    fun provideFriendsSource(
+        firestore: FirebaseFirestore,
+        firebaseFunctions: FirebaseFunctions
+    ): FriendsSource =
+        FirestoreFriendsSource(firestore, firebaseFunctions)
 
     @Provides
     @Singleton
-    fun provideRequestsSource(firestore: FirebaseFirestore): RequestsSource = FirestoreRequestsSource(firestore)
+    fun provideRequestsSource(
+        firestore: FirebaseFirestore,
+        firebaseFunctions: FirebaseFunctions
+    ): RequestsSource = FirestoreRequestsSource(firestore, firebaseFunctions)
 
     @Provides
     @Singleton
-    fun provideSuggestionsSource(firestore: FirebaseFirestore): SuggestionsSource = FirestoreSuggestionsSource(firestore)
+    fun provideSuggestionsSource(firestore: FirebaseFirestore): SuggestionsSource =
+        FirestoreSuggestionsSource(firestore)
 
     @Provides
     @Singleton
-    fun provideSearchSource(firestore: FirebaseFirestore): SearchSource = FirestoreSearchSource(firestore)
+    fun provideSearchSource(firestore: FirebaseFirestore): SearchSource =
+        FirestoreSearchSource(firestore)
 
     @Provides
     @Singleton
-    fun provideProfileSource(firestore: FirebaseFirestore): ProfileSource = FirestoreProfileSource(firestore)
+    fun provideProfileSource(firestore: FirebaseFirestore): ProfileSource =
+        FirestoreProfileSource(firestore)
 
     @Provides
     @Singleton

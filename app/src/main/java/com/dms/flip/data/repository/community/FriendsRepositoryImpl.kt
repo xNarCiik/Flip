@@ -25,7 +25,7 @@ class FriendsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun removeFriend(friendId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        friendsSource.removeFriend(uid, friendId)
+        auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        friendsSource.removeFriend(friendId)
     }
 }

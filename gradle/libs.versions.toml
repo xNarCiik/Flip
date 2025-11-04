@@ -26,6 +26,7 @@ googleid = "1.1.1"
 google-services = "4.4.4"
 animation = "1.9.4"
 ui = "1.9.4"
+firebaseFunctionsKtx = "22.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -67,6 +68,7 @@ firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+firebase-functions = { group = "com.google.firebase", name = "firebase-functions" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

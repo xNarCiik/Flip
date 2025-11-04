@@ -1,6 +1,16 @@
 package com.dms.flip.ui.dailyflip.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,14 +21,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,181 +45,328 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.dms.flip.R
+import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
+import com.dms.flip.ui.util.previewDailyPleasure
 import kotlinx.coroutines.delay
 
 @Composable
 fun DailyFlipCompletedContent(
     modifier: Modifier = Modifier,
+    completedPleasure: Pleasure? = null,
     onShareClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-
+    val scrollState = rememberScrollState()
     var hasPlayed by rememberSaveable { mutableStateOf(false) }
     var playAnimation by remember { mutableStateOf(false) }
+    var showContent by remember { mutableStateOf(false) }
 
-    val checkmarkComposition by rememberLottieComposition(
-        spec = LottieCompositionSpec.RawRes(resId = R.raw.checkmark)
-    )
+    val checkmarkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.checkmark))
+    val confettiComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti))
 
     val checkmarkProgress by animateLottieCompositionAsState(
         composition = checkmarkComposition,
         isPlaying = playAnimation,
         restartOnPlay = false,
-        speed = 0.6f
+        speed = 0.7f
     )
 
     LaunchedEffect(Unit) {
-        if (!hasPlayed) {
-            delay(400)
-            playAnimation = true
-        }
+        delay(200)
+        playAnimation = true
+        delay(600)
+        showContent = true
     }
 
-    LaunchedEffect(checkmarkProgress) {
-        if (checkmarkProgress == 1f) {
-            hasPlayed = true
-        }
-    }
+    val categoryColor = completedPleasure?.category?.iconTint ?: MaterialTheme.colorScheme.primary
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .verticalScroll(scrollState)
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(
+
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .size(130.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        listOf(categoryColor.copy(0.3f), Color.Transparent)
+                    )
+                ),
+            contentAlignment = Alignment.Center
         ) {
+            // Halo animé
+            val pulse by rememberInfiniteTransition().animateFloat(
+                0.9f, 1.1f,
+                animationSpec = infiniteRepeatable(
+                    tween(1200, easing = FastOutSlowInEasing),
+                    RepeatMode.Reverse
+                )
+            )
             Box(
                 modifier = Modifier
-                    .size(192.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
+                    .size((110 * pulse).dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            listOf(categoryColor.copy(0.25f), Color.Transparent)
+                        ),
+                        shape = CircleShape
+                    )
+            )
+
+            // Animation check
+            LottieAnimation(
+                composition = checkmarkComposition,
+                progress = { checkmarkProgress },
+                modifier = Modifier.size(110.dp)
+            )
+
+            if (hasPlayed || checkmarkProgress > 0.9f) {
                 LottieAnimation(
-                    modifier = Modifier.size(140.dp),
-                    composition = checkmarkComposition,
-                    progress = { if (hasPlayed) 1f else checkmarkProgress }
+                    composition = confettiComposition,
+                    iterations = 1,
+                    modifier = Modifier.fillMaxSize()
                 )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = stringResource(R.string.daily_flip_completed_title),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.daily_flip_completed_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.daily_flip_completed_next_draw),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = stringResource(R.string.daily_flip_completed_next_draw_subtitle),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         }
 
-        Button(
-            onClick = onShareClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .semantics {
-                    contentDescription = context.getString(R.string.share_moment_button)
-                },
-            shape = RoundedCornerShape(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 2.dp
-            )
+        /** 🥳 Titre + Sous-titre */
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(tween(600, delayMillis = 150)) +
+                    scaleIn(initialScale = 0.9f, animationSpec = tween(600))
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.daily_flip_completed_title),
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.daily_flip_completed_subtitle),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        /** 🍰 Carte du plaisir */
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(tween(700, delayMillis = 300)) + scaleIn(initialScale = 0.9f)
+        ) {
+            completedPleasure?.let {
+                CompletedPleasureCard(pleasure = it, categoryColor = categoryColor)
+            }
+        }
+
+        // TODO EXPORT
+        /** 💭 Citation inspirante */
+        val quotes = listOf(
+            "Chaque petit plaisir construit ton bonheur.",
+            "Les moments simples font les plus beaux souvenirs.",
+            "Savourer, c’est déjà vivre deux fois.",
+            "Aujourd’hui, tu t’es choisi. Et c’est beau."
+        )
+        val randomQuote = remember { quotes.random() }
+
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(tween(800, delayMillis = 500)) + scaleIn(initialScale = 0.95f)
         ) {
             Text(
-                text = stringResource(R.string.share_moment_button),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                text = "« $randomQuote »",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 12.dp)
             )
+        }
+
+        /** 📅 Carte “Prochain tirage” */
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(tween(800, delayMillis = 700)) + scaleIn(initialScale = 0.9f)
+        ) {
+            NextDrawInfoCard()
+        }
+
+        /** 🔘 Bouton de partage */
+        AnimatedVisibility(
+            visible = showContent,
+            enter = fadeIn(tween(900, delayMillis = 900)) + scaleIn(initialScale = 0.9f)
+        ) {
+            val pulse by rememberInfiniteTransition().animateFloat(
+                1f, 1.05f,
+                animationSpec = infiniteRepeatable(
+                    tween(900, easing = FastOutSlowInEasing),
+                    RepeatMode.Reverse
+                )
+            )
+            Button(
+                onClick = onShareClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .scale(pulse)
+                    .shadow(
+                        elevation = 10.dp,
+                        shape = RoundedCornerShape(16.dp),
+                        spotColor = categoryColor.copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = categoryColor,
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.share_moment_button),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompletedPleasureCard(
+    pleasure: Pleasure,
+    categoryColor: Color
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                brush = Brush.linearGradient(
+                    listOf(
+                        categoryColor.copy(alpha = 0.12f),
+                        categoryColor.copy(alpha = 0.05f)
+                    )
+                )
+            )
+            .border(1.5.dp, categoryColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(categoryColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = pleasure.category.icon,
+                    contentDescription = null,
+                    tint = categoryColor,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.daily_flip_completed_pleasure_label),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = categoryColor
+                )
+                Text(
+                    text = pleasure.title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = pleasure.description,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                    ),
+                    lineHeight = 18.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NextDrawInfoCard() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .padding(14.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Column {
+                Text(
+                    text = stringResource(R.string.daily_flip_completed_next_draw),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.daily_flip_completed_next_draw_subtitle),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                )
+            }
         }
     }
 }
@@ -217,7 +376,7 @@ fun DailyFlipCompletedContent(
 private fun DailyFlipCompletedContentPreview() {
     FlipTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            DailyFlipCompletedContent()
+            DailyFlipCompletedContent(completedPleasure = previewDailyPleasure)
         }
     }
 }

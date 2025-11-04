@@ -1,5 +1,6 @@
 package com.dms.flip.data.firebase.mapper
 
+import android.R.attr.handle
 import com.dms.flip.data.firebase.dto.CommentDto
 import com.dms.flip.data.firebase.dto.FriendDto
 import com.dms.flip.data.firebase.dto.PostDto
@@ -60,20 +61,20 @@ fun FriendDto.toDomain(id: String): Friend = Friend(
 
 fun RequestDto.toPendingReceived(id: String): FriendRequest = FriendRequest(
     id = id,
-    userId = userId,
-    username = username,
-    handle = handle,
-    avatarUrl = avatarUrl,
+    userId = fromUserId,
+    username = fromUsername,
+    handle = fromHandle,
+    avatarUrl = fromAvatarUrl,
     requestedAt = requestedAt?.time ?: 0L,
     source = FriendRequestSource.SEARCH
 )
 
 fun RequestDto.toPendingSent(id: String): FriendRequest = FriendRequest(
     id = id,
-    userId = userId,
-    username = username,
-    handle = handle,
-    avatarUrl = avatarUrl,
+    userId = fromUserId,
+    username = fromUsername,
+    handle = fromHandle,
+    avatarUrl = fromAvatarUrl,
     requestedAt = requestedAt?.time ?: 0L,
     source = FriendRequestSource.SEARCH
 )

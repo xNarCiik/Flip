@@ -33,18 +33,18 @@ class RequestsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun accept(requestId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        requestsSource.accept(uid, requestId)
+        auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        requestsSource.accept(requestId)
     }
 
     override suspend fun decline(requestId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        requestsSource.decline(uid, requestId)
+        auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        requestsSource.decline(requestId)
     }
 
     override suspend fun cancelSent(requestId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        requestsSource.cancelSent(uid, requestId)
+        auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+        requestsSource.cancelSent(requestId)
     }
 
     override suspend fun send(toUserId: String): FriendRequest {

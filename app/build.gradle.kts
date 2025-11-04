@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.ui)
+    implementation(libs.firebase.functions)
     kapt(libs.hilt.compiler)
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)
