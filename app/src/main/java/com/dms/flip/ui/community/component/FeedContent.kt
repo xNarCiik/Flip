@@ -284,7 +284,7 @@ fun PostCard(
                     .allowHardware(false)
                     .build(),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 60.dp, end = 8.dp)
