@@ -98,9 +98,10 @@
     <string name="share_moment_title">Partager ce moment</string>
     <string name="share_moment_subtitle">Exprimez-vous et inspirez les autres 🌸</string>
     <string name="share_moment_button">Partager ce moment</string>
-    <string name="share_your_comment">Votre commentaire (%1$d/%2$d)</string>
+    <string name="share_your_comment">Votre commentaire</string>
     <string name="share_comment_placeholder">Ajoutez un commentaire…</string>
     <string name="add_photo">+ Photo</string>
+    <string name="add_photo_optional">(Optionnel)</string>
     <string name="remove_photo">Supprimer la photo</string>
     <string name="publish">Publier</string>
     <string name="sharing">Publication…</string>

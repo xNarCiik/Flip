@@ -2,15 +2,17 @@ package com.dms.flip.ui.community
 
 import androidx.annotation.StringRes
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.UserSearchResult
 
 data class CommunityUiState(
     val isLoading: Boolean = false,
+    val isLoadingMorePosts: Boolean = false,
 
     val friendsPosts: List<Post> = emptyList(),
+    val feedNextCursor: String? = null,
     val expandedPostId: String? = null,
     val currentUserId: String? = null,
     val friends: List<Friend> = emptyList(),
@@ -56,5 +58,6 @@ sealed interface CommunityEvent {
     data class OnAcceptFriendRequestFromProfile(val userId: String) : CommunityEvent
     data class OnRemoveFriendFromProfile(val userId: String) : CommunityEvent
 
+    data object OnLoadMorePosts : CommunityEvent
     data object OnRetryClicked : CommunityEvent
 }

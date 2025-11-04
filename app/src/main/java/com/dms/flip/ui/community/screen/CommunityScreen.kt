@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -27,9 +29,9 @@ import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
+import com.dms.flip.ui.community.component.DeleteConfirmationDialog
 import com.dms.flip.ui.community.component.FeedContent
 import com.dms.flip.ui.community.component.PostOptionsDialog
-import com.dms.flip.ui.community.component.DeleteConfirmationDialog
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.theme.FlipTheme
@@ -77,10 +79,23 @@ fun CommunityScreen(
             AnimatedContent(
                 targetState = contentState,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(200)) +
-                            scaleIn(initialScale = 0.98f, animationSpec = tween(200))) togetherWith
-                            (fadeOut(animationSpec = tween(150)) +
-                                    scaleOut(targetScale = 1.01f, animationSpec = tween(150)))
+                    (fadeIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + scaleIn(
+                        initialScale = 0.95f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )) togetherWith (fadeOut(
+                        animationSpec = tween(200)
+                    ) + scaleOut(
+                        targetScale = 1.02f,
+                        animationSpec = tween(200)
+                    ))
                 },
                 label = "CommunityContentTransition"
             ) { state ->
