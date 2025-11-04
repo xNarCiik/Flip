@@ -52,15 +52,15 @@ fun FriendsListScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             when {
-                uiState.error != null -> {
+                uiState.errorMessage != null -> {
                     ErrorState(
                         modifier = Modifier.fillMaxSize(),
-                        message = stringResource(id = uiState.error),
+                        message = uiState.errorMessage,
                         onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
                     )
                 }
 
-                uiState.isLoading && uiState.friends.isEmpty() -> {
+                uiState.isLoadingInitial && uiState.friends.isEmpty() -> {
                     LoadingState(modifier = Modifier.fillMaxSize())
                 }
 

@@ -1,10 +1,8 @@
 package com.dms.flip.ui.community
 
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dms.flip.R
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
@@ -33,6 +31,9 @@ import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
 import com.dms.flip.domain.usecase.community.DeletePostUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,12 +85,13 @@ class CommunityViewModel @Inject constructor(
     private val searchQuery = MutableStateFlow("")
     private var observationJob: Job? = null
     private var searchJob: Job? = null
+    private var refreshJob: Job? = null
     private var isLoadingMoreFeed = false
     private val loadingProfiles = mutableSetOf<String>()
 
     init {
         observeSearch()
-        refresh()
+        loadInitial()
         viewModelScope.launch {
             getUserInfoUseCase().collect { userInfo ->
                 _uiState.update { it.copy(currentUserId = userInfo?.id) }
@@ -97,12 +99,24 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun refresh(force: Boolean = false) {
-        _uiState.update { it.copy(isLoading = true, isLoadingMorePosts = false, error = null) }
-        if (force) {
-            restartObservations()
-        } else {
-            ensureObservationsStarted()
+    fun refresh() {
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+            try {
+                val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE).first()
+                _uiState.update { state ->
+                    val mergedPosts = mergeFeedPosts(state.posts, page.items)
+                    state.copy(
+                        posts = mergedPosts,
+                        feedNextCursor = page.nextCursor
+                    )
+                }
+            } catch (throwable: Throwable) {
+                handleError(throwable, stopInitial = false, stopRefresh = true)
+            } finally {
+                _uiState.update { it.copy(isRefreshing = false) }
+            }
         }
     }
 
@@ -120,12 +134,19 @@ class CommunityViewModel @Inject constructor(
             is CommunityEvent.OnSearchQueryChanged -> handleSearchQuery(event.query)
             is CommunityEvent.OnAddUserFromSearch -> addUserFromSearch(event.userId)
             is CommunityEvent.OnLoadMorePosts -> loadMorePosts()
-            is CommunityEvent.OnRetryClicked -> refresh(force = true)
+            is CommunityEvent.OnRetryClicked -> {
+                if (_uiState.value.posts.isEmpty()) {
+                    loadInitial(force = true)
+                } else {
+                    refresh()
+                }
+            }
             is CommunityEvent.OnDeleteComment -> deleteComment(event.postId, event.commentId)
             is CommunityEvent.OnDeletePost -> deletePost(event.postId)
             is CommunityEvent.OnAcceptFriendRequestFromProfile ->
                 acceptFriendRequestFromProfile(event.userId)
             is CommunityEvent.OnRemoveFriendFromProfile -> removeFriendFromProfile(event.userId)
+            is CommunityEvent.OnRefresh -> refresh()
             else -> Unit
         }
     }
@@ -148,7 +169,7 @@ class CommunityViewModel @Inject constructor(
                         _publicProfiles.update { current -> current + (userId to result.data) }
                     }
                     is Result.Err -> {
-                        _uiState.update { it.copy(error = R.string.error_load_friends) }
+                        _uiState.update { it.copy(errorMessage = mapErrorMessage(result.throwable)) }
                     }
                 }
             } finally {
@@ -166,7 +187,7 @@ class CommunityViewModel @Inject constructor(
             .catch { throwable ->
                 handleError(throwable)
                 val currentState = _uiState.value
-                emit(Paged(currentState.friendsPosts, currentState.feedNextCursor))
+                emit(Paged(currentState.posts.toList(), currentState.feedNextCursor))
             }
 
         val friendsFlow = observeFriendsUseCase()
@@ -205,16 +226,16 @@ class CommunityViewModel @Inject constructor(
             suggestionsFlow
         ) { feedPage, friends, pendingReceived, pendingSent, suggestions ->
             _uiState.update { state ->
-                val mergedPosts = mergeFeedPosts(state.friendsPosts, feedPage.items)
+                val mergedPosts = mergeFeedPosts(state.posts, feedPage.items)
                 state.copy(
-                    friendsPosts = mergedPosts,
+                    posts = mergedPosts,
                     feedNextCursor = feedPage.nextCursor,
                     friends = friends,
                     pendingRequests = pendingReceived,
                     sentRequests = pendingSent,
                     suggestions = suggestions,
-                    isLoading = false,
-                    error = null
+                    isLoadingInitial = false,
+                    errorMessage = null
                 )
             }
         }
@@ -228,27 +249,30 @@ class CommunityViewModel @Inject constructor(
             }
     }
 
-    private fun restartObservations() {
-        cancelObservations()
-        ensureObservationsStarted()
+    private fun loadInitial(force: Boolean = false) {
+        if (observationJob == null || force) {
+            _uiState.update { it.copy(isLoadingInitial = true, errorMessage = null) }
+            cancelObservations()
+            ensureObservationsStarted()
+        }
     }
 
     private fun mergeFeedPosts(
-        existing: List<Post>,
+        existing: PersistentList<Post>,
         incoming: List<Post>
-    ): List<Post> {
-        if (incoming.isEmpty()) return emptyList()
+    ): PersistentList<Post> {
+        if (incoming.isEmpty()) return persistentListOf()
         val incomingIds = incoming.map { it.id }.toSet()
         val preserved = existing.filterNot { it.id in incomingIds }
-        return incoming + preserved
+        return (incoming + preserved).toPersistentList()
     }
 
     private fun togglePostLike(postId: String) {
-        val post = _uiState.value.friendsPosts.find { it.id == postId } ?: return
+        val post = _uiState.value.posts.find { it.id == postId } ?: return
         val like = !post.isLiked
         _uiState.update { state ->
             state.copy(
-                friendsPosts = state.friendsPosts.updatePost(postId) {
+                posts = state.posts.updatePost(postId) {
                     it.copy(
                         isLiked = like,
                         likesCount = if (like) it.likesCount + 1 else (it.likesCount - 1).coerceAtLeast(0)
@@ -261,13 +285,13 @@ class CommunityViewModel @Inject constructor(
                 is Result.Err -> {
                     _uiState.update { state ->
                         state.copy(
-                            friendsPosts = state.friendsPosts.updatePost(postId) {
+                            posts = state.posts.updatePost(postId) {
                                 it.copy(
                                     isLiked = !like,
                                     likesCount = if (like) (it.likesCount - 1).coerceAtLeast(0) else it.likesCount + 1
                                 )
                             },
-                            error = R.string.error_load_friends
+                            errorMessage = mapErrorMessage(null)
                         )
                     }
                 }
@@ -292,7 +316,7 @@ class CommunityViewModel @Inject constructor(
                     val comment = result.data
                     _uiState.update { state ->
                         state.copy(
-                            friendsPosts = state.friendsPosts.updatePost(postId) {
+                            posts = state.posts.updatePost(postId) {
                                 it.copy(
                                     comments = it.comments + comment,
                                     commentsCount = it.commentsCount + 1
@@ -301,7 +325,7 @@ class CommunityViewModel @Inject constructor(
                         )
                     }
                 }
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -312,7 +336,7 @@ class CommunityViewModel @Inject constructor(
                 is Result.Ok -> {
                     _uiState.update { state ->
                         state.copy(
-                            friendsPosts = state.friendsPosts.updatePost(postId) { post ->
+                            posts = state.posts.updatePost(postId) { post ->
                                 val updatedComments = post.comments.filterNot { it.id == commentId }
                                 post.copy(
                                     comments = updatedComments,
@@ -322,18 +346,18 @@ class CommunityViewModel @Inject constructor(
                         )
                     }
                 }
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
             }
         }
     }
 
     private fun deletePost(postId: String) {
-        val previousPosts = _uiState.value.friendsPosts
+        val previousPosts = _uiState.value.posts
         val previousExpanded = _uiState.value.expandedPostId
 
         _uiState.update { state ->
             state.copy(
-                friendsPosts = state.friendsPosts.filterNot { it.id == postId },
+                posts = state.posts.filterNot { it.id == postId }.toPersistentList(),
                 expandedPostId = state.expandedPostId.takeUnless { it == postId }
             )
         }
@@ -343,9 +367,9 @@ class CommunityViewModel @Inject constructor(
                 is Result.Err -> {
                     _uiState.update { state ->
                         state.copy(
-                            friendsPosts = previousPosts,
+                            posts = previousPosts,
                             expandedPostId = previousExpanded,
-                            error = R.string.error_delete_post
+                            errorMessage = mapErrorMessage(null)
                         )
                     }
                 }
@@ -357,7 +381,7 @@ class CommunityViewModel @Inject constructor(
     private fun removeFriend(friend: Friend) {
         viewModelScope.launch {
             when (val result = removeFriendUseCase(friend.id)) {
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 else -> Unit
             }
         }
@@ -373,7 +397,7 @@ class CommunityViewModel @Inject constructor(
             when (val result = sendFriendRequestUseCase(suggestion.id)) {
                 is Result.Ok -> {
                     when (val hideResult = hideSuggestionUseCase(suggestion.id)) {
-                        is Result.Err -> handleError(hideResult.throwable)
+                        is Result.Err -> handleError(hideResult.throwable, stopInitial = false, stopRefresh = false)
                         else -> Unit
                     }
                     _uiState.update { state ->
@@ -382,7 +406,7 @@ class CommunityViewModel @Inject constructor(
                         )
                     }
                 }
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -390,7 +414,7 @@ class CommunityViewModel @Inject constructor(
     private fun hideSuggestion(suggestion: FriendSuggestion) {
         viewModelScope.launch {
             when (val result = hideSuggestionUseCase(suggestion.id)) {
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 else -> Unit
             }
         }
@@ -399,7 +423,7 @@ class CommunityViewModel @Inject constructor(
     private fun acceptFriendRequest(request: FriendRequest) {
         viewModelScope.launch {
             when (val result = acceptFriendRequestUseCase(request.id)) {
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 else -> Unit
             }
         }
@@ -414,7 +438,7 @@ class CommunityViewModel @Inject constructor(
     private fun declineFriendRequest(request: FriendRequest) {
         viewModelScope.launch {
             when (val result = declineFriendRequestUseCase(request.id)) {
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 else -> Unit
             }
         }
@@ -446,7 +470,7 @@ class CommunityViewModel @Inject constructor(
                         state.copy(sentRequests = state.sentRequests + result.data)
                     }
                 }
-                is Result.Err -> handleError(result.throwable)
+                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -473,7 +497,7 @@ class CommunityViewModel @Inject constructor(
                     }
                     is Result.Err -> {
                         _uiState.update { it.copy(isSearching = false) }
-                        handleError(result.throwable, shouldStopLoading = false)
+                        handleError(result.throwable, stopInitial = false, stopRefresh = false)
                     }
                 }
             }
@@ -491,18 +515,18 @@ class CommunityViewModel @Inject constructor(
                 val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE, cursor).first()
                 _uiState.update { state ->
                     val updatedPosts = LinkedHashMap<String, Post>().apply {
-                        state.friendsPosts.forEach { put(it.id, it) }
+                        state.posts.forEach { put(it.id, it) }
                         page.items.forEach { put(it.id, it) }
-                    }.values.toList()
+                    }.values.toList().toPersistentList()
                     state.copy(
-                        friendsPosts = updatedPosts,
+                        posts = updatedPosts,
                         feedNextCursor = page.nextCursor,
                         isLoadingMorePosts = false
                     )
                 }
             } catch (throwable: Throwable) {
                 _uiState.update { it.copy(isLoadingMorePosts = false) }
-                handleError(throwable, shouldStopLoading = false)
+                handleError(throwable, stopInitial = false, stopRefresh = false)
             } finally {
                 isLoadingMoreFeed = false
             }
@@ -521,17 +545,22 @@ class CommunityViewModel @Inject constructor(
 
     private fun handleError(
         throwable: Throwable,
-        @StringRes messageRes: Int = R.string.error_load_friends,
-        shouldStopLoading: Boolean = true
+        stopInitial: Boolean = true,
+        stopRefresh: Boolean = true
     ) {
-        // TODO TIMBER
         Log.e("CommunityViewModel", "handleError: ", throwable)
+        val message = mapErrorMessage(throwable)
         _uiState.update { state ->
             state.copy(
-                isLoading = if (shouldStopLoading) false else state.isLoading,
-                error = messageRes
+                isLoadingInitial = if (stopInitial) false else state.isLoadingInitial,
+                isRefreshing = if (stopRefresh) false else state.isRefreshing,
+                errorMessage = message
             )
         }
+    }
+
+    private fun mapErrorMessage(throwable: Throwable?): String {
+        return "Une erreur est survenue. Vérifiez votre connexion et réessayez."
     }
 
     private fun cancelObservations() {
@@ -541,15 +570,17 @@ class CommunityViewModel @Inject constructor(
         _uiState.update { it.copy(isLoadingMorePosts = false) }
     }
 
-    private fun List<Post>.updatePost(
+    private fun PersistentList<Post>.updatePost(
         postId: String,
         transform: (Post) -> Post
-    ): List<Post> = map { post -> if (post.id == postId) transform(post) else post }
+    ): PersistentList<Post> = map { post -> if (post.id == postId) transform(post) else post }.toPersistentList()
 
     override fun onCleared() {
         super.onCleared()
         cancelObservations()
         searchJob?.cancel()
         searchJob = null
+        refreshJob?.cancel()
+        refreshJob = null
     }
 }

@@ -3,6 +3,7 @@ package com.dms.flip.ui.community.component
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,7 +21,8 @@ fun CommunityTopBar(
     modifier: Modifier = Modifier,
     pendingRequestsCount: Int,
     onFriendsListClick: () -> Unit,
-    onInvitationsClick: () -> Unit
+    onInvitationsClick: () -> Unit,
+    onRefreshClick: (() -> Unit)? = null
 ) {
     FlipTopBar(
         modifier = modifier,
@@ -36,8 +38,15 @@ fun CommunityTopBar(
                 contentDescription = stringResource(R.string.community_invitations),
                 onClick = onInvitationsClick,
                 badgeCount = pendingRequestsCount.takeIf { it > 0 }
-            )
-        )
+            ),
+            onRefreshClick?.let {
+                TopBarIcon(
+                    icon = Icons.Default.Refresh,
+                    contentDescription = stringResource(R.string.retry),
+                    onClick = it
+                )
+            }
+        ).filterNotNull()
     )
 }
 
@@ -56,7 +65,8 @@ private fun CommunityTopBarPreview(
             CommunityTopBar(
                 pendingRequestsCount = pendingRequests,
                 onFriendsListClick = {},
-                onInvitationsClick = {}
+                onInvitationsClick = {},
+                onRefreshClick = {}
             )
         }
     }

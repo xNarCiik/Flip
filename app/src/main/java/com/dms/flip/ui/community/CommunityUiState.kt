@@ -1,17 +1,21 @@
 package com.dms.flip.ui.community
 
-import androidx.annotation.StringRes
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.UserSearchResult
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+
+typealias PostUi = Post
 
 data class CommunityUiState(
-    val isLoading: Boolean = false,
+    val isLoadingInitial: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isLoadingMorePosts: Boolean = false,
 
-    val friendsPosts: List<Post> = emptyList(),
+    val posts: PersistentList<PostUi> = persistentListOf(),
     val feedNextCursor: String? = null,
     val expandedPostId: String? = null,
     val currentUserId: String? = null,
@@ -23,7 +27,7 @@ data class CommunityUiState(
     val isSearching: Boolean = false,
     val searchResults: List<UserSearchResult> = emptyList(),
 
-    @StringRes val error: Int? = null
+    val errorMessage: String? = null
 )
 
 sealed interface CommunityEvent {
@@ -60,4 +64,5 @@ sealed interface CommunityEvent {
 
     data object OnLoadMorePosts : CommunityEvent
     data object OnRetryClicked : CommunityEvent
+    data object OnRefresh : CommunityEvent
 }

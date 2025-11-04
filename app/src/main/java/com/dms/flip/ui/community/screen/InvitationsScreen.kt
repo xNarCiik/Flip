@@ -42,15 +42,15 @@ fun InvitationsScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             when {
-                uiState.error != null -> {
+                uiState.errorMessage != null -> {
                     ErrorState(
                         modifier = Modifier.fillMaxSize(),
-                        message = stringResource(id = uiState.error),
+                        message = uiState.errorMessage,
                         onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
                     )
                 }
 
-                uiState.isLoading && uiState.pendingRequests.isEmpty() &&
+                uiState.isLoadingInitial && uiState.pendingRequests.isEmpty() &&
                     uiState.sentRequests.isEmpty() && uiState.suggestions.isEmpty() -> {
                     LoadingState(modifier = Modifier.fillMaxSize())
                 }

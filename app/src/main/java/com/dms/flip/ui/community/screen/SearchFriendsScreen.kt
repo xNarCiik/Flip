@@ -45,10 +45,10 @@ fun SearchFriendsScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             when {
-                uiState.error != null -> {
+                uiState.errorMessage != null -> {
                     ErrorState(
                         modifier = Modifier.fillMaxSize(),
-                        message = stringResource(id = uiState.error),
+                        message = uiState.errorMessage,
                         onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
                     )
                 }

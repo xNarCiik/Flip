@@ -19,6 +19,7 @@ import com.dms.flip.domain.model.community.RecentActivity
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
 import com.dms.flip.ui.history.WeeklyDay
+import kotlinx.collections.immutable.toPersistentList
 
 @Preview(name = "Light", showBackground = true)
 @Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
@@ -442,23 +443,23 @@ val previewPublicProfile = PublicProfile(
  * État de preview avec tous les onglets remplis
  */
 val previewCommunityUiStateFull = CommunityUiState(
-    isLoading = false,
-    friendsPosts = previewPosts,
+    isLoadingInitial = false,
+    posts = previewPosts.toPersistentList(),
     friends = previewFriends,
     suggestions = previewSuggestions,
     pendingRequests = previewPendingRequests,
     sentRequests = previewSentRequests,
     searchQuery = "",
     searchResults = emptyList(),
-    error = null
+    errorMessage = null
 )
 
 /**
  * État de preview avec recherche active
  */
 val previewCommunityUiStateSearching = CommunityUiState(
-    isLoading = false,
-    friendsPosts = previewPosts,
+    isLoadingInitial = false,
+    posts = previewPosts.toPersistentList(),
     friends = previewFriends,
     suggestions = previewSuggestions,
     searchQuery = "Alice",

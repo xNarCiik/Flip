@@ -54,6 +54,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -68,9 +69,12 @@ dependencies {
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.ui)
     implementation(libs.firebase.functions)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.material)
     kapt(libs.hilt.compiler)
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
 
     // Datastore
     implementation(libs.androidx.datastore.preferences)
