@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
@@ -70,7 +72,8 @@ import kotlinx.coroutines.delay
 fun DailyFlipCompletedContent(
     modifier: Modifier = Modifier,
     completedPleasure: Pleasure? = null,
-    onShareClick: () -> Unit = {}
+    onShareClick: () -> Unit = {},
+    onPleasureClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var hasPlayed by rememberSaveable { mutableStateOf(false) }
@@ -117,12 +120,13 @@ fun DailyFlipCompletedContent(
             contentAlignment = Alignment.Center
         ) {
             // Halo animé
-            val pulse by rememberInfiniteTransition().animateFloat(
+            val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
                 0.9f, 1.1f,
                 animationSpec = infiniteRepeatable(
                     tween(1200, easing = FastOutSlowInEasing),
                     RepeatMode.Reverse
-                )
+                ),
+                label = "pulse"
             )
             Box(
                 modifier = Modifier
@@ -180,23 +184,26 @@ fun DailyFlipCompletedContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        /** 🍰 Carte du plaisir */
+        /** 🎂 Carte du plaisir */
         AnimatedVisibility(
             visible = showContent,
             enter = fadeIn(tween(700, delayMillis = 300)) + scaleIn(initialScale = 0.9f)
         ) {
             completedPleasure?.let {
-                CompletedPleasureCard(pleasure = it, categoryColor = categoryColor)
+                CompletedPleasureCard(
+                    pleasure = it,
+                    categoryColor = categoryColor,
+                    onClick = onPleasureClick
+                )
             }
         }
 
-        // TODO EXPORT
         /** 💭 Citation inspirante */
         val quotes = listOf(
             "Chaque petit plaisir construit ton bonheur.",
             "Les moments simples font les plus beaux souvenirs.",
-            "Savourer, c’est déjà vivre deux fois.",
-            "Aujourd’hui, tu t’es choisi. Et c’est beau."
+            "Savourer, c'est déjà vivre deux fois.",
+            "Aujourd'hui, tu t'es choisi. Et c'est beau."
         )
         val randomQuote = remember { quotes.random() }
 
@@ -216,7 +223,7 @@ fun DailyFlipCompletedContent(
             )
         }
 
-        /** 📅 Carte “Prochain tirage” */
+        /** 📅 Carte "Prochain tirage" */
         AnimatedVisibility(
             visible = showContent,
             enter = fadeIn(tween(800, delayMillis = 700)) + scaleIn(initialScale = 0.9f)
@@ -224,24 +231,25 @@ fun DailyFlipCompletedContent(
             NextDrawInfoCard()
         }
 
-        /** 🔘 Bouton de partage */
+        /** 📤 Bouton de partage */
         AnimatedVisibility(
             visible = showContent,
             enter = fadeIn(tween(900, delayMillis = 900)) + scaleIn(initialScale = 0.9f)
         ) {
-            val pulse by rememberInfiniteTransition().animateFloat(
+            val buttonPulse by rememberInfiniteTransition(label = "buttonPulse").animateFloat(
                 1f, 1.05f,
                 animationSpec = infiniteRepeatable(
                     tween(900, easing = FastOutSlowInEasing),
                     RepeatMode.Reverse
-                )
+                ),
+                label = "buttonPulse"
             )
             Button(
                 onClick = onShareClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
-                    .scale(pulse)
+                    .scale(buttonPulse)
                     .shadow(
                         elevation = 10.dp,
                         shape = RoundedCornerShape(16.dp),
@@ -273,7 +281,8 @@ fun DailyFlipCompletedContent(
 @Composable
 private fun CompletedPleasureCard(
     pleasure: Pleasure,
-    categoryColor: Color
+    categoryColor: Color,
+    onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -288,9 +297,13 @@ private fun CompletedPleasureCard(
                 )
             )
             .border(1.5.dp, categoryColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
                     .size(52.dp)
@@ -325,6 +338,13 @@ private fun CompletedPleasureCard(
                     lineHeight = 18.sp
                 )
             }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.see_details),
+                tint = categoryColor,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -376,7 +396,10 @@ private fun NextDrawInfoCard() {
 private fun DailyFlipCompletedContentPreview() {
     FlipTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            DailyFlipCompletedContent(completedPleasure = previewDailyPleasure)
+            DailyFlipCompletedContent(
+                completedPleasure = previewDailyPleasure,
+                onPleasureClick = {}
+            )
         }
     }
 }

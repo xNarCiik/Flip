@@ -21,11 +21,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -33,7 +37,6 @@ import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +46,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -86,6 +88,8 @@ fun ShareMomentBottomSheet(
         onResult = { uri -> uri?.let { onPhotoSelected(it) } }
     )
 
+    val scrollState = rememberScrollState()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -104,6 +108,9 @@ fun ShareMomentBottomSheet(
         Column(
             modifier = modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 24.dp)
         ) {
@@ -215,41 +222,40 @@ fun ShareMomentBottomSheet(
                     placeholder = {
                         Text(
                             text = stringResource(R.string.share_comment_placeholder),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = pleasure.category.iconTint,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        errorBorderColor = MaterialTheme.colorScheme.error
+                        focusedLabelColor = pleasure.category.iconTint,
+                        cursorColor = pleasure.category.iconTint,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                     ),
-                    shape = RoundedCornerShape(20.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    maxLines = 6,
+                    shape = RoundedCornerShape(16.dp),
+                    maxLines = 5,
                     isError = error != null
                 )
 
+                // Error message
                 AnimatedVisibility(
                     visible = error != null,
-                    enter = fadeIn() + scaleIn(initialScale = 0.9f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.9f)
+                    enter = fadeIn() + scaleIn(initialScale = 0.95f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.95f)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.3f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.error,
-                                    shape = CircleShape
-                                )
-                        )
                         Text(
                             text = error ?: "",
                             style = MaterialTheme.typography.bodySmall,
@@ -260,60 +266,39 @@ fun ShareMomentBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons with modern styling
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp),
-                    enabled = !isSharing,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.cancel),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                Button(
-                    onClick = onSubmit,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(52.dp)
-                        .shadow(
-                            elevation = if (comment.isNotBlank() && !isSharing) 8.dp else 0.dp,
-                            shape = RoundedCornerShape(16.dp),
-                            spotColor = pleasure.category.iconTint.copy(alpha = 0.3f)
-                        ),
-                    enabled = !isSharing && comment.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = pleasure.category.iconTint,
-                        contentColor = Color.White,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            // Submit button without loader
+            Button(
+                onClick = onSubmit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(16.dp),
+                        spotColor = pleasure.category.iconTint.copy(alpha = 0.3f)
                     ),
-                    shape = RoundedCornerShape(16.dp)
+                enabled = !isSharing && comment.trim().isNotEmpty(),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = pleasure.category.iconTint,
+                    contentColor = Color.White,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isSharing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
                     Text(
-                        text = if (isSharing)
-                            stringResource(R.string.sharing)
-                        else
-                            stringResource(R.string.publish),
+                        text = stringResource(R.string.publish),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -324,17 +309,21 @@ fun ShareMomentBottomSheet(
 }
 
 @Composable
-private fun PleasureCard(pleasure: Pleasure) {
+private fun PleasureCard(
+    pleasure: Pleasure,
+    modifier: Modifier = Modifier
+) {
     val categoryColor = pleasure.category.iconTint
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(
                 brush = Brush.linearGradient(
-                    colors = listOf(
-                        categoryColor.copy(alpha = 0.08f),
-                        categoryColor.copy(alpha = 0.03f)
+                    listOf(
+                        categoryColor.copy(alpha = 0.12f),
+                        categoryColor.copy(alpha = 0.05f)
                     )
                 )
             )

@@ -110,6 +110,19 @@
     <string name="sharing">Publication…</string>
     <string name="close">Fermer</string>
 
+    <!-- Share Loading Dialog -->
+    <string name="share_loading_title">Partage en cours…</string>
+    <string name="share_loading_subtitle">Votre moment sera bientôt partagé</string>
+
+    <!-- Pleasure Detail Screen -->
+    <string name="pleasure_detail_title">Détail du plaisir</string>
+    <string name="pleasure_detail_title_label">Titre</string>
+    <string name="pleasure_detail_description_label">Description</string>
+    <string name="pleasure_detail_category_label">Catégorie</string>
+    <string name="pleasure_detail_completed_date_label">Complété le</string>
+    <string name="pleasure_detail_quote">Chaque moment compte dans ton parcours</string>
+    <string name="see_details">Voir les détails</string>
+
     <!-- Share Errors -->
     <string name="share_error_empty_comment">Veuillez ajouter un commentaire</string>
     <string name="share_success">Partagé avec succès ✨</string>

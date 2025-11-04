@@ -41,6 +41,8 @@ import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.dailyflip.component.DailyFlipCompletedContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipContent
 import com.dms.flip.ui.dailyflip.component.DailyFlipSetupContent
+import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
+import com.dms.flip.ui.dailyflip.component.ShareLoadingDialog
 import com.dms.flip.ui.dailyflip.component.ShareMomentBottomSheet
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -70,10 +72,21 @@ fun DailyFlipScreen(
             snackbarHostState.showSnackbar(
                 message = context.getString(R.string.share_success)
             )
-            // Remet le flag à false
             onEvent(DailyFlipEvent.OnShareSnackbarShown)
         }
     }
+
+    // Show pleasure detail screen if requested
+    if (uiState.showPleasureDetail && screenState is DailyFlipScreenState.Completed) {
+        screenState.dailyPleasure?.let { pleasure ->
+            PleasureDetailScreen(
+                pleasure = pleasure,
+                onBackClick = { onEvent(DailyFlipEvent.OnPleasureDetailDismissed) }
+            )
+            return
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             // TopBar
@@ -109,7 +122,8 @@ fun DailyFlipScreen(
                     DailyFlipCompletedContent(
                         modifier = Modifier.fillMaxSize(),
                         completedPleasure = screenState.dailyPleasure,
-                        onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) }
+                        onShareClick = { onEvent(DailyFlipEvent.OnShareClicked) },
+                        onPleasureClick = { onEvent(DailyFlipEvent.OnPleasureDetailClicked) }
                     )
                 }
 
@@ -123,6 +137,7 @@ fun DailyFlipScreen(
             }
         }
 
+        // Share bottom sheet
         if (screenState is DailyFlipScreenState.Completed) {
             ShareMomentBottomSheet(
                 isVisible = uiState.showShareBottomSheet,
@@ -139,11 +154,15 @@ fun DailyFlipScreen(
             )
         }
 
+        // Loading dialog for sharing
+        ShareLoadingDialog(isVisible = uiState.isSharing)
+
         // Snackbar
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(16.dp)
         )
     }
 }

@@ -118,6 +118,8 @@ class DailyFlipViewModel @Inject constructor(
             is DailyFlipEvent.OnSharePhotoSelected -> handleSharePhotoSelected(event.uri)
             is DailyFlipEvent.OnSharePhotoRemoved -> handleSharePhotoRemoved()
             is DailyFlipEvent.OnShareSubmit -> handleShareSubmit()
+            is DailyFlipEvent.OnPleasureDetailClicked -> handlePleasureDetailClicked()
+            is DailyFlipEvent.OnPleasureDetailDismissed -> handlePleasureDetailDismissed()
         }
     }
 
@@ -236,7 +238,14 @@ class DailyFlipViewModel @Inject constructor(
             return@launch
         }
 
-        _uiState.update { it.copy(isSharing = true, shareError = null) }
+        // Close bottom sheet and show loading dialog
+        _uiState.update {
+            it.copy(
+                showShareBottomSheet = false,
+                isSharing = true,
+                shareError = null
+            )
+        }
 
         try {
             shareMomentUseCase(
@@ -248,7 +257,6 @@ class DailyFlipViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     lastShareCompleted = true,
-                    showShareBottomSheet = false,
                     isSharing = false,
                     shareComment = "",
                     sharePhotoUri = null,
@@ -259,9 +267,22 @@ class DailyFlipViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isSharing = false,
-                    shareError = e.message ?: resources.getString(R.string.generic_error_message)
+                    shareError = e.message ?: resources.getString(R.string.generic_error_message),
+                    showShareBottomSheet = true // Reopen bottom sheet on error
                 )
             }
+        }
+    }
+
+    private fun handlePleasureDetailClicked() {
+        _uiState.update {
+            it.copy(showPleasureDetail = true)
+        }
+    }
+
+    private fun handlePleasureDetailDismissed() {
+        _uiState.update {
+            it.copy(showPleasureDetail = false)
         }
     }
 

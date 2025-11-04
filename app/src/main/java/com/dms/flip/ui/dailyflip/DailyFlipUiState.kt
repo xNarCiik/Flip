@@ -14,7 +14,8 @@ data class DailyFlipUiState(
     val sharePhotoUri: Uri? = null,
     val isSharing: Boolean = false,
     val shareError: String? = null,
-    val lastShareCompleted: Boolean = false
+    val lastShareCompleted: Boolean = false,
+    val showPleasureDetail: Boolean = false
 )
 
 sealed interface DailyFlipScreenState {
@@ -46,4 +47,6 @@ sealed interface DailyFlipEvent {
     data class OnSharePhotoSelected(val uri: Uri) : DailyFlipEvent
     data object OnSharePhotoRemoved : DailyFlipEvent
     data object OnShareSubmit : DailyFlipEvent
+    data object OnPleasureDetailClicked : DailyFlipEvent
+    data object OnPleasureDetailDismissed : DailyFlipEvent
 }
