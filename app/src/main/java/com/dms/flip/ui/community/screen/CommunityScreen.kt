@@ -21,13 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
-import com.dms.flip.ui.community.component.FriendsFeedContent
+import com.dms.flip.ui.community.component.FeedContent
 import com.dms.flip.ui.community.component.PostOptionsDialog
 import com.dms.flip.ui.community.component.DeleteConfirmationDialog
 import com.dms.flip.ui.component.ErrorState
@@ -49,11 +49,11 @@ fun CommunityScreen(
     uiState: CommunityUiState,
     onEvent: (CommunityEvent) -> Unit
 ) {
-    var selectedPost by remember { mutableStateOf<FriendPost?>(null) }
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
     var selectedComment by remember {
         mutableStateOf<Pair<String, PostComment>?>(null)
     }
-    var postPendingDeletion by remember { mutableStateOf<FriendPost?>(null) }
+    var postPendingDeletion by remember { mutableStateOf<Post?>(null) }
 
     Column(
         modifier = modifier
@@ -108,7 +108,7 @@ fun CommunityScreen(
                     }
 
                     is CommunityContentState.Content -> {
-                        FriendsFeedContent(
+                        FeedContent(
                             posts = uiState.friendsPosts,
                             expandedPostId = uiState.expandedPostId,
                             currentUserId = uiState.currentUserId,

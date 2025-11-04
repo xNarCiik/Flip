@@ -1,11 +1,14 @@
 package com.dms.flip.ui.dailyflip
 
+import android.R.attr.category
 import android.content.res.Resources
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.domain.usecase.GetRandomDailyMessageUseCase
+import com.dms.flip.domain.usecase.community.ShareMomentUseCase
 import com.dms.flip.domain.usecase.dailypleasure.GetRandomPleasureUseCase
 import com.dms.flip.domain.usecase.history.GetTodayHistoryEntryUseCase
 import com.dms.flip.domain.usecase.history.SaveHistoryEntryUseCase
@@ -13,7 +16,6 @@ import com.dms.flip.domain.usecase.pleasures.GetPleasuresUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import com.dms.flip.ui.util.FlipFeedbackPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +29,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 const val MinimumPleasuresCount = 7
+const val MAX_SHARE_COMMENT_LENGTH = 200
 
 @HiltViewModel
 class DailyFlipViewModel @Inject constructor(
@@ -37,7 +40,8 @@ class DailyFlipViewModel @Inject constructor(
     private val saveHistoryEntryUseCase: SaveHistoryEntryUseCase,
     private val getTodayHistoryEntryUseCase: GetTodayHistoryEntryUseCase,
     private val getUserInfoUseCase: GetUserInfoUseCase,
-    private val flipFeedbackPlayer: FlipFeedbackPlayer
+    private val flipFeedbackPlayer: FlipFeedbackPlayer,
+    private val shareMomentUseCase: ShareMomentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyFlipUiState())
@@ -68,7 +72,7 @@ class DailyFlipViewModel @Inject constructor(
                     )
 
                     todayHistory?.completed == true -> DailyFlipUiState(
-                        screenState = DailyFlipScreenState.Completed,
+                        screenState = DailyFlipScreenState.Completed(dailyPleasure = todayHistory.toPleasureOrNull()),
                         headerMessage = "",
                         userInfo = userInfo
                     )
@@ -104,10 +108,23 @@ class DailyFlipViewModel @Inject constructor(
     fun onEvent(event: DailyFlipEvent) {
         when (event) {
             is DailyFlipEvent.Reload -> observeData()
+            is DailyFlipEvent.OnShareSnackbarShown -> onShareSnackbarShown()
             is DailyFlipEvent.OnCategorySelected -> handleCategorySelection(event.category)
             is DailyFlipEvent.OnCardClicked -> handleDrawCard()
             is DailyFlipEvent.OnCardFlipped -> handleCardFlipped()
             is DailyFlipEvent.OnCardMarkedAsDone -> handleCardMarkedAsDone()
+            is DailyFlipEvent.OnShareClicked -> handleShareClicked()
+            is DailyFlipEvent.OnShareDismissed -> handleShareDismissed()
+            is DailyFlipEvent.OnShareCommentChanged -> handleShareCommentChanged(event.comment)
+            is DailyFlipEvent.OnSharePhotoSelected -> handleSharePhotoSelected(event.uri)
+            is DailyFlipEvent.OnSharePhotoRemoved -> handleSharePhotoRemoved()
+            is DailyFlipEvent.OnShareSubmit -> handleShareSubmit()
+        }
+    }
+
+    private fun onShareSnackbarShown() {
+        _uiState.update {
+            it.copy(lastShareCompleted = false)
         }
     }
 
@@ -158,6 +175,92 @@ class DailyFlipViewModel @Inject constructor(
                 _uiState.value = DailyFlipUiState(
                     screenState = DailyFlipScreenState.Error(resources.getString(R.string.generic_error_message)),
                     userInfo = _uiState.value.userInfo
+                )
+            }
+        }
+    }
+
+    private fun handleShareClicked() {
+        _uiState.update {
+            it.copy(
+                showShareBottomSheet = true,
+                shareComment = "",
+                sharePhotoUri = null,
+                shareError = null
+            )
+        }
+    }
+
+    private fun handleShareDismissed() {
+        _uiState.update {
+            it.copy(
+                showShareBottomSheet = false,
+                shareComment = "",
+                sharePhotoUri = null,
+                isSharing = false,
+                shareError = null
+            )
+        }
+    }
+
+    private fun handleShareCommentChanged(comment: String) {
+        if (comment.length <= MAX_SHARE_COMMENT_LENGTH) {
+            _uiState.update {
+                it.copy(shareComment = comment, shareError = null)
+            }
+        }
+    }
+
+    private fun handleSharePhotoSelected(uri: Uri) {
+        _uiState.update {
+            it.copy(sharePhotoUri = uri, shareError = null)
+        }
+    }
+
+    private fun handleSharePhotoRemoved() {
+        _uiState.update {
+            it.copy(sharePhotoUri = null)
+        }
+    }
+
+    private fun handleShareSubmit() = viewModelScope.launch {
+        val current = _uiState.value.screenState
+        if (current !is DailyFlipScreenState.Completed) return@launch
+
+        val pleasure = current.dailyPleasure ?: return@launch
+        val comment = _uiState.value.shareComment.trim()
+
+        if (comment.isBlank()) {
+            _uiState.update {
+                it.copy(shareError = resources.getString(R.string.share_error_empty_comment))
+            }
+            return@launch
+        }
+
+        _uiState.update { it.copy(isSharing = true, shareError = null) }
+
+        try {
+            shareMomentUseCase(
+                pleasure = pleasure,
+                comment = comment,
+                photoUri = _uiState.value.sharePhotoUri
+            )
+
+            _uiState.update {
+                it.copy(
+                    lastShareCompleted = true,
+                    showShareBottomSheet = false,
+                    isSharing = false,
+                    shareComment = "",
+                    sharePhotoUri = null,
+                    shareError = null
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isSharing = false,
+                    shareError = e.message ?: resources.getString(R.string.generic_error_message)
                 )
             }
         }

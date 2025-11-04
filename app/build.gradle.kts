@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.dagger.hilt)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.firebase.storage)
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.ui)
     kapt(libs.hilt.compiler)
     implementation(libs.lottie.compose)
     implementation(libs.androidx.core.splashscreen)
@@ -72,6 +74,8 @@ dependencies {
     // Datastore
     implementation(libs.androidx.datastore.preferences)
 
+    implementation(libs.coil.compose)
+    implementation(libs.coil)
     implementation(libs.glide.compose)
     implementation(libs.kotlinx.coroutines.play.services)
 

@@ -5,7 +5,7 @@ import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.repository.community.FeedRepository
@@ -26,7 +26,7 @@ class FeedRepositoryImpl @Inject constructor(
     private val profileSource: ProfileSource
 ) : FeedRepository {
 
-    override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<FriendPost>> {
+    override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<Post>> {
         val uid = auth.currentUser?.uid ?: return flowOf(Paged(emptyList(), null))
         return feedSource.observeFriendsFeed(uid, limit, cursor)
             .map { page ->

@@ -42,7 +42,7 @@ L’idée : s’accorder un moment rien qu’à soi, sans culpabilité, avec une
 
 | Chemin                                             | Description |
 |----------------------------------------------------| --- |
-| `public_profiles/{userId}`                         | Profil public (username, handle, avatar_url, bio, stats). |
+| `public_profiles/{userId}`                         | Profil public (username, handle, avatarUrl, bio, stats). |
 | `users/{uid}/friends/{friendId}`                   | Relation d'amitié (`since`). |
 | `users/{uid}/friend_requests_received/{requestId}` | Demandes reçues (RequestDto). |
 | `users/{uid}/friend_requests_sent/{requestId}`     | Demandes envoyées. |

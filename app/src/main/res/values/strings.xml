@@ -94,6 +94,22 @@
     <string name="daily_flip_completed_next_draw_subtitle">Votre prochaine carte sera disponible demain.</string>
     <string name="daily_flip_completed_share_button">Partager ce moment</string>
 
+    <!-- Share Moment Bottom Sheet -->
+    <string name="share_moment_title">Partager ce moment</string>
+    <string name="share_moment_subtitle">Exprimez-vous et inspirez les autres 🌸</string>
+    <string name="share_moment_button">Partager ce moment</string>
+    <string name="share_your_comment">Votre commentaire (%1$d/%2$d)</string>
+    <string name="share_comment_placeholder">Ajoutez un commentaire…</string>
+    <string name="add_photo">+ Photo</string>
+    <string name="remove_photo">Supprimer la photo</string>
+    <string name="publish">Publier</string>
+    <string name="sharing">Publication…</string>
+    <string name="close">Fermer</string>
+
+    <!-- Share Errors -->
+    <string name="share_error_empty_comment">Veuillez ajouter un commentaire</string>
+    <string name="share_success">Partagé avec succès ✨</string>
+
     <!-- History Screen -->
     <string name="history_previous_week">Semaine précédente</string>
     <string name="history_next_week">Semaine suivante</string>
@@ -233,6 +249,7 @@
     <string name="community_empty_feed_title">Votre fil est encore vide</string>
     <string name="community_empty_feed_description">Ajoutez des amis pour découvrir leurs plaisirs quotidiens et partager les vôtres.</string>
     <string name="community_empty_feed_action">Ajouter des amis</string>
+    <string name="community_post_image">Photo du post</string>
 
     <string name="community_empty_friends_emoji" translatable="false">🤝</string>
     <string name="community_empty_friends_title">Aucun ami pour le moment</string>

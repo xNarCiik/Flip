@@ -1,6 +1,6 @@
 package com.dms.flip.data.mock.community
 
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.repository.community.FeedRepository
@@ -14,7 +14,7 @@ class MockFeedRepository @Inject constructor(
     private val dataSource: MockCommunityDataSource
 ) : FeedRepository {
 
-    override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<FriendPost>> =
+    override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<Post>> =
         dataSource.feedPosts.map { posts ->
             if (limit <= 0) {
                 Paged(emptyList(), null)

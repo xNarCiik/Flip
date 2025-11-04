@@ -46,7 +46,7 @@ class FeedRepositoryImplTest {
         feedSource.isLiked = true
         feedSource.emit(
             Paged(
-                items = listOf(FeedSource.PostDocument("post", PostDto(authorId = "author", content = "Hello", likes_count = 1))),
+                items = listOf(FeedSource.PostDocument("post", PostDto(authorId = "author", content = "Hello", likeCount = 1))),
                 nextCursor = null
             )
         )

@@ -8,7 +8,7 @@ import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendPleasure
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
@@ -105,7 +105,7 @@ val previewFriends = listOf(
 )
 
 val previewPosts = listOf(
-    FriendPost(
+    Post(
         id = "p1",
         friend = previewFriends[0],
         content = "Magnifique session de méditation ce matin ! Je me sens tellement apaisé 🧘‍♀️✨",
@@ -142,7 +142,7 @@ val previewPosts = listOf(
             )
         )
     ),
-    FriendPost(
+    Post(
         id = "p2",
         friend = previewFriends[1],
         content = "Course matinale sous le soleil, parfait pour commencer la journée ! 🏃‍♂️☀️",
@@ -171,7 +171,7 @@ val previewPosts = listOf(
             )
         )
     ),
-    FriendPost(
+    Post(
         id = "p3",
         friend = previewFriends[2],
         content = "La nature est tellement ressourçante. Cette randonnée était exactement ce dont j'avais besoin 🌲💚",
@@ -216,7 +216,7 @@ val previewPosts = listOf(
             )
         )
     ),
-    FriendPost(
+    Post(
         id = "p4",
         friend = previewFriends[3],
         content = "Préparation d'un délicieux petit-déjeuner healthy 🥑🍳 La journée commence bien !",
@@ -253,7 +253,7 @@ val previewPosts = listOf(
             )
         )
     ),
-    FriendPost(
+    Post(
         id = "p5",
         friend = previewFriends[4],
         content = "Lecture de mon nouveau livre préféré avec un bon café ☕📖 Moment parfait",

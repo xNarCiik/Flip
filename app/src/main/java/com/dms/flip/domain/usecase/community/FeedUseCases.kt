@@ -1,7 +1,7 @@
 package com.dms.flip.domain.usecase.community
 
 import com.dms.flip.domain.model.community.Paged
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.repository.community.FeedRepository
 import com.dms.flip.domain.util.Result
@@ -11,7 +11,7 @@ import javax.inject.Inject
 class ObserveFriendsFeedUseCase @Inject constructor(
     private val feedRepository: FeedRepository
 ) {
-    operator fun invoke(limit: Int, cursor: String? = null): Flow<Paged<FriendPost>> =
+    operator fun invoke(limit: Int, cursor: String? = null): Flow<Paged<Post>> =
         feedRepository.observeFriendsFeed(limit, cursor)
 }
 

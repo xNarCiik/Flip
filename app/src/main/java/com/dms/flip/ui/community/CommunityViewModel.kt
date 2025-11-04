@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
@@ -423,10 +423,10 @@ class CommunityViewModel @Inject constructor(
         observationJobs.clear()
     }
 
-    private fun List<FriendPost>.updatePost(
+    private fun List<Post>.updatePost(
         postId: String,
-        transform: (FriendPost) -> FriendPost
-    ): List<FriendPost> = map { post -> if (post.id == postId) transform(post) else post }
+        transform: (Post) -> Post
+    ): List<Post> = map { post -> if (post.id == postId) transform(post) else post }
 
     override fun onCleared() {
         super.onCleared()

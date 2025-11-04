@@ -33,6 +33,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,12 +52,16 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.dms.flip.R
 import com.dms.flip.data.model.PleasureCategory
 import com.dms.flip.ui.community.CommunityEvent
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -64,14 +71,14 @@ import com.dms.flip.ui.util.previewPosts
 private val FireStreakColor = Color(0xFFFF6B35)
 
 @Composable
-fun FriendsFeedContent(
-    posts: List<FriendPost>,
+fun FeedContent(
+    posts: List<Post>,
     expandedPostId: String?,
     currentUserId: String?,
     onEvent: (CommunityEvent) -> Unit,
-    onPostMenuClick: (FriendPost) -> Unit,
+    onPostMenuClick: (Post) -> Unit,
     onOwnCommentLongPress: (String, PostComment) -> Unit,
-    onOwnPostLongPress: (FriendPost) -> Unit,
+    onOwnPostLongPress: (Post) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -80,7 +87,7 @@ fun FriendsFeedContent(
     ) {
         items(items = posts, key = { it.id }) { post ->
             val isOwnPost = post.friend.id == currentUserId
-            FriendPostCard(
+            PostCard(
                 post = post,
                 isExpanded = post.id == expandedPostId,
                 isOwnPost = isOwnPost,
@@ -110,8 +117,8 @@ fun FriendsFeedContent(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun FriendPostCard(
-    post: FriendPost,
+fun PostCard(
+    post: Post,
     isExpanded: Boolean,
     isOwnPost: Boolean,
     onLike: () -> Unit,
@@ -135,9 +142,10 @@ fun FriendPostCard(
                 }
             )
         }
-    } else {
-        Modifier
-    }
+    } else Modifier
+
+    var showFullImage by remember { mutableStateOf(false) }
+
     val likeScale by animateFloatAsState(
         targetValue = if (post.isLiked) 1.1f else 1f,
         label = "likeScale"
@@ -157,6 +165,7 @@ fun FriendPostCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
+        // --- HEADER AUTEUR
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -189,9 +198,8 @@ fun FriendPostCard(
                     ) {
                         val displayName = if (isOwnPost) {
                             stringResource(id = R.string.community_comment_author_me)
-                        } else {
-                            post.friend.username
-                        }
+                        } else post.friend.username
+
                         Text(
                             text = displayName,
                             style = MaterialTheme.typography.titleMedium,
@@ -249,10 +257,7 @@ fun FriendPostCard(
                 }
             }
 
-            IconButton(
-                onClick = onMenu,
-                modifier = Modifier.size(48.dp)
-            ) {
+            IconButton(onClick = onMenu, modifier = Modifier.size(48.dp)) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = stringResource(R.string.community_post_menu),
@@ -262,22 +267,48 @@ fun FriendPostCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // --- PLAISIR ASSOCIÉ
         if (post.pleasureCategory != null && post.pleasureTitle != null) {
             PleasureCard(category = post.pleasureCategory, title = post.pleasureTitle)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Text(
-            text = post.content,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 60.dp)
-        )
+        if (!post.photoUrl.isNullOrEmpty()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(post.photoUrl)
+                    .placeholderMemoryCacheKey(post.photoUrlThumb)
+                    .crossfade(true)
+                    .allowHardware(false)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 60.dp, end = 8.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .height(240.dp)
+                    .clickable { showFullImage = true }
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
+        // --- TEXTE DU POST
+        if (post.content.isNotBlank()) {
+            Text(
+                text = post.content,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(start = 60.dp, end = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // --- ACTIONS : LIKE / COMMENT
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -291,9 +322,7 @@ fun FriendPostCard(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable {
-                        if (!post.isLiked) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
+                        if (!post.isLiked) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLike()
                     }
                     .padding(4.dp)
@@ -337,6 +366,7 @@ fun FriendPostCard(
             }
         }
 
+        // --- SECTION COMMENTAIRES
         if (isExpanded) {
             Spacer(modifier = Modifier.height(16.dp))
             CommentsSection(
@@ -346,6 +376,28 @@ fun FriendPostCard(
                 onCommentClick = onCommentUserClick,
                 onOwnCommentLongPress = onOwnCommentLongPress
             )
+        }
+    }
+
+    // --- DIALOG IMAGE PLEIN ÉCRAN
+    if (showFullImage && !post.photoUrl.isNullOrEmpty()) {
+        Dialog(onDismissRequest = { showFullImage = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.95f)),
+                contentAlignment = Alignment.Center
+            ) {
+                GlideImage(
+                    model = post.photoUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showFullImage = false }
+                )
+            }
         }
     }
 }
@@ -422,8 +474,8 @@ private fun PleasureCard(
     }
 }
 
-private class FriendsFeedPreviewParameterProvider : PreviewParameterProvider<List<FriendPost>> {
-    override val values: Sequence<List<FriendPost>> = sequenceOf(
+private class FeedPreviewParameterProvider : PreviewParameterProvider<List<Post>> {
+    override val values: Sequence<List<Post>> = sequenceOf(
         previewPosts.take(3),
         previewPosts.take(2)
     )
@@ -431,13 +483,13 @@ private class FriendsFeedPreviewParameterProvider : PreviewParameterProvider<Lis
 
 @LightDarkPreview
 @Composable
-private fun FriendsFeedPreview(
-    @PreviewParameter(FriendsFeedPreviewParameterProvider::class)
-    posts: List<FriendPost>
+private fun FeedPreview(
+    @PreviewParameter(FeedPreviewParameterProvider::class)
+    posts: List<Post>
 ) {
     FlipTheme {
         Surface {
-            FriendsFeedContent(
+            FeedContent(
                 posts = posts,
                 expandedPostId = posts.firstOrNull()?.id,
                 currentUserId = posts.firstOrNull()?.friend?.id,

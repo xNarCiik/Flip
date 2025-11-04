@@ -2,18 +2,15 @@ package com.dms.flip.ui.community
 
 import androidx.annotation.StringRes
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPost
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
-import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
-import com.dms.flip.domain.model.community.PostComment
-import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
 
 data class CommunityUiState(
     val isLoading: Boolean = false,
 
-    val friendsPosts: List<FriendPost> = emptyList(),
+    val friendsPosts: List<Post> = emptyList(),
     val expandedPostId: String? = null,
     val currentUserId: String? = null,
     val friends: List<Friend> = emptyList(),

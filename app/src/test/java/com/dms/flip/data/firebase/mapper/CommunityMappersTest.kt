@@ -22,8 +22,8 @@ class CommunityMappersTest {
             timestamp = Date(),
             pleasureCategory = "WELLNESS",
             pleasureTitle = "Yoga",
-            likes_count = 2,
-            comments_count = 1
+            likeCount = 2,
+            commentsCount = 1
         )
         val commentDto = CommentDto(
             userId = "commenter",
