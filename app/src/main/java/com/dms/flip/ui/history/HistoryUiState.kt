@@ -1,7 +1,6 @@
 package com.dms.flip.ui.history
 
 import com.dms.flip.domain.model.PleasureHistory
-import java.util.Locale
 
 data class HistoryUiState(
     val isLoading: Boolean = false,
@@ -12,7 +11,8 @@ data class HistoryUiState(
     val weekDates: String = "",
     val streakDays: Int = 0,
     val weekOffset: Int = 0,
-    val canNavigateToNextWeek: Boolean = false
+    val canNavigateToNextWeek: Boolean = false,
+    val showPleasureDetail: Boolean = false
 )
 
 data class WeeklyDay(
@@ -29,6 +29,7 @@ sealed interface HistoryEvent {
     data object OnNextWeekClicked : HistoryEvent
     data object OnDiscoverTodayClicked : HistoryEvent
     data object OnScreenResumed : HistoryEvent
+    data object OnPleasureDetailDismissed : HistoryEvent
 }
 
 fun getDayName(dayOfWeek: Int): String {

@@ -38,6 +38,7 @@ class HistoryViewModel @Inject constructor(
             is HistoryEvent.OnNextWeekClicked -> navigateToNextWeek()
             is HistoryEvent.OnDiscoverTodayClicked -> discoverToday()
             is HistoryEvent.OnScreenResumed -> refreshCurrentWeek()
+            is HistoryEvent.OnPleasureDetailDismissed -> dismissPleasureDetail()
         }
     }
 
@@ -46,11 +47,25 @@ class HistoryViewModel @Inject constructor(
     }
 
     private fun selectPleasure(item: PleasureHistory) {
-        _uiState.update { it.copy(selectedPleasureHistory = item) }
+        _uiState.update { 
+            it.copy(
+                selectedPleasureHistory = item,
+                showPleasureDetail = true
+            ) 
+        }
     }
 
     private fun dismissBottomSheet() {
         _uiState.update { it.copy(selectedPleasureHistory = null) }
+    }
+
+    private fun dismissPleasureDetail() {
+        _uiState.update { 
+            it.copy(
+                showPleasureDetail = false,
+                selectedPleasureHistory = null
+            ) 
+        }
     }
 
     private fun navigateToPreviousWeek() {
@@ -66,7 +81,7 @@ class HistoryViewModel @Inject constructor(
     }
 
     private fun discoverToday() {
-
+        // This will be handled by navigation in the screen
     }
 
     private var loadHistoryJob: Job? = null

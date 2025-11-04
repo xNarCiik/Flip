@@ -41,6 +41,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dms.flip.R
 import com.dms.flip.ui.component.LoadingState
+import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
 import com.dms.flip.ui.history.component.WeekNavigationHeader
 import com.dms.flip.ui.history.component.WeeklyPleasuresList
 import com.dms.flip.ui.history.component.WeeklyStatsGrid
@@ -71,6 +72,18 @@ fun HistoryScreen(
 
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Show pleasure detail screen if requested
+    if (uiState.showPleasureDetail && uiState.selectedPleasureHistory != null) {
+        val pleasure = uiState.selectedPleasureHistory.toPleasureOrNull()
+        pleasure?.let {
+            PleasureDetailScreen(
+                pleasure = it,
+                onBackClick = { onEvent(HistoryEvent.OnPleasureDetailDismissed) }
+            )
+            return
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {

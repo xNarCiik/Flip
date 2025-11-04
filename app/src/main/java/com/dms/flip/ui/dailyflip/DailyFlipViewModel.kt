@@ -239,12 +239,12 @@ class DailyFlipViewModel @Inject constructor(
         }
 
         // Close bottom sheet and show loading dialog
-        _uiState.update {
+        _uiState.update { 
             it.copy(
                 showShareBottomSheet = false,
-                isSharing = true,
+                isSharing = true, 
                 shareError = null
-            )
+            ) 
         }
 
         try {
