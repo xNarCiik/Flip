@@ -88,6 +88,17 @@ class FeedRepositoryImplTest {
         override suspend fun getComments(postId: String, limit: Int): List<Pair<String, CommentDto>> = comments
 
         override suspend fun isPostLiked(postId: String, uid: String): Boolean = isLiked
+        override suspend fun deleteComment(
+            postId: String,
+            commentId: String,
+            uid: String
+        ) {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun deletePost(postId: String, uid: String) {
+            TODO("Not yet implemented")
+        }
     }
 
     private class FakeProfileSource : ProfileSource {

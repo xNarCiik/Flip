@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,8 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dms.flip.R
-import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
+import com.dms.flip.domain.model.community.iconTint
 import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.FlipTopBar
@@ -81,6 +82,12 @@ fun DailyFlipScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val pleasure = when (screenState) {
+                is DailyFlipScreenState.Completed -> screenState.dailyPleasure
+                is DailyFlipScreenState.Ready -> screenState.dailyPleasure
+                else -> null
+            }
+
             // TopBar
             FlipTopBar(
                 title = stringResource(R.string.app_name),
@@ -92,7 +99,8 @@ fun DailyFlipScreen(
                             CommunityAvatar(
                                 imageUrl = uiState.userInfo?.avatarUrl,
                                 fallbackText = avatarFallback,
-                                size = 40.dp
+                                size = 40.dp,
+                                borderColor = pleasure?.category?.iconTint ?: Color.Transparent
                             )
                         }
                     )

@@ -1,7 +1,9 @@
 package com.dms.flip.ui.dailyflip.component
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -11,39 +13,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,15 +36,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
+import com.airbnb.lottie.compose.*
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.community.icon
 import com.dms.flip.domain.model.community.iconTint
+import com.dms.flip.ui.component.PleasureCard
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewDailyPleasure
@@ -79,11 +56,12 @@ fun DailyFlipCompletedContent(
 ) {
     val scrollState = rememberScrollState()
 
-    var playAnimation by rememberSaveable { mutableStateOf(false) } // Pour le checkmark et le contenu
-    var showContent by rememberSaveable { mutableStateOf(false) }   // Pour le contenu textuel/cartes
-    var hasPlayedConfetti by rememberSaveable { mutableStateOf(false) } // Pour savoir si le confetti a déjà été joué
+    var hasAnimated by rememberSaveable { mutableStateOf(false) }
+    var showHero by rememberSaveable { mutableStateOf(false) }
+    var showContent by rememberSaveable { mutableStateOf(false) }
+    var showExtras by rememberSaveable { mutableStateOf(false) }
 
-    // État local (non sauvegardé) pour déclencher l'animation confetti
+    var hasPlayedConfetti by rememberSaveable { mutableStateOf(false) }
     var playConfetti by remember { mutableStateOf(false) }
 
     val checkmarkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.checkmark))
@@ -91,7 +69,7 @@ fun DailyFlipCompletedContent(
 
     val checkmarkProgress by animateLottieCompositionAsState(
         composition = checkmarkComposition,
-        isPlaying = playAnimation,
+        isPlaying = showHero,
         restartOnPlay = false,
         speed = 0.7f
     )
@@ -99,30 +77,29 @@ fun DailyFlipCompletedContent(
     val confettiProgress by animateLottieCompositionAsState(
         composition = confettiComposition,
         isPlaying = playConfetti,
-        restartOnPlay = false,
-        speed = 1.0f
+        restartOnPlay = false
     )
 
-    // Logique de déclenchement initiale et de navigation
-    LaunchedEffect(Unit) { // Se lance une seule fois à la composition initiale
-        if (hasPlayedConfetti) {
-            // Si l'animation confetti a déjà joué, on montre tout le contenu et le checkmark à la fin
+    LaunchedEffect(Unit) {
+        if (!hasAnimated) {
+            delay(150)
+            showHero = true
+            delay(300)
             showContent = true
-            playAnimation = true // Maintient l'animation du checkmark à la fin
-        } else if (!playAnimation) {
-            // Première entrée : lance l'animation du checkmark
-            delay(200) // Petit délai avant de commencer le checkmark
-            playAnimation = true
-            showContent = true // Commence à montrer le contenu textuel/cartes
+            delay(300)
+            showExtras = true
+            hasAnimated = true
+        } else {
+            showHero = true
+            showContent = true
+            showExtras = true
         }
     }
 
-    // Effet pour écouter la fin de l'animation "checkmark" et lancer "confetti"
     LaunchedEffect(checkmarkProgress) {
-        // Déclenche les confettis si le checkmark est presque fini ET que les confettis n'ont pas encore joués
         if (checkmarkProgress > 0.95f && !hasPlayedConfetti) {
+            hasPlayedConfetti = true
             playConfetti = true
-            hasPlayedConfetti = true // Marque les confettis comme joués
         }
     }
 
@@ -136,63 +113,61 @@ fun DailyFlipCompletedContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-
-        Box(
-            modifier = Modifier
-                .size(130.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        listOf(categoryColor.copy(0.3f), Color.Transparent)
+        AnimatedVisibility(
+            visible = showHero,
+            enter = fadeIn(tween(600, easing = FastOutSlowInEasing)) +
+                    scaleIn(
+                        initialScale = 0.85f,
+                        animationSpec = tween(600, easing = FastOutSlowInEasing)
                     )
-                ),
-            contentAlignment = Alignment.Center
         ) {
-            // Halo animé
-            val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
-                0.9f, 1.1f,
-                animationSpec = infiniteRepeatable(
-                    tween(1200, easing = FastOutSlowInEasing),
-                    RepeatMode.Reverse
-                ),
-                label = "pulse"
-            )
             Box(
                 modifier = Modifier
-                    .size((110 * pulse).dp)
+                    .size(130.dp)
+                    .clip(CircleShape)
                     .background(
                         brush = Brush.radialGradient(
-                            listOf(categoryColor.copy(0.25f), Color.Transparent)
-                        ),
-                        shape = CircleShape
-                    )
-            )
-
-            // Animation Checkmark
-            LottieAnimation(
-                composition = checkmarkComposition,
-                // Si l'anim a déjà joué, on la met à 1f (fin) pour qu'elle reste affichée
-                progress = { if (hasPlayedConfetti) 1f else checkmarkProgress },
-                modifier = Modifier.size(110.dp)
-            )
-
-            // Animation Confetti, affichée seulement quand playConfetti est vrai
-            this@Column.AnimatedVisibility(
-                visible = playConfetti, // N'affiche le composable Lottie que si on doit jouer le confetti
-                modifier = Modifier.fillMaxSize()
+                            listOf(categoryColor.copy(0.3f), Color.Transparent)
+                        )
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                LottieAnimation(
-                    composition = confettiComposition,
-                    progress = { confettiProgress },
-                    modifier = Modifier.fillMaxSize()
+                val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
+                    0.9f, 1.1f,
+                    animationSpec = infiniteRepeatable(
+                        tween(1200, easing = FastOutSlowInEasing),
+                        RepeatMode.Reverse
+                    ),
+                    label = "pulse"
                 )
+                Box(
+                    modifier = Modifier
+                        .size((110 * pulse).dp)
+                        .background(
+                            brush = Brush.radialGradient(
+                                listOf(categoryColor.copy(0.25f), Color.Transparent)
+                            ),
+                            shape = CircleShape
+                        )
+                )
+                LottieAnimation(
+                    composition = checkmarkComposition,
+                    progress = { if (hasPlayedConfetti) 1f else checkmarkProgress },
+                    modifier = Modifier.size(110.dp)
+                )
+                this@Column.AnimatedVisibility(visible = playConfetti) {
+                    LottieAnimation(
+                        composition = confettiComposition,
+                        progress = { confettiProgress },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
 
-        /** 🥳 Titre + Sous-titre */
         AnimatedVisibility(
             visible = showContent,
-            enter = fadeIn(tween(600, delayMillis = 150)) +
+            enter = fadeIn(tween(600, delayMillis = 100)) +
                     scaleIn(initialScale = 0.9f, animationSpec = tween(600))
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -216,23 +191,24 @@ fun DailyFlipCompletedContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        /** 🎂 Carte du plaisir */
         AnimatedVisibility(
             visible = showContent,
-            enter = fadeIn(tween(700, delayMillis = 300)) + scaleIn(initialScale = 0.9f)
+            enter = fadeIn(tween(700, delayMillis = 250)) +
+                    scaleIn(initialScale = 0.95f, animationSpec = tween(700))
         ) {
             completedPleasure?.let {
-                CompletedPleasureCard(
-                    pleasure = it,
-                    categoryColor = categoryColor,
+                PleasureCard(
+                    icon = it.category.icon,
+                    iconTint = categoryColor,
+                    label = stringResource(R.string.daily_flip_completed_pleasure_label),
+                    title = it.title,
+                    description = it.description,
+                    showChevron = true,
                     onClick = onPleasureClick
                 )
             }
         }
 
-        /** 💭 Citation inspirante */
         val quotes = listOf(
             "Chaque petit plaisir construit ton bonheur.",
             "Les moments simples font les plus beaux souvenirs.",
@@ -242,8 +218,9 @@ fun DailyFlipCompletedContent(
         val randomQuote = remember { quotes.random() }
 
         AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(800, delayMillis = 500)) + scaleIn(initialScale = 0.95f)
+            visible = showExtras,
+            enter = fadeIn(tween(700, delayMillis = 300)) +
+                    scaleIn(initialScale = 0.95f, animationSpec = tween(700))
         ) {
             Text(
                 text = "« $randomQuote »",
@@ -257,33 +234,35 @@ fun DailyFlipCompletedContent(
             )
         }
 
-        /** 📅 Carte "Prochain tirage" */
         AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(800, delayMillis = 700)) + scaleIn(initialScale = 0.9f)
+            visible = showExtras,
+            enter = fadeIn(tween(800, delayMillis = 400)) +
+                    scaleIn(initialScale = 0.95f, animationSpec = tween(800))
         ) {
             NextDrawInfoCard()
         }
 
-        /** 📤 Bouton de partage */
         AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(900, delayMillis = 900)) + scaleIn(initialScale = 0.9f)
+            visible = showExtras,
+            enter = fadeIn(tween(900, delayMillis = 500))
         ) {
-            val buttonPulse by rememberInfiniteTransition(label = "buttonPulse").animateFloat(
-                1f, 1.05f,
-                animationSpec = infiniteRepeatable(
-                    tween(900, easing = FastOutSlowInEasing),
-                    RepeatMode.Reverse
-                ),
-                label = "buttonPulse"
-            )
+            val scale = remember { Animatable(1f) }
+            LaunchedEffect(showExtras) {
+                if (showExtras) {
+                    delay(1500)
+                    while (true) {
+                        scale.animateTo(1.05f, tween(1200, easing = FastOutSlowInEasing))
+                        scale.animateTo(1f, tween(1200, easing = FastOutSlowInEasing))
+                    }
+                }
+            }
+
             Button(
                 onClick = onShareClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
-                    .scale(buttonPulse)
+                    .scale(scale.value)
                     .shadow(
                         elevation = 10.dp,
                         shape = RoundedCornerShape(16.dp),
@@ -303,82 +282,9 @@ fun DailyFlipCompletedContent(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.share_moment_button),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun CompletedPleasureCard(
-    pleasure: Pleasure,
-    categoryColor: Color,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        categoryColor.copy(alpha = 0.12f),
-                        categoryColor.copy(alpha = 0.05f)
-                    )
-                )
-            )
-            .border(1.5.dp, categoryColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(categoryColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = pleasure.category.icon,
-                    contentDescription = null,
-                    tint = categoryColor,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.daily_flip_completed_pleasure_label),
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = categoryColor
-                )
-                Text(
-                    text = pleasure.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = pleasure.description,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                    ),
-                    lineHeight = 18.sp
-                )
-            }
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.see_details),
-                tint = categoryColor,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }

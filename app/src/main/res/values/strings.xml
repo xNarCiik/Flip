@@ -130,7 +130,7 @@
     <!-- History Screen -->
     <string name="history_previous_week">Semaine précédente</string>
     <string name="history_next_week">Semaine suivante</string>
-    <string name="history_locked_day_description">Jour non encore vécu</string>
+    <string name="history_locked_day_description">À découvrir...</string>
     <string name="history_pleasures_this_week">Plaisirs de la semaine</string>
     <string name="history_streak_days">Jours de série</string>
     <string name="history_ready_for_joy">Prêt(e) pour votre joie du jour ?</string>

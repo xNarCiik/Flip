@@ -70,7 +70,9 @@ import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.model.community.icon
 import com.dms.flip.domain.model.community.iconTint
+import com.dms.flip.domain.model.community.label
 import com.dms.flip.ui.community.CommunityEvent
+import com.dms.flip.ui.component.PleasureCard
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.formatTimestamp
@@ -139,7 +141,7 @@ fun FeedContent(
 }
 
 @Composable
-fun FeedSkeleton(count: Int = 5, modifier: Modifier = Modifier) {
+fun FeedSkeleton(modifier: Modifier = Modifier, count: Int = 5) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -334,17 +336,10 @@ fun PostCard(
 
     val categoryColor = post.pleasureCategory?.iconTint ?: MaterialTheme.colorScheme.primary
 
-    // Main card container with glassmorphism effect
     Column(
         modifier = modifier
             .then(pressModifier)
             .fillMaxWidth()
-            .shadow(
-                elevation = 0.dp,
-                shape = RoundedCornerShape(24.dp),
-                ambientColor = Color.Black.copy(alpha = 0.05f),
-                spotColor = Color.Black.copy(alpha = 0.05f)
-            )
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -361,11 +356,7 @@ fun PostCard(
             )
             .clip(RoundedCornerShape(24.dp))
     ) {
-        // Image with overlay header
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Main image
+        Box(modifier = Modifier.fillMaxWidth()) {
             if (!post.photoUrl.isNullOrEmpty()) {
                 GlideImage(
                     model = post.photoUrl,
@@ -379,7 +370,6 @@ fun PostCard(
                 )
             }
 
-            // Overlay header with glassmorphism
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -399,7 +389,6 @@ fun PostCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Avatar and user info
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -407,31 +396,12 @@ fun PostCard(
                             .weight(1f)
                             .clickable(onClick = onFriendClick)
                     ) {
-                        // Avatar with category-colored border
-                        Box {
-                            if (post.friend.avatarUrl != null) {
-                                GlideImage(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .border(
-                                            width = 2.dp,
-                                            color = categoryColor.copy(alpha = 0.6f),
-                                            shape = CircleShape
-                                        )
-                                        .padding(2.dp)
-                                        .clip(CircleShape)
-                                        .shadow(4.dp, CircleShape),
-                                    model = post.friend.avatarUrl,
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = null
-                                )
-                            } else {
-                                PlaceholderAvatar(
-                                    name = post.friend.username,
-                                    borderColor = categoryColor
-                                )
-                            }
-                        }
+                        CommunityAvatar(
+                            imageUrl = post.friend.avatarUrl,
+                            fallbackText = post.friend.username.firstOrNull()?.uppercase() ?: "?",
+                            size = 40.dp,
+                            borderColor = categoryColor
+                        )
 
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Row(
@@ -479,39 +449,23 @@ fun PostCard(
                             )
                         }
                     }
-
-                    // Category badge
-                    post.pleasureCategory?.let { category ->
-                        Row(
-                            modifier = Modifier
-                                .background(
-                                    color = categoryColor.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = category.icon,
-                                contentDescription = null,
-                                tint = categoryColor,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = post.pleasureTitle ?: "",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White,
-                                maxLines = 1
-                            )
-                        }
-                    }
                 }
             }
         }
 
-        // Post content text
+        if (post.pleasureCategory != null && post.pleasureTitle != null) {
+            PleasureCard(
+                icon = post.pleasureCategory.icon,
+                iconTint = categoryColor,
+                label = stringResource(post.pleasureCategory.label),
+                title = post.pleasureTitle,
+                description = null,
+                showChevron = false,
+                onClick = {},
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+        }
+
         if (post.content.isNotBlank()) {
             Text(
                 text = post.content,
@@ -526,13 +480,11 @@ fun PostCard(
             )
         }
 
-        // Subtle divider
         HorizontalDivider(
             thickness = 0.5.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
         )
 
-        // Actions bar (Like, Comment, Menu)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -541,12 +493,10 @@ fun PostCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Like and Comment buttons
             Row(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Like button
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -576,7 +526,6 @@ fun PostCard(
                     )
                 }
 
-                // Comment button
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -600,7 +549,6 @@ fun PostCard(
                 }
             }
 
-            // Menu button
             IconButton(
                 onClick = onMenu,
                 modifier = Modifier.size(40.dp)
@@ -614,7 +562,6 @@ fun PostCard(
             }
         }
 
-        // Comments section with smooth expand animation
         if (isExpanded) {
             Column(
                 modifier = Modifier
@@ -642,7 +589,6 @@ fun PostCard(
         }
     }
 
-    // Full screen image dialog
     if (showFullImage && !post.photoUrl.isNullOrEmpty()) {
         Dialog(onDismissRequest = { showFullImage = false }) {
             Box(
@@ -662,41 +608,6 @@ fun PostCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun PlaceholderAvatar(
-    name: String,
-    borderColor: Color = Color.Transparent
-) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .border(
-                width = 2.dp,
-                color = borderColor.copy(alpha = 0.6f),
-                shape = CircleShape
-            )
-            .padding(2.dp)
-            .clip(CircleShape)
-            .shadow(4.dp, CircleShape)
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = name.firstOrNull()?.uppercase() ?: "?",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
     }
 }
 

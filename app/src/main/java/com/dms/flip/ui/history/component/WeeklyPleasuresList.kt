@@ -3,7 +3,7 @@ package com.dms.flip.ui.history.component
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,13 +37,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dms.flip.R
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.model.community.icon
 import com.dms.flip.domain.model.community.iconTint
+import com.dms.flip.ui.component.PleasureCard
 import com.dms.flip.ui.history.WeeklyDay
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.theme.flipGradients
@@ -170,118 +168,18 @@ private fun PleasureInfoCard(
     val category = historyEntry.pleasureCategory
     val categoryColor = category.iconTint
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = if (isCompleted) 4.dp else 2.dp,
-                shape = RoundedCornerShape(20.dp),
-                spotColor = categoryColor.copy(alpha = 0.2f)
-            )
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        categoryColor.copy(alpha = 0.12f),
-                        categoryColor.copy(alpha = 0.05f)
-                    )
-                )
-            )
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon container avec design moderne
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(14.dp),
-                        spotColor = categoryColor.copy(alpha = 0.3f)
-                    )
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                categoryColor.copy(alpha = 0.2f),
-                                categoryColor.copy(alpha = 0.1f)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = category.icon,
-                    contentDescription = null,
-                    tint = categoryColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            // Contenu texte
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = weeklyDay.dayName,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = categoryColor
-                )
-                Text(
-                    text = historyEntry.pleasureTitle ?: "",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                historyEntry.pleasureDescription?.let { description ->
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                        ),
-                        lineHeight = 18.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            // Indicateur de statut ou flèche
-            if (isCompleted) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = stringResource(R.string.status_done_checked),
-                        tint = categoryColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = stringResource(R.string.see_details),
-                        tint = categoryColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            } else {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.see_details),
-                    tint = categoryColor,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
+    PleasureCard(
+        icon = category.icon,
+        iconTint = categoryColor,
+        label = weeklyDay.dayName,
+        title = historyEntry.pleasureTitle ?: "",
+        description = historyEntry.pleasureDescription,
+        showChevron = true,
+        isCompleted = isCompleted,
+        maxTitleLines = 1,
+        maxDescriptionLines = 2,
+        onClick = onClick
+    )
 }
 
 @Composable
@@ -415,44 +313,55 @@ private fun LockedDayCard(dayName: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .background(
+                brush = Brush.linearGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.05f)
+                    )
+                )
+            )
+            .border(
+                width = 1.5.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(20.dp)
+            )
             .alpha(0.6f)
             .padding(16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon container
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(52.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            // Text content
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = dayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
                     text = stringResource(R.string.history_locked_day_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                    ),
+                    lineHeight = 18.sp
                 )
             }
         }

@@ -30,7 +30,7 @@ import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.ui.community.CommunityNavHost
 import com.dms.flip.ui.dailyflip.DailyFlipScreen
 import com.dms.flip.ui.dailyflip.DailyFlipViewModel
-import com.dms.flip.ui.dailyflip.component.PleasureDetailScreen
+import com.dms.flip.ui.pleasuredetail.PleasureDetailScreen
 import com.dms.flip.ui.history.HistoryScreen
 import com.dms.flip.ui.history.HistoryViewModel
 import com.dms.flip.ui.login.LoginScreen
