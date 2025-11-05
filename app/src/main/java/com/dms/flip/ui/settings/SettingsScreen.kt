@@ -65,7 +65,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.dms.flip.R
 import com.dms.flip.domain.model.Theme
 import com.dms.flip.domain.model.UserInfo
-import com.dms.flip.ui.community.component.CommunityAvatar
+import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TimePicker
 import com.dms.flip.ui.component.TopBarIcon

@@ -41,7 +41,7 @@ import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TopBarIcon
-import com.dms.flip.ui.community.component.CommunityAvatar
+import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewSearchResults

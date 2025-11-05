@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
+import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.theme.FlipTheme

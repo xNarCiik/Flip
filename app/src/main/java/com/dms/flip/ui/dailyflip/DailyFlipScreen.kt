@@ -36,7 +36,7 @@ import androidx.compose.ui.zIndex
 import com.dms.flip.R
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.domain.model.community.iconTint
-import com.dms.flip.ui.community.component.CommunityAvatar
+import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.LoadingState

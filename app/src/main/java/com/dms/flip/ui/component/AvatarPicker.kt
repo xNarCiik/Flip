@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.dms.flip.ui.community.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 

@@ -19,7 +19,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -39,14 +38,13 @@ import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
 import com.dms.flip.ui.community.component.DeleteConfirmationDialog
-import com.dms.flip.ui.community.component.FeedContent
-import com.dms.flip.ui.community.component.FeedSkeleton
+import com.dms.flip.ui.community.component.feed.FeedContent
+import com.dms.flip.ui.community.component.feed.FeedSkeleton
 import com.dms.flip.ui.community.component.PostOptionsDialog
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewCommunityUiStateFull
-import com.google.android.material.loadingindicator.LoadingIndicator
 
 private sealed interface CommunityContentState {
     data object Loading : CommunityContentState

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.Post
+import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPosts

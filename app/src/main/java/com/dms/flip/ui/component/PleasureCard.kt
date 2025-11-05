@@ -38,6 +38,7 @@ import com.dms.flip.ui.util.previewDailyPleasure
 /**
  * Composant réutilisable pour afficher une carte de plaisir avec un design unifié.
  *
+ * @param modifier Modificateur pour personnaliser la carte
  * @param icon L'icône à afficher dans le coin gauche
  * @param iconTint La couleur de l'icône et des accents de la carte
  * @param label Le label supérieur (ex: "Votre plaisir du jour", "Lundi")
@@ -48,10 +49,10 @@ import com.dms.flip.ui.util.previewDailyPleasure
  * @param maxTitleLines Nombre maximum de lignes pour le titre (défaut: pas de limite)
  * @param maxDescriptionLines Nombre maximum de lignes pour la description (défaut: pas de limite)
  * @param onClick Action au clic sur la carte
- * @param modifier Modificateur pour personnaliser la carte
  */
 @Composable
 fun PleasureCard(
+    modifier: Modifier = Modifier,
     icon: ImageVector,
     iconTint: Color,
     label: String,
@@ -62,7 +63,6 @@ fun PleasureCard(
     maxTitleLines: Int = Int.MAX_VALUE,
     maxDescriptionLines: Int = Int.MAX_VALUE,
     onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
@@ -72,14 +72,14 @@ fun PleasureCard(
             .background(
                 brush = Brush.linearGradient(
                     listOf(
-                        iconTint.copy(alpha = if (isCompleted) 0.08f else 0.12f),
-                        iconTint.copy(alpha = if (isCompleted) 0.03f else 0.05f)
+                        iconTint.copy(alpha = 0.12f),
+                        iconTint.copy(alpha = 0.05f)
                     )
                 )
             )
             .border(
                 width = 1.5.dp,
-                color = iconTint.copy(alpha = if (isCompleted) 0.15f else 0.25f),
+                color = iconTint.copy(alpha = 0.25f),
                 shape = RoundedCornerShape(20.dp)
             )
             .clickable(onClick = onClick)

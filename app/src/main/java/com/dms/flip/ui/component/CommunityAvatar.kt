@@ -1,4 +1,4 @@
-package com.dms.flip.ui.community.component
+package com.dms.flip.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
