@@ -33,7 +33,7 @@ fun PostDto.toDomain(
     timestamp = timestamp?.time ?: 0L,
     photoUrl = photoUrl,
     photoUrlThumb = photoUrlThumb,
-    likesCount = likeCount,
+    likesCount = likesCount,
     commentsCount = commentsCount,
     isLiked = isLiked,
     pleasureCategory = pleasureCategory?.toPleasureCategoryOrNull(),

@@ -11,6 +11,6 @@ data class PostDto(
     val pleasureTitle: String? = null,
     val photoUrl: String? = null,
     val photoUrlThumb: String? = null,
-    val likeCount: Int = 0,
+    val likesCount: Int = 0,
     val commentsCount: Int = 0
 )

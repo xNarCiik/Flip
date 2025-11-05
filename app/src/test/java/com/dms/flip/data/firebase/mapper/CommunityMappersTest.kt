@@ -22,7 +22,7 @@ class CommunityMappersTest {
             timestamp = Date(),
             pleasureCategory = "WELLNESS",
             pleasureTitle = "Yoga",
-            likeCount = 2,
+            likesCount = 2,
             commentsCount = 1
         )
         val commentDto = CommentDto(

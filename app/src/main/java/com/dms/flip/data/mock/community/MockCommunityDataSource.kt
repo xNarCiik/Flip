@@ -485,14 +485,26 @@ class MockCommunityDataSource @Inject constructor() {
         _suggestions.update { current -> current.filterNot { it.id == userId } }
     }
 
-    fun togglePostLike(postId: String, like: Boolean) {
+    fun createPost(
+        content: String,
+        pleasureCategory: String?,
+        pleasureTitle: String?,
+        photoUrl: String?
+    ) {
+    }/*: Post {
+        return Post()
+    }*/ // TODO
+
+    fun togglePostLike(postId: String) {
         _feedPosts.update { posts ->
             posts.map { post ->
                 if (post.id == postId) {
                     val targetLikes =
-                        if (like) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
+                        if (!post.isLiked) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(
+                            0
+                        )
                     post.copy(
-                        isLiked = like,
+                        isLiked = !post.isLiked,
                         likesCount = targetLikes
                     )
                 } else {

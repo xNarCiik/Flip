@@ -25,8 +25,17 @@ class MockFeedRepository @Inject constructor(
             }
         }
 
-    override suspend fun toggleLike(postId: String, like: Boolean) {
-        dataSource.togglePostLike(postId, like)
+    override suspend fun createPost(
+        content: String,
+        pleasureCategory: String?,
+        pleasureTitle: String?,
+        photoUrl: String?
+    ) {
+        dataSource.createPost(content, pleasureCategory, pleasureTitle, photoUrl)
+    }
+
+    override suspend fun toggleLike(postId: String) {
+        dataSource.togglePostLike(postId)
     }
 
     override suspend fun addComment(postId: String, content: String): PostComment {

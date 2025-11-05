@@ -137,7 +137,7 @@ fun CommunityScreen(
 						PullToRefreshBox(
                             state = pullState,
                             isRefreshing = uiState.isRefreshing,
-                            onRefresh = { onEvent(CommunityEvent.OnRefresh) },
+                            onRefresh = { onEvent(CommunityEvent.OnRefresh(forceReload = true)) },
                             indicator = {
                                 Indicator(
                                     state = pullState,

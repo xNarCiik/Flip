@@ -41,7 +41,8 @@ object CommunityModule {
 
     @Provides
     @Singleton
-    fun provideFeedSource(firestore: FirebaseFirestore): FeedSource = FirestoreFeedSource(firestore)
+    fun provideFeedSource(firestore: FirebaseFirestore, functions: FirebaseFunctions): FeedSource =
+        FirestoreFeedSource(firestore, functions)
 
     @Provides
     @Singleton

@@ -1,9 +1,9 @@
 package com.dms.flip.domain.usecase.community
 
 import android.net.Uri
-import com.dms.flip.domain.repository.community.PostRepository
 import com.dms.flip.data.repository.StorageRepository
 import com.dms.flip.domain.model.Pleasure
+import com.dms.flip.domain.repository.community.FeedRepository
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 
@@ -11,7 +11,7 @@ import javax.inject.Inject
  * Use case pour partager un moment (plaisir du jour) avec la communauté
  */
 class ShareMomentUseCase @Inject constructor(
-    private val postRepository: PostRepository,
+    private val feedRepository: FeedRepository,
     private val storageRepository: StorageRepository,
     private val firebaseAuth: FirebaseAuth
 ) {
@@ -20,7 +20,7 @@ class ShareMomentUseCase @Inject constructor(
         comment: String,
         photoUri: Uri? = null
     ) {
-        val userId = firebaseAuth.currentUser?.uid 
+        val userId = firebaseAuth.currentUser?.uid
             ?: throw IllegalStateException("User not authenticated")
 
         // Upload de la photo si présente
@@ -29,8 +29,7 @@ class ShareMomentUseCase @Inject constructor(
         }
 
         // Créer le post
-        postRepository.createPost(
-            authorId = userId,
+        feedRepository.createPost(
             content = comment,
             pleasureCategory = pleasure.category.name,
             pleasureTitle = pleasure.title,

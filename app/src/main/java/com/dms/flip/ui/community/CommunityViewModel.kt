@@ -108,24 +108,24 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun refresh() {
+    fun refresh(forceReload: Boolean = false) {
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
-            try {
-                val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE).first()
-                _uiState.update { state ->
-                    val mergedPosts = mergeFeedPosts(state.posts, page.items)
-                    state.copy(
-                        posts = mergedPosts,
-                        feedNextCursor = page.nextCursor
-                    )
+
+            if (forceReload) {
+                cancelObservations()
+                ensureObservationsStarted()
+            } else {
+                try {
+                    val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE).first()
+                    _uiState.update { it.copy(posts = page.items.toPersistentList()) }
+                } catch (t: Throwable) {
+                    handleError(t, stopInitial = false, stopRefresh = true)
                 }
-            } catch (throwable: Throwable) {
-                handleError(throwable, stopInitial = false, stopRefresh = true)
-            } finally {
-                _uiState.update { it.copy(isRefreshing = false) }
             }
+
+            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 
@@ -157,7 +157,7 @@ class CommunityViewModel @Inject constructor(
                 acceptFriendRequestFromProfile(event.userId)
 
             is CommunityEvent.OnRemoveFriendFromProfile -> removeFriendFromProfile(event.userId)
-            is CommunityEvent.OnRefresh -> refresh()
+            is CommunityEvent.OnRefresh -> refresh(event.forceReload)
             else -> Unit
         }
     }
@@ -297,8 +297,7 @@ class CommunityViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // TODO REMOVE LIKE
-            when (toggleLikeUseCase(postId, !wasLiked)) {
+            when (toggleLikeUseCase(postId)) {
                 is Result.Err -> {
                     _uiState.update { state ->
                         state.copy(

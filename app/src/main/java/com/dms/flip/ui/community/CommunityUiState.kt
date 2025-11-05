@@ -65,5 +65,5 @@ sealed interface CommunityEvent {
 
     data object OnLoadMorePosts : CommunityEvent
     data object OnRetryClicked : CommunityEvent
-    data object OnRefresh : CommunityEvent
+    data class OnRefresh(val forceReload: Boolean = false) : CommunityEvent
 }

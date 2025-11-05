@@ -18,9 +18,9 @@ class ObserveFriendsFeedUseCase @Inject constructor(
 class ToggleLikeUseCase @Inject constructor(
     private val feedRepository: FeedRepository
 ) {
-    suspend operator fun invoke(postId: String, like: Boolean): Result<Unit> =
+    suspend operator fun invoke(postId: String): Result<Unit> =
         runCatching {
-            feedRepository.toggleLike(postId, like)
+            feedRepository.toggleLike(postId)
         }.fold(
             onSuccess = { Result.Ok(Unit) },
             onFailure = { Result.Err(it) }

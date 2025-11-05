@@ -28,15 +28,25 @@ class FeedRepositoryImpl @Inject constructor(
 
     override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<Post>> {
         val uid = auth.currentUser?.uid ?: return flowOf(Paged(emptyList(), null))
+
         return feedSource.observeFriendsFeed(uid, limit, cursor)
             .map { page ->
                 val posts = coroutineScope {
                     page.items.map { document ->
                         async {
                             val author = resolveFriend(document.data.authorId)
-                            val comments = feedSource.getComments(document.id)
-                                .map { (id, dto) -> dto.toDomain(id) }
-                            val liked = feedSource.isPostLiked(document.id, uid)
+
+                            val commentsDeferred = async {
+                                feedSource.getComments(document.id)
+                                    .map { (id, dto) -> dto.toDomain(id) }
+                            }
+                            val likedDeferred = async {
+                                feedSource.isPostLiked(document.id, uid)
+                            }
+
+                            val comments = commentsDeferred.await()
+                            val liked = likedDeferred.await()
+
                             document.data.toDomain(
                                 id = document.id,
                                 author = author,
@@ -52,22 +62,26 @@ class FeedRepositoryImpl @Inject constructor(
 
     private suspend fun resolveFriend(userId: String): Friend {
         val profile = profileSource.getPublicProfile(userId)
-        val username = profile?.username ?: ""
-        val handle = profile?.handle ?: ""
-        val avatar = profile?.avatarUrl
-        val streak = profile?.stats?.get("currentStreak") ?: 0
         return Friend(
             id = userId,
-            username = username,
-            handle = handle,
-            avatarUrl = avatar,
-            streak = streak
+            username = profile?.username.orEmpty(),
+            handle = profile?.handle.orEmpty(),
+            avatarUrl = profile?.avatarUrl,
+            streak = profile?.stats?.get("currentStreak") ?: 0
         )
     }
 
-    override suspend fun toggleLike(postId: String, like: Boolean) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        feedSource.toggleLike(postId, uid, like)
+    override suspend fun createPost(
+        content: String,
+        pleasureCategory: String?,
+        pleasureTitle: String?,
+        photoUrl: String?
+    ) {
+        feedSource.createPost(content, pleasureCategory, pleasureTitle, photoUrl)
+    }
+
+    override suspend fun toggleLike(postId: String) {
+        feedSource.toggleLike(postId)
     }
 
     override suspend fun addComment(postId: String, content: String): PostComment {
@@ -85,12 +99,10 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteComment(postId: String, commentId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        feedSource.deleteComment(postId, commentId, uid)
+        feedSource.deleteComment(postId, commentId)
     }
 
     override suspend fun deletePost(postId: String) {
-        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        feedSource.deletePost(postId, uid)
+        feedSource.deletePost(postId)
     }
 }

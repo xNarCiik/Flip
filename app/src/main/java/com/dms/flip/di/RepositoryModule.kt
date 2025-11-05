@@ -13,14 +13,12 @@ import com.dms.flip.data.repository.SettingsRepositoryImpl
 import com.dms.flip.data.repository.StatisticsRepositoryImpl
 import com.dms.flip.data.repository.StorageRepository
 import com.dms.flip.data.repository.UserRepositoryImpl
-import com.dms.flip.data.repository.community.PostRepositoryImpl
 import com.dms.flip.domain.repository.DailyMessageRepository
 import com.dms.flip.domain.repository.HistoryRepository
 import com.dms.flip.domain.repository.PleasureRepository
 import com.dms.flip.domain.repository.SettingsRepository
 import com.dms.flip.domain.repository.StatisticsRepository
 import com.dms.flip.domain.repository.UserRepository
-import com.dms.flip.domain.repository.community.PostRepository
 import com.dms.flip.domain.repository.onboarding.OnboardingRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -101,9 +99,4 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideStatisticsRepository(): StatisticsRepository = StatisticsRepositoryImpl()
-
-    @Provides
-    @Singleton
-    fun providePostRepository(firestore: FirebaseFirestore): PostRepository = PostRepositoryImpl(firestore = firestore)
-
 }

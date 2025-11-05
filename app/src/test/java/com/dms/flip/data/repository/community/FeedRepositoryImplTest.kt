@@ -46,7 +46,7 @@ class FeedRepositoryImplTest {
         feedSource.isLiked = true
         feedSource.emit(
             Paged(
-                items = listOf(FeedSource.PostDocument("post", PostDto(authorId = "author", content = "Hello", likeCount = 1))),
+                items = listOf(FeedSource.PostDocument("post", PostDto(authorId = "author", content = "Hello", likesCount = 1))),
                 nextCursor = null
             )
         )
@@ -80,7 +80,7 @@ class FeedRepositoryImplTest {
 
         override fun observeFriendsFeed(uid: String, limit: Int, cursor: String?) = flow
 
-        override suspend fun toggleLike(postId: String, uid: String, like: Boolean) {}
+        override suspend fun toggleLike(postId: String, uid: String) {}
 
         override suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto> =
             "id" to comment

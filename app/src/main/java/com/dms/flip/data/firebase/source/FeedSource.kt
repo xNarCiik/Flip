@@ -17,7 +17,14 @@ interface FeedSource {
         cursor: String? = null
     ): Flow<Paged<PostDocument>>
 
-    suspend fun toggleLike(postId: String, uid: String, like: Boolean)
+    suspend fun createPost(
+        content: String,
+        pleasureCategory: String?,
+        pleasureTitle: String?,
+        photoUrl: String? = null
+    )
+
+    suspend fun toggleLike(postId: String)
 
     suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto>
 
@@ -25,7 +32,7 @@ interface FeedSource {
 
     suspend fun isPostLiked(postId: String, uid: String): Boolean
 
-    suspend fun deleteComment(postId: String, commentId: String, uid: String)
+    suspend fun deleteComment(postId: String, commentId: String)
 
-    suspend fun deletePost(postId: String, uid: String)
+    suspend fun deletePost(postId: String)
 }
