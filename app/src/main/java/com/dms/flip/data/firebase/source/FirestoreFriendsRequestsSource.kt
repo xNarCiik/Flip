@@ -1,5 +1,6 @@
 package com.dms.flip.data.firebase.source
 
+import com.dms.flip.data.firebase.dto.FriendDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.mapper.toRequestDto
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,10 +15,36 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FirestoreRequestsSource @Inject constructor(
+class FirestoreFriendsRequestsSource @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val functions: FirebaseFunctions
-) : RequestsSource {
+) : FriendsRequestsSource {
+
+    override fun observeFriends(uid: String): Flow<List<Pair<String, FriendDto>>> = callbackFlow {
+        val friendsCollection = firestore.collection("users")
+            .document(uid)
+            .collection("friends")
+        var registration: ListenerRegistration? = null
+        val job = launch {
+            registration = friendsCollection.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
+                this@callbackFlow.launch {
+                    val friends = snapshot.documents.mapNotNull { doc ->
+                        fetchFriendProfile(doc.id)
+                    }
+                    trySend(friends)
+                }
+            }
+        }
+        awaitClose {
+            registration?.remove()
+            job.cancel()
+        }
+    }
 
     override fun observePendingReceived(uid: String): Flow<List<Pair<String, RequestDto>>> =
         callbackFlow {
@@ -70,31 +97,19 @@ class FirestoreRequestsSource @Inject constructor(
         }
 
     // --- 📨 Send friend request ---
-    override suspend fun send(fromUserId: String, toUserId: String): Pair<String, RequestDto> {
+    override suspend fun sendFriendInvitation(fromUserId: String, toUserId: String) {
         val data = mapOf(
             "toUserId" to toUserId
         )
 
-        val result = functions
+        functions
             .getHttpsCallable("sendFriendRequest")
             .call(data)
             .await()
-            .data as Map<*, *>
-
-        val dto = RequestDto(
-            fromUserId = result["fromUserId"] as String,
-            toUserId = result["toUserId"] as String,
-            fromUsername = result["fromUsername"] as String,
-            fromHandle = result["fromHandle"] as String,
-            fromAvatarUrl = result["fromAvatarUrl"] as? String
-        )
-
-        val id = result["id"] as String
-        return id to dto
     }
 
     // --- ✅ Accept friend request ---
-    override suspend fun accept(requestId: String) {
+    override suspend fun acceptFriend(requestId: String) {
         functions
             .getHttpsCallable("acceptFriendRequest")
             .call(
@@ -106,7 +121,7 @@ class FirestoreRequestsSource @Inject constructor(
     }
 
     // --- ❌ Decline friend request ---
-    override suspend fun decline(requestId: String) {
+    override suspend fun declineFriend(requestId: String) {
         functions
             .getHttpsCallable("declineFriendRequest")
             .call(
@@ -117,8 +132,15 @@ class FirestoreRequestsSource @Inject constructor(
             .await()
     }
 
+    override suspend fun removeFriend(friendId: String) {
+        functions
+            .getHttpsCallable("removeFriend")
+            .call(mapOf("friendId" to friendId))
+            .await()
+    }
+
     // --- 🗑️ Cancel friend request ---
-    override suspend fun cancelSent( requestId: String) {
+    override suspend fun cancelSentInvitationFriend(requestId: String) {
         functions
             .getHttpsCallable("cancelFriendRequest")
             .call(
@@ -130,6 +152,15 @@ class FirestoreRequestsSource @Inject constructor(
     }
 
     // --- 📊 Utils ---
+    override suspend fun getFriendIds(uid: String): Set<String> {
+        val snapshot = firestore.collection("users")
+            .document(uid)
+            .collection("friends")
+            .get()
+            .await()
+        return snapshot.documents.map { it.id }.toSet()
+    }
+
     override suspend fun getPendingReceivedIds(uid: String): Set<String> {
         val snapshot = firestore.collection("users")
             .document(uid)
@@ -146,5 +177,15 @@ class FirestoreRequestsSource @Inject constructor(
             .get()
             .await()
         return snapshot.documents.mapNotNull { it.getString("toUserId") }.toSet()
+    }
+
+    private suspend fun fetchFriendProfile(friendId: String): Pair<String, FriendDto>? {
+        val profileSnapshot = firestore.collection("public_profiles")
+            .document(friendId)
+            .get()
+            .await()
+        if (!profileSnapshot.exists()) return null
+        val dto = profileSnapshot.toObject(FriendDto::class.java)
+        return dto?.let { friendId to it }
     }
 }

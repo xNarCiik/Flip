@@ -3,41 +3,36 @@ package com.dms.flip.di
 import com.dms.flip.BuildConfig
 import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.firebase.source.FirestoreFeedSource
-import com.dms.flip.data.firebase.source.FirestoreFriendsSource
 import com.dms.flip.data.firebase.source.FirestoreProfileSource
-import com.dms.flip.data.firebase.source.FirestoreRequestsSource
+import com.dms.flip.data.firebase.source.FirestoreFriendsRequestsSource
 import com.dms.flip.data.firebase.source.FirestoreSearchSource
 import com.dms.flip.data.firebase.source.FirestoreSuggestionsSource
-import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
-import com.dms.flip.data.firebase.source.RequestsSource
+import com.dms.flip.data.firebase.source.FriendsRequestsSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
 import com.dms.flip.data.mock.community.MockFeedRepository
-import com.dms.flip.data.mock.community.MockFriendsRepository
+import com.dms.flip.data.mock.community.MockFriendsRequestsRepository
 import com.dms.flip.data.mock.community.MockProfileRepository
-import com.dms.flip.data.mock.community.MockRequestsRepository
 import com.dms.flip.data.mock.community.MockSearchRepository
 import com.dms.flip.data.mock.community.MockSuggestionsRepository
 import com.dms.flip.data.repository.community.FeedRepositoryImpl
-import com.dms.flip.data.repository.community.FriendsRepositoryImpl
+import com.dms.flip.data.repository.community.FriendsRequestsRepositoryImpl
 import com.dms.flip.data.repository.community.ProfileRepositoryImpl
-import com.dms.flip.data.repository.community.RequestsRepositoryImpl
 import com.dms.flip.data.repository.community.SearchRepositoryImpl
 import com.dms.flip.data.repository.community.SuggestionsRepositoryImpl
 import com.dms.flip.domain.repository.community.FeedRepository
-import com.dms.flip.domain.repository.community.FriendsRepository
+import com.dms.flip.domain.repository.community.FriendsRequestsRepository
 import com.dms.flip.domain.repository.community.ProfileRepository
-import com.dms.flip.domain.repository.community.RequestsRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dagger.Lazy
 import javax.inject.Singleton
 
 @Module
@@ -50,18 +45,10 @@ object CommunityModule {
 
     @Provides
     @Singleton
-    fun provideFriendsSource(
+    fun provideFriendsRequestsSource(
         firestore: FirebaseFirestore,
         firebaseFunctions: FirebaseFunctions
-    ): FriendsSource =
-        FirestoreFriendsSource(firestore, firebaseFunctions)
-
-    @Provides
-    @Singleton
-    fun provideRequestsSource(
-        firestore: FirebaseFirestore,
-        firebaseFunctions: FirebaseFunctions
-    ): RequestsSource = FirestoreRequestsSource(firestore, firebaseFunctions)
+    ): FriendsRequestsSource = FirestoreFriendsRequestsSource(firestore, firebaseFunctions)
 
     @Provides
     @Singleton
@@ -112,17 +99,9 @@ object CommunityModule {
 
     @Provides
     @Singleton
-    fun provideFriendsRepository(
-        impl: Lazy<FriendsRepositoryImpl>,
-        mock: Lazy<MockFriendsRepository>
-    ): FriendsRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
-
-    @Provides
-    @Singleton
     fun provideRequestsRepository(
-        impl: Lazy<RequestsRepositoryImpl>,
-        mock: Lazy<MockRequestsRepository>
-    ): RequestsRepository =
+        impl: Lazy<FriendsRequestsRepositoryImpl>,
+        mock: Lazy<MockFriendsRequestsRepository>
+    ): FriendsRequestsRepository =
         if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 }

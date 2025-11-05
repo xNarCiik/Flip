@@ -1,9 +1,8 @@
 package com.dms.flip.data.repository.community
 
 import com.dms.flip.data.firebase.mapper.toDomain
-import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
-import com.dms.flip.data.firebase.source.RequestsSource
+import com.dms.flip.data.firebase.source.FriendsRequestsSource
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.repository.community.ProfileRepository
@@ -15,8 +14,8 @@ import javax.inject.Singleton
 class ProfileRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val profileSource: ProfileSource,
-    private val friendsSource: FriendsSource,
-    private val requestsSource: RequestsSource
+    private val friendsSource: FriendsRequestsSource,
+    private val friendsRequestsSource: FriendsRequestsSource
 ) : ProfileRepository {
 
     override suspend fun getPublicProfile(userId: String): PublicProfile {
@@ -37,9 +36,9 @@ class ProfileRepositoryImpl @Inject constructor(
         if (currentUid == otherUserId) return RelationshipStatus.FRIEND
         val friends = friendsSource.getFriendIds(currentUid)
         if (friends.contains(otherUserId)) return RelationshipStatus.FRIEND
-        val pendingSent = requestsSource.getPendingSentIds(currentUid)
+        val pendingSent = friendsRequestsSource.getPendingSentIds(currentUid)
         if (pendingSent.contains(otherUserId)) return RelationshipStatus.PENDING_SENT
-        val pendingReceived = requestsSource.getPendingReceivedIds(currentUid)
+        val pendingReceived = friendsRequestsSource.getPendingReceivedIds(currentUid)
         if (pendingReceived.contains(otherUserId)) return RelationshipStatus.PENDING_RECEIVED
         return RelationshipStatus.NONE
     }

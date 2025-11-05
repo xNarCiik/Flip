@@ -1,7 +1,5 @@
 package com.dms.flip.domain.model.community
 
-import com.dms.flip.domain.model.community.PleasureCategory
-
 data class Post(
     val id: String,
     val friend: Friend,

@@ -1,7 +1,7 @@
 package com.dms.flip.data.repository.community
 
 import com.dms.flip.data.firebase.dto.RequestDto
-import com.dms.flip.data.firebase.source.RequestsSource
+import com.dms.flip.data.firebase.source.FriendsRequestsSource
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -19,8 +19,8 @@ class RequestsRepositoryImplTest {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var user: FirebaseUser
-    private lateinit var requestsSource: FakeRequestsSource
-    private lateinit var repository: RequestsRepositoryImpl
+    private lateinit var requestsSource: FakeFriendsRequestsSource
+    private lateinit var repository: FriendsRequestsRepositoryImpl
 
     @Before
     fun setUp() {
@@ -28,8 +28,8 @@ class RequestsRepositoryImplTest {
         user = mock()
         whenever(auth.currentUser).thenReturn(user)
         whenever(user.uid).thenReturn("uid")
-        requestsSource = FakeRequestsSource()
-        repository = RequestsRepositoryImpl(auth, requestsSource)
+        requestsSource = FakeFriendsRequestsSource()
+        repository = FriendsRequestsRepositoryImpl(auth, requestsSource)
     }
 
     @Test
@@ -46,7 +46,7 @@ class RequestsRepositoryImplTest {
     fun send_createsRequest() = runBlocking {
         requestsSource.sendResult = "req" to RequestDto(userId = "target", username = "Bob", handle = "@bob")
 
-        val request = repository.send("target")
+        val request = repository.sendFriendInvitation("target")
 
         assertThat(request.id).isEqualTo("req")
         assertThat(request.userId).isEqualTo("target")
@@ -55,13 +55,13 @@ class RequestsRepositoryImplTest {
 
     @Test
     fun accept_delegatesToSource() = runBlocking {
-        repository.accept("req")
+        repository.acceptFriend("req")
 
         assertThat(requestsSource.acceptedId).isEqualTo("req")
         assertThat(requestsSource.acceptedUid).isEqualTo("uid")
     }
 
-    private class FakeRequestsSource : RequestsSource {
+    private class FakeFriendsRequestsSource : FriendsRequestsSource {
         private val receivedFlow = MutableSharedFlow<List<Pair<String, RequestDto>>>(replay = 1)
         private val sentFlow = MutableSharedFlow<List<Pair<String, RequestDto>>>(replay = 1)
         var sendResult: Pair<String, RequestDto> = "" to RequestDto()
@@ -86,7 +86,7 @@ class RequestsRepositoryImplTest {
 
         override suspend fun cancelSent(uid: String, requestId: String) {}
 
-        override suspend fun send(uid: String, toUserId: String): Pair<String, RequestDto> {
+        override suspend fun sendFriendInvitation(uid: String, toUserId: String): Pair<String, RequestDto> {
             lastSendUid = uid
             return sendResult
         }

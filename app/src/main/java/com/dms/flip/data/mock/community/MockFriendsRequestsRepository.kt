@@ -3,21 +3,22 @@ package com.dms.flip.data.mock.community
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
-import com.dms.flip.domain.repository.community.RequestsRepository
+import com.dms.flip.domain.repository.community.FriendsRequestsRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MockRequestsRepository @Inject constructor(
+class MockFriendsRequestsRepository @Inject constructor(
     private val dataSource: MockCommunityDataSource
-) : RequestsRepository {
+) : FriendsRequestsRepository {
+    override fun observeFriends(): Flow<List<Friend>> = dataSource.friends
 
     override fun observePendingReceived(): Flow<List<FriendRequest>> = dataSource.pendingReceived
 
     override fun observePendingSent(): Flow<List<FriendRequest>> = dataSource.pendingSent
 
-    override suspend fun accept(requestId: String) {
+    override suspend fun acceptFriend(requestId: String) {
         val request = dataSource.pendingReceived.value.firstOrNull { it.id == requestId }
             ?: throw IllegalArgumentException("Friend request not found: $requestId")
         dataSource.removePendingReceived(requestId)
@@ -25,15 +26,15 @@ class MockRequestsRepository @Inject constructor(
         dataSource.addFriend(friend)
     }
 
-    override suspend fun decline(requestId: String) {
+    override suspend fun declineFriend(requestId: String) {
         dataSource.removePendingReceived(requestId)
     }
 
-    override suspend fun cancelSent(requestId: String) {
+    override suspend fun cancelSentInvitationFriend(requestId: String) {
         dataSource.removePendingSent(requestId)
     }
 
-    override suspend fun send(toUserId: String): FriendRequest {
+    override suspend fun sendFriendInvitation(toUserId: String) {
         val user = dataSource.getUser(toUserId)
         val request = FriendRequest(
             id = dataSource.nextRequestId(),
@@ -45,7 +46,10 @@ class MockRequestsRepository @Inject constructor(
             source = FriendRequestSource.SEARCH
         )
         dataSource.addPendingSent(request)
-        return request
+    }
+
+    override suspend fun removeFriend(friendId: String) {
+        dataSource.removeFriend(friendId)
     }
 
     private fun FriendRequest.toFriend(dataSource: MockCommunityDataSource): Friend {

@@ -394,19 +394,14 @@ class CommunityViewModel @Inject constructor(
 
     private fun addSuggestion(suggestion: FriendSuggestion) {
         viewModelScope.launch {
-            when (val result = sendFriendRequestUseCase(suggestion.id)) {
+            when (sendFriendRequestUseCase(suggestion.id)) {
                 is Result.Ok -> {
                     when (val hideResult = hideSuggestionUseCase(suggestion.id)) {
                         is Result.Err -> handleError(hideResult.throwable, stopInitial = false, stopRefresh = false)
                         else -> Unit
                     }
-                    _uiState.update { state ->
-                        state.copy(
-                            sentRequests = state.sentRequests + result.data.copy(source = FriendRequestSource.SUGGESTION)
-                        )
-                    }
                 }
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                is Result.Err -> handleError(null, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -463,14 +458,11 @@ class CommunityViewModel @Inject constructor(
 
     private fun addUserFromSearch(userId: String) {
         viewModelScope.launch {
-            when (val result = sendFriendRequestUseCase(userId)) {
+            when (sendFriendRequestUseCase(userId)) {
                 is Result.Ok -> {
                     updateSearchResultStatus(userId, RelationshipStatus.PENDING_SENT)
-                    _uiState.update { state ->
-                        state.copy(sentRequests = state.sentRequests + result.data)
-                    }
                 }
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                is Result.Err -> handleError(null, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -544,7 +536,7 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun handleError(
-        throwable: Throwable,
+        throwable: Throwable?,
         stopInitial: Boolean = true,
         stopRefresh: Boolean = true
     ) {
