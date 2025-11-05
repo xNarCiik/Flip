@@ -37,7 +37,7 @@ import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.navigation.DailyPleasureRoute
 import com.dms.flip.ui.navigation.NavGraph
 import com.dms.flip.ui.navigation.RootRoute
-import com.dms.flip.ui.navigation.CommunityRoute
+import com.dms.flip.ui.navigation.CommunityRootRoute
 import com.dms.flip.ui.navigation.WeeklyRoute
 import com.dms.flip.ui.settings.SettingsViewModel
 import com.dms.flip.ui.theme.FlipTheme
@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
                             val visible = currentRoute in listOf(
                                 DailyPleasureRoute::class.qualifiedName,
                                 WeeklyRoute::class.qualifiedName,
-                                CommunityRoute::class.qualifiedName
+                                CommunityRootRoute::class.qualifiedName
                             )
 
                             if (visible) {

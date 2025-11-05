@@ -30,11 +30,11 @@ import com.dms.flip.domain.model.RootNavigationState
 import com.dms.flip.ui.community.CommunityNavHost
 import com.dms.flip.ui.dailyflip.DailyFlipScreen
 import com.dms.flip.ui.dailyflip.DailyFlipViewModel
-import com.dms.flip.ui.pleasuredetail.PleasureDetailScreen
 import com.dms.flip.ui.history.HistoryScreen
 import com.dms.flip.ui.history.HistoryViewModel
 import com.dms.flip.ui.login.LoginScreen
 import com.dms.flip.ui.onboarding.OnboardingScreen
+import com.dms.flip.ui.pleasuredetail.PleasureDetailScreen
 import com.dms.flip.ui.settings.SettingsScreen
 import com.dms.flip.ui.settings.SettingsViewModel
 import com.dms.flip.ui.settings.manage.ManagePleasuresScreen
@@ -43,7 +43,6 @@ import com.dms.flip.ui.settings.statistics.StatisticsScreen
 import com.dms.flip.ui.settings.statistics.StatisticsViewModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.jvm.java
 import kotlin.reflect.typeOf
 
 @Serializable
@@ -56,7 +55,7 @@ object DailyPleasureRoute
 object WeeklyRoute
 
 @Serializable
-object CommunityRoute
+object CommunityRootRoute
 
 @Serializable
 object SettingsRoute
@@ -73,7 +72,7 @@ data class PleasureDetailRoute(val pleasureHistory: PleasureHistory)
 private val navRouteOrder = listOf(
     WeeklyRoute::class.qualifiedName,
     DailyPleasureRoute::class.qualifiedName,
-    CommunityRoute::class.qualifiedName
+    CommunityRootRoute::class.qualifiedName
 ).mapIndexed { index, route -> route to index }
     .toMap()
 
@@ -119,7 +118,7 @@ private fun navDirection(
     return if (to > from) NavDirection.Forward else NavDirection.Backward
 }
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnterTransition(): EnterTransition {
+fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnterTransition(): EnterTransition {
     val direction = navDirection(
         initialRoute = initialState.destination.route,
         targetRoute = targetState.destination.route
@@ -138,7 +137,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnterTransition
             )
 }
 
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.navExitTransition(): ExitTransition {
+fun AnimatedContentTransitionScope<NavBackStackEntry>.navExitTransition(): ExitTransition {
     val direction = navDirection(
         initialRoute = initialState.destination.route,
         targetRoute = targetState.destination.route
@@ -182,8 +181,7 @@ fun NavGraph(
         enterTransition = { navEnterTransition() },
         exitTransition = { navExitTransition() },
         popEnterTransition = { navEnterTransition() },
-        popExitTransition = { navExitTransition() },
-        typeMap = mapOf(typeOf<PleasureHistory>() to PleasureHistoryType)
+        popExitTransition = { navExitTransition() }
     ) {
         composable<RootRoute> {
             when (rootNavigationState) {
@@ -243,7 +241,7 @@ fun NavGraph(
             )
         }
 
-        composable<CommunityRoute> {
+        composable<CommunityRootRoute> {
             CommunityNavHost(modifier = modifierWithPaddingValues)
         }
 
