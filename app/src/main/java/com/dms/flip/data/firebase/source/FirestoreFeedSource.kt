@@ -89,6 +89,7 @@ class FirestoreFeedSource @Inject constructor(
         awaitClose { job.cancel() }
     }
 
+    // TODO FIREBASE FUNC AND REMOVE LIKE
     override suspend fun toggleLike(postId: String, uid: String, like: Boolean) {
         val likesCollection = firestore.collection("posts").document(postId).collection("likes")
         val postRef = firestore.collection("posts").document(postId)
@@ -100,6 +101,7 @@ class FirestoreFeedSource @Inject constructor(
         }.await()
     }
 
+    // TODO FIREBASE FUNC
     override suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto> {
         val commentsCollection = firestore.collection("posts")
             .document(postId)

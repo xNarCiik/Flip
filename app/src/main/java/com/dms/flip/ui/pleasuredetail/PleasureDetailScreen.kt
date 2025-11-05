@@ -196,6 +196,7 @@ private fun InfoCard(
     categoryColor: Color,
     modifier: Modifier = Modifier
 ) {
+    // TODO NEW ONE
     PleasureCard(
         icon = icon,
         iconTint = categoryColor,
@@ -203,6 +204,7 @@ private fun InfoCard(
         title = value,
         description = null,
         showChevron = false,
+        isCompleted = true,
         onClick = {},
         modifier = modifier
     )

@@ -23,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dms.flip.ui.community.component.FriendListItem
 import com.dms.flip.ui.component.dialog.UploadingDialog
 import com.dms.flip.ui.onboarding.component.OnboardingNavigation
 import com.dms.flip.ui.onboarding.component.OnboardingProgressBar
@@ -35,7 +33,6 @@ import com.dms.flip.ui.onboarding.component.step.UsernameStep
 import com.dms.flip.ui.onboarding.component.step.WelcomeScreen
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
-import com.dms.flip.ui.util.previewFriends
 
 @Composable
 fun OnboardingScreen(

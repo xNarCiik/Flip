@@ -203,6 +203,7 @@ fun DailyFlipCompletedContent(
                     label = stringResource(R.string.daily_flip_completed_pleasure_label),
                     title = it.title,
                     description = it.description,
+                    isCompleted = true,
                     showChevron = true,
                     onClick = onPleasureClick
                 )

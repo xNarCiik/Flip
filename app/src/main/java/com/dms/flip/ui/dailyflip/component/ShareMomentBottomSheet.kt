@@ -1,5 +1,9 @@
 package com.dms.flip.ui.dailyflip.component
 
+import android.R.attr.description
+import android.R.attr.iconTint
+import android.R.attr.label
+import android.R.attr.onClick
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -56,14 +60,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.community.icon
 import com.dms.flip.domain.model.community.iconTint
+import com.dms.flip.ui.component.PleasureCard
 import com.dms.flip.ui.dailyflip.MAX_SHARE_COMMENT_LENGTH
+import kotlinx.coroutines.NonCancellable.isCompleted
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,8 +161,15 @@ fun ShareMomentBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Pleasure card with modern design
-            PleasureCard(pleasure = pleasure)
+            PleasureCard(
+                icon = pleasure.category.icon,
+                iconTint = pleasure.category.iconTint,
+                label = stringResource(R.string.daily_flip_completed_pleasure_label),
+                title = pleasure.title,
+                description = pleasure.description,
+                showChevron = false,
+                isCompleted = true
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -304,88 +316,6 @@ fun ShareMomentBottomSheet(
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PleasureCard(
-    pleasure: Pleasure,
-    modifier: Modifier = Modifier
-) {
-    val categoryColor = pleasure.category.iconTint
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        categoryColor.copy(alpha = 0.12f),
-                        categoryColor.copy(alpha = 0.05f)
-                    )
-                )
-            )
-            .border(
-                width = 1.dp,
-                color = categoryColor.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .padding(16.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon container with modern styling
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(14.dp),
-                        spotColor = categoryColor.copy(alpha = 0.3f)
-                    )
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                categoryColor.copy(alpha = 0.2f),
-                                categoryColor.copy(alpha = 0.1f)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = pleasure.category.icon,
-                    contentDescription = null,
-                    tint = categoryColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = pleasure.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = pleasure.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }

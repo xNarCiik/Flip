@@ -10,17 +10,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dms.flip.R
-import com.dms.flip.ui.component.ErrorState
-import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.SearchResultItem
 import com.dms.flip.ui.community.component.SearchTopBar
+import com.dms.flip.ui.component.ErrorState
+import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewCommunityUiStateSearching
@@ -37,6 +38,10 @@ fun SearchFriendsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        LaunchedEffect(Unit) {
+            onEvent(CommunityEvent.OnSearchQueryChanged(""))
+        }
+
         SearchTopBar(
             searchQuery = uiState.searchQuery,
             onQueryChange = { onEvent(CommunityEvent.OnSearchQueryChanged(it)) },
@@ -82,6 +87,13 @@ fun SearchFriendsScreen(
                             SearchResultItem(
                                 result = result,
                                 onAdd = { onEvent(CommunityEvent.OnAddUserFromSearch(result.id)) },
+                                onAccept = {
+                                    onEvent(
+                                        CommunityEvent.OnAcceptFriendRequestFromProfile(
+                                            result.id
+                                        )
+                                    )
+                                },
                                 onClick = { onEvent(CommunityEvent.OnSearchResultClicked(result)) }
                             )
                         }

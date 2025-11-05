@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -120,9 +122,12 @@ fun SearchTopBar(
 fun SearchResultItem(
     result: UserSearchResult,
     onAdd: () -> Unit,
+    onAccept: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -157,12 +162,29 @@ fun SearchResultItem(
         when (result.relationshipStatus) {
             RelationshipStatus.NONE -> {
                 Button(
-                    onClick = onAdd,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAdd()
+                    },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                 ) {
                     Text(stringResource(R.string.button_add))
                 }
+            }
+
+            RelationshipStatus.PENDING_RECEIVED -> {
+                Button(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAccept()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                ) {
+                    Text(stringResource(R.string.button_accept))
+                }
+
             }
 
             RelationshipStatus.PENDING_SENT -> {
@@ -180,8 +202,6 @@ fun SearchResultItem(
                     tint = MaterialTheme.colorScheme.tertiary
                 )
             }
-
-            else -> Unit
         }
     }
 }
@@ -201,7 +221,7 @@ private fun SearchComponentsPreview(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 SearchTopBar(searchQuery = "", onQueryChange = {}, onNavigateBack = {})
                 results.take(2).forEach { result ->
-                    SearchResultItem(result = result, onAdd = {}, onClick = {})
+                    SearchResultItem(result = result, onAdd = {}, onAccept = {}, onClick = {})
                 }
             }
         }

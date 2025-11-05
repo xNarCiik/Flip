@@ -3,19 +3,20 @@ package com.dms.flip.ui.community
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.util.CoilUtils.result
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
-import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
-import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.Paged
+import com.dms.flip.domain.model.community.Post
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
-import com.dms.flip.domain.util.Result
 import com.dms.flip.domain.usecase.community.AcceptFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.AddCommentUseCase
 import com.dms.flip.domain.usecase.community.CancelSentRequestUseCase
 import com.dms.flip.domain.usecase.community.DeclineFriendRequestUseCase
+import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
+import com.dms.flip.domain.usecase.community.DeletePostUseCase
 import com.dms.flip.domain.usecase.community.GetPublicProfileUseCase
 import com.dms.flip.domain.usecase.community.HideSuggestionUseCase
 import com.dms.flip.domain.usecase.community.ObserveFriendsFeedUseCase
@@ -27,14 +28,13 @@ import com.dms.flip.domain.usecase.community.RemoveFriendUseCase
 import com.dms.flip.domain.usecase.community.SearchUsersUseCase
 import com.dms.flip.domain.usecase.community.SendFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.ToggleLikeUseCase
-import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
-import com.dms.flip.domain.usecase.community.DeletePostUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
+import com.dms.flip.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,12 +47,19 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val FEED_PAGE_SIZE = 20
+
+private data class CommunityData(
+    val feed: Paged<Post>,
+    val friends: List<Friend>,
+    val pendingReceived: List<FriendRequest>,
+    val pendingSent: List<FriendRequest>,
+    val suggestions: List<FriendSuggestion>
+)
 
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
@@ -88,6 +95,8 @@ class CommunityViewModel @Inject constructor(
     private var refreshJob: Job? = null
     private var isLoadingMoreFeed = false
     private val loadingProfiles = mutableSetOf<String>()
+
+    private val pendingActions = mutableMapOf<String, Job>()
 
     init {
         observeSearch()
@@ -141,10 +150,12 @@ class CommunityViewModel @Inject constructor(
                     refresh()
                 }
             }
+
             is CommunityEvent.OnDeleteComment -> deleteComment(event.postId, event.commentId)
             is CommunityEvent.OnDeletePost -> deletePost(event.postId)
             is CommunityEvent.OnAcceptFriendRequestFromProfile ->
                 acceptFriendRequestFromProfile(event.userId)
+
             is CommunityEvent.OnRemoveFriendFromProfile -> removeFriendFromProfile(event.userId)
             is CommunityEvent.OnRefresh -> refresh()
             else -> Unit
@@ -168,6 +179,7 @@ class CommunityViewModel @Inject constructor(
                     is Result.Ok -> {
                         _publicProfiles.update { current -> current + (userId to result.data) }
                     }
+
                     is Result.Err -> {
                         _uiState.update { it.copy(errorMessage = mapErrorMessage(result.throwable)) }
                     }
@@ -193,108 +205,114 @@ class CommunityViewModel @Inject constructor(
         val friendsFlow = observeFriendsUseCase()
             .catch { throwable ->
                 handleError(throwable)
-                emit(emptyList())
+                emit(_uiState.value.friends.toList())
             }
-            .onStart { emit(emptyList()) }
 
         val pendingReceivedFlow = observePendingReceivedUseCase()
             .catch { throwable ->
                 handleError(throwable)
-                emit(emptyList())
+                emit(_uiState.value.pendingRequests.toList())
             }
-            .onStart { emit(emptyList()) }
 
         val pendingSentFlow = observePendingSentUseCase()
             .catch { throwable ->
                 handleError(throwable)
-                emit(emptyList())
+                emit(_uiState.value.sentRequests.toList())
             }
-            .onStart { emit(emptyList()) }
 
         val suggestionsFlow = observeSuggestionsUseCase()
             .catch { throwable ->
                 handleError(throwable)
-                emit(emptyList())
+                emit(_uiState.value.suggestions.toList())
             }
-            .onStart { emit(emptyList()) }
 
         observationJob = combine(
-            feedFlow,
-            friendsFlow,
-            pendingReceivedFlow,
-            pendingSentFlow,
-            suggestionsFlow
-        ) { feedPage, friends, pendingReceived, pendingSent, suggestions ->
-            _uiState.update { state ->
-                val mergedPosts = mergeFeedPosts(state.posts, feedPage.items)
-                state.copy(
-                    posts = mergedPosts,
-                    feedNextCursor = feedPage.nextCursor,
-                    friends = friends,
-                    pendingRequests = pendingReceived,
-                    sentRequests = pendingSent,
-                    suggestions = suggestions,
-                    isLoadingInitial = false,
-                    errorMessage = null
-                )
-            }
+            feedFlow, friendsFlow, pendingReceivedFlow, pendingSentFlow, suggestionsFlow
+        ) { feed, friends, received, sent, suggestions ->
+            CommunityData(
+                feed = feed,
+                friends = friends,
+                pendingReceived = received,
+                pendingSent = sent,
+                suggestions = suggestions
+            )
         }
-            .launchIn(viewModelScope)
-            .also { job ->
-                job.invokeOnCompletion {
-                    if (observationJob == job) {
-                        observationJob = null
-                    }
+            .onEach { data ->
+                _uiState.update { state ->
+                    val mergedPosts = mergeFeedPosts(state.posts, data.feed.items)
+                    state.copy(
+                        posts = mergedPosts,
+                        feedNextCursor = data.feed.nextCursor,
+                        friends = data.friends.toPersistentList(),
+                        pendingRequests = data.pendingReceived.toPersistentList(),
+                        sentRequests = data.pendingSent.toPersistentList(),
+                        suggestions = data.suggestions.toPersistentList(),
+                        isLoadingInitial = false
+                    )
                 }
             }
-    }
-
-    private fun loadInitial(force: Boolean = false) {
-        if (observationJob == null || force) {
-            _uiState.update { it.copy(isLoadingInitial = true, errorMessage = null) }
-            cancelObservations()
-            ensureObservationsStarted()
-        }
+            .launchIn(viewModelScope)
     }
 
     private fun mergeFeedPosts(
-        existing: PersistentList<Post>,
-        incoming: List<Post>
+        current: PersistentList<Post>,
+        new: List<Post>
     ): PersistentList<Post> {
-        if (incoming.isEmpty()) return persistentListOf()
-        val incomingIds = incoming.map { it.id }.toSet()
-        val preserved = existing.filterNot { it.id in incomingIds }
-        return (incoming + preserved).toPersistentList()
+        val currentMap = current.associateBy { it.id }
+        val newMap = new.associateBy { it.id }
+        val mergedMap = (currentMap + newMap).mapValues { (id, post) ->
+            currentMap[id]?.let { existing ->
+                post.copy(
+                    isLiked = existing.isLiked,
+                    likesCount = existing.likesCount,
+                    comments = existing.comments
+                )
+            } ?: post
+        }
+        return mergedMap.values
+            .sortedByDescending { it.timestamp }
+            .toPersistentList()
+    }
+
+    private fun loadInitial(force: Boolean = false) {
+        if (force) cancelObservations()
+        if (!force && observationJob != null) return
+        _uiState.update { it.copy(isLoadingInitial = true, errorMessage = null) }
+        ensureObservationsStarted()
     }
 
     private fun togglePostLike(postId: String) {
-        val post = _uiState.value.posts.find { it.id == postId } ?: return
-        val like = !post.isLiked
+        val currentPost = _uiState.value.posts.find { it.id == postId } ?: return
+        val wasLiked = currentPost.isLiked
+
         _uiState.update { state ->
             state.copy(
-                posts = state.posts.updatePost(postId) {
-                    it.copy(
-                        isLiked = like,
-                        likesCount = if (like) it.likesCount + 1 else (it.likesCount - 1).coerceAtLeast(0)
+                posts = state.posts.updatePost(postId) { post ->
+                    post.copy(
+                        isLiked = !wasLiked,
+                        likesCount = if (wasLiked) post.likesCount - 1 else post.likesCount + 1
                     )
                 }
             )
         }
+
         viewModelScope.launch {
-            when (toggleLikeUseCase(postId, like)) {
+            // TODO REMOVE LIKE
+            when (toggleLikeUseCase(postId, !wasLiked)) {
                 is Result.Err -> {
                     _uiState.update { state ->
                         state.copy(
-                            posts = state.posts.updatePost(postId) {
-                                it.copy(
-                                    isLiked = !like,
-                                    likesCount = if (like) (it.likesCount - 1).coerceAtLeast(0) else it.likesCount + 1
+                            posts = state.posts.updatePost(postId) { post ->
+                                post.copy(
+                                    isLiked = wasLiked,
+                                    likesCount = if (wasLiked) post.likesCount + 1 else post.likesCount - 1
                                 )
-                            },
-                            errorMessage = mapErrorMessage(null)
+                            }
                         )
                     }
+                    handleError(null, stopInitial = false, stopRefresh = false)
                 }
+
                 else -> Unit
             }
         }
@@ -302,16 +320,15 @@ class CommunityViewModel @Inject constructor(
 
     private fun toggleComments(postId: String) {
         _uiState.update { state ->
-            state.copy(
-                expandedPostId = if (state.expandedPostId == postId) null else postId
-            )
+            state.copy(expandedPostId = if (state.expandedPostId == postId) null else postId)
         }
     }
 
-    private fun addComment(postId: String, content: String) {
-        if (content.isBlank()) return
+    private fun addComment(postId: String, comment: String) {
         viewModelScope.launch {
-            when (val result = addCommentUseCase(postId, content)) {
+            // TODO ACTION
+            when (val result = addCommentUseCase(postId, comment)) {
+                is Result.Err -> handleError(null, stopInitial = false, stopRefresh = false)
                 is Result.Ok -> {
                     val comment = result.data
                     _uiState.update { state ->
@@ -325,7 +342,6 @@ class CommunityViewModel @Inject constructor(
                         )
                     }
                 }
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
             }
         }
     }
@@ -346,7 +362,12 @@ class CommunityViewModel @Inject constructor(
                         )
                     }
                 }
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
+
+                is Result.Err -> handleError(
+                    result.throwable,
+                    stopInitial = false,
+                    stopRefresh = false
+                )
             }
         }
     }
@@ -368,22 +389,50 @@ class CommunityViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             posts = previousPosts,
-                            expandedPostId = previousExpanded,
-                            errorMessage = mapErrorMessage(null)
+                            expandedPostId = previousExpanded
                         )
                     }
+
+                    handleError(null, stopInitial = false, stopRefresh = false)
                 }
+
                 else -> Unit
             }
         }
     }
 
     private fun removeFriend(friend: Friend) {
-        viewModelScope.launch {
+        val actionKey = "remove_friend_${friend.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                friends = state.friends.filter { it.id != friend.id }.toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
             when (val result = removeFriendUseCase(friend.id)) {
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                else -> Unit
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                }
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            friends = (state.friends + friend).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
@@ -393,34 +442,124 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun addSuggestion(suggestion: FriendSuggestion) {
-        viewModelScope.launch {
-            when (sendFriendRequestUseCase(suggestion.id)) {
+        val actionKey = "add_suggestion_${suggestion.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                suggestions = state.suggestions.filter { it.id != suggestion.id }
+                    .toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
+            when (val sendResult = sendFriendRequestUseCase(suggestion.id)) {
                 is Result.Ok -> {
-                    when (val hideResult = hideSuggestionUseCase(suggestion.id)) {
-                        is Result.Err -> handleError(hideResult.throwable, stopInitial = false, stopRefresh = false)
-                        else -> Unit
+                    when (hideSuggestionUseCase(suggestion.id)) {
+                        is Result.Err -> {
+                            _uiState.update { state ->
+                                state.copy(actionStatus = state.actionStatus - actionKey)
+                            }
+                        }
+
+                        else -> {
+                            _uiState.update { state ->
+                                state.copy(actionStatus = state.actionStatus - actionKey)
+                            }
+                        }
                     }
                 }
-                is Result.Err -> handleError(null, stopInitial = false, stopRefresh = false)
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            suggestions = (state.suggestions + suggestion).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(
+                        sendResult.throwable,
+                        stopInitial = false,
+                        stopRefresh = false
+                    )
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
     private fun hideSuggestion(suggestion: FriendSuggestion) {
-        viewModelScope.launch {
+        val actionKey = "hide_suggestion_${suggestion.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                suggestions = state.suggestions.filter { it.id != suggestion.id }
+                    .toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
             when (val result = hideSuggestionUseCase(suggestion.id)) {
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                else -> Unit
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                }
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            suggestions = (state.suggestions + suggestion).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
     private fun acceptFriendRequest(request: FriendRequest) {
-        viewModelScope.launch {
+        val actionKey = "accept_request_${request.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                pendingRequests = state.pendingRequests.filter { it.id != request.id }
+                    .toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
             when (val result = acceptFriendRequestUseCase(request.id)) {
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                else -> Unit
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                }
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            pendingRequests = (state.pendingRequests + request).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
@@ -431,20 +570,74 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun declineFriendRequest(request: FriendRequest) {
-        viewModelScope.launch {
+        val actionKey = "decline_request_${request.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                pendingRequests = state.pendingRequests.filter { it.id != request.id }
+                    .toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
             when (val result = declineFriendRequestUseCase(request.id)) {
-                is Result.Err -> handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                else -> Unit
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                }
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            pendingRequests = (state.pendingRequests + request).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
     private fun cancelFriendRequest(request: FriendRequest) {
-        viewModelScope.launch {
+        val actionKey = "cancel_request_${request.id}"
+        pendingActions[actionKey]?.cancel()
+
+        _uiState.update { state ->
+            state.copy(
+                sentRequests = state.sentRequests.filter { it.id != request.id }
+                    .toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
             when (val result = cancelSentRequestUseCase(request.id)) {
-                is Result.Err -> handleError(result.throwable)
-                else -> Unit
+                is Result.Ok -> {
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                }
+
+                is Result.Err -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            sentRequests = (state.sentRequests + request).sortedBy { it.username }
+                                .toPersistentList(),
+                            actionStatus = state.actionStatus - actionKey
+                        )
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
@@ -457,13 +650,29 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun addUserFromSearch(userId: String) {
-        viewModelScope.launch {
-            when (sendFriendRequestUseCase(userId)) {
+        val actionKey = "search_add_$userId"
+        pendingActions[actionKey]?.cancel()
+
+        updateSearchResultStatus(userId, RelationshipStatus.PENDING_SENT)
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
+            when (val result = sendFriendRequestUseCase(userId)) {
                 is Result.Ok -> {
-                    updateSearchResultStatus(userId, RelationshipStatus.PENDING_SENT)
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
                 }
-                is Result.Err -> handleError(null, stopInitial = false, stopRefresh = false)
+
+                is Result.Err -> {
+                    updateSearchResultStatus(userId, RelationshipStatus.NONE)
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
+                    }
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                }
             }
+            pendingActions.remove(actionKey)
         }
     }
 
@@ -474,7 +683,12 @@ class CommunityViewModel @Inject constructor(
             .distinctUntilChanged()
             .onEach { query ->
                 if (query.isBlank()) {
-                    _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+                    _uiState.update {
+                        it.copy(
+                            searchResults = emptyList(),
+                            isSearching = false
+                        )
+                    }
                 }
             }
             .filter { it.isNotBlank() }
@@ -487,9 +701,14 @@ class CommunityViewModel @Inject constructor(
                     is Result.Ok -> _uiState.update {
                         it.copy(searchResults = result.data, isSearching = false)
                     }
+
                     is Result.Err -> {
                         _uiState.update { it.copy(isSearching = false) }
-                        handleError(result.throwable, stopInitial = false, stopRefresh = false)
+                        handleError(
+                            result.throwable,
+                            stopInitial = false,
+                            stopRefresh = false
+                        )
                     }
                 }
             }
@@ -506,12 +725,9 @@ class CommunityViewModel @Inject constructor(
             try {
                 val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE, cursor).first()
                 _uiState.update { state ->
-                    val updatedPosts = LinkedHashMap<String, Post>().apply {
-                        state.posts.forEach { put(it.id, it) }
-                        page.items.forEach { put(it.id, it) }
-                    }.values.toList().toPersistentList()
+                    val merged = mergeFeedPosts(state.posts, page.items)
                     state.copy(
-                        posts = updatedPosts,
+                        posts = merged,
                         feedNextCursor = page.nextCursor,
                         isLoadingMorePosts = false
                     )
@@ -565,7 +781,8 @@ class CommunityViewModel @Inject constructor(
     private fun PersistentList<Post>.updatePost(
         postId: String,
         transform: (Post) -> Post
-    ): PersistentList<Post> = map { post -> if (post.id == postId) transform(post) else post }.toPersistentList()
+    ): PersistentList<Post> =
+        map { post -> if (post.id == postId) transform(post) else post }.toPersistentList()
 
     override fun onCleared() {
         super.onCleared()
@@ -574,5 +791,7 @@ class CommunityViewModel @Inject constructor(
         searchJob = null
         refreshJob?.cancel()
         refreshJob = null
+        pendingActions.values.forEach { it.cancel() }
+        pendingActions.clear()
     }
 }

@@ -30,6 +30,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +47,7 @@ import com.dms.flip.ui.component.FlipTopBar
 import com.dms.flip.ui.component.TopBarIcon
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
+import com.dms.flip.ui.util.formatRequestTime
 import com.dms.flip.ui.util.previewPendingRequests
 import com.dms.flip.ui.util.previewSentRequests
 import com.dms.flip.ui.util.previewSuggestions
@@ -73,20 +76,28 @@ fun ReceivedRequestItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     RequestRow(
         modifier = modifier.clickable(onClick = onClick),
         request = request,
         trailingContent = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
-                    onClick = onDecline,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onDecline()
+                    },
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     Text(stringResource(R.string.button_decline))
                 }
                 Button(
-                    onClick = onAccept,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAccept()
+                    },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
@@ -105,12 +116,17 @@ fun SentRequestItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+
     RequestRow(
         modifier = modifier.clickable(onClick = onClick),
         request = request,
         trailingContent = {
             TextButton(
-                onClick = onCancel,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onCancel()
+                },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(stringResource(R.string.button_cancel))
@@ -209,6 +225,8 @@ private fun SuggestionCard(
     onHide: () -> Unit,
     onClick: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Card(
         modifier = Modifier
             .width(140.dp)
@@ -268,7 +286,10 @@ private fun SuggestionCard(
                 }
 
                 Button(
-                    onClick = onAdd,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAdd()
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
@@ -281,20 +302,6 @@ private fun SuggestionCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-internal fun formatRequestTime(timestamp: Long): String {
-    val days = ((System.currentTimeMillis() - timestamp) / (1_000 * 60 * 60 * 24)).toInt()
-    return when (days) {
-        0 -> stringResource(id = R.string.community_request_time_today)
-        1 -> stringResource(id = R.string.community_request_time_yesterday)
-        else -> pluralStringResource(
-            id = R.plurals.community_request_time_days,
-            count = days,
-            days
-        )
     }
 }
 

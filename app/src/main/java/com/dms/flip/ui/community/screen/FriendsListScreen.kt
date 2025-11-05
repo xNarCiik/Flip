@@ -16,15 +16,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
-import com.dms.flip.ui.component.ErrorState
-import com.dms.flip.ui.component.LoadingState
+import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
-import com.dms.flip.domain.model.community.Friend
+import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.FriendListItem
 import com.dms.flip.ui.community.component.FriendOptionsDialog
-import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.FriendsListTopBar
+import com.dms.flip.ui.component.ErrorState
+import com.dms.flip.ui.component.LoadingState
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewCommunityUiStateFull
@@ -80,14 +80,7 @@ fun FriendsListScreen(
                             FriendListItem(
                                 friend = friend,
                                 onClick = { onEvent(CommunityEvent.OnFriendClicked(friend)) },
-                                onMenuClick = { selectedFriend = friend },
-                                onQuickAction = {
-                                    onEvent(
-                                        CommunityEvent.OnInviteFriendToPleasure(
-                                            friend
-                                        )
-                                    )
-                                }
+                                onMenuClick = { selectedFriend = friend }
                             )
                         }
                     }

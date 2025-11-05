@@ -126,6 +126,7 @@ fun PostCard(
                 title = post.pleasureTitle,
                 description = null,
                 showChevron = false,
+                isCompleted = true,
                 onClick = {},
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )

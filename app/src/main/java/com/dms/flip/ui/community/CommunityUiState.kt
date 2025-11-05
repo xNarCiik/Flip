@@ -8,26 +8,27 @@ import com.dms.flip.domain.model.community.UserSearchResult
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 
-typealias PostUi = Post
+sealed class ActionStatus {
+    object Processing : ActionStatus()
+}
 
 data class CommunityUiState(
+    val posts: PersistentList<Post> = persistentListOf(),
+    val friends: PersistentList<Friend> = persistentListOf(),
+    val pendingRequests: PersistentList<FriendRequest> = persistentListOf(),
+    val sentRequests: PersistentList<FriendRequest> = persistentListOf(),
+    val suggestions: PersistentList<FriendSuggestion> = persistentListOf(),
+    val searchResults: List<UserSearchResult> = emptyList(),
+    val searchQuery: String = "",
+    val expandedPostId: String? = null,
+    val feedNextCursor: String? = null,
     val isLoadingInitial: Boolean = false,
     val isRefreshing: Boolean = false,
     val isLoadingMorePosts: Boolean = false,
-
-    val posts: PersistentList<PostUi> = persistentListOf(),
-    val feedNextCursor: String? = null,
-    val expandedPostId: String? = null,
-    val currentUserId: String? = null,
-    val friends: List<Friend> = emptyList(),
-    val suggestions: List<FriendSuggestion> = emptyList(),
-    val pendingRequests: List<FriendRequest> = emptyList(),
-    val sentRequests: List<FriendRequest> = emptyList(),
-    val searchQuery: String = "",
     val isSearching: Boolean = false,
-    val searchResults: List<UserSearchResult> = emptyList(),
-
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val currentUserId: String? = null,
+    val actionStatus: Map<String, ActionStatus> = emptyMap()
 )
 
 sealed interface CommunityEvent {

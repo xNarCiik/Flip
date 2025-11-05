@@ -67,7 +67,7 @@ fun PleasureCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (isCompleted) 0.7f else 1f)
+            .alpha(if (isCompleted) 1f else 0.7f)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 brush = Brush.linearGradient(
@@ -94,7 +94,7 @@ fun PleasureCard(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(iconTint.copy(alpha = if (isCompleted) 0.1f else 0.15f)),
+                    .background(iconTint.copy(alpha = if (isCompleted) 0.15f else 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -110,7 +110,7 @@ fun PleasureCard(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = iconTint.copy(alpha = if (isCompleted) 0.8f else 1f)
+                    color = iconTint.copy(alpha = if (isCompleted) 1f else 0.8f)
                 )
                 Text(
                     text = title,

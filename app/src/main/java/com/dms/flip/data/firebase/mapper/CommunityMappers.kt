@@ -70,10 +70,10 @@ fun RequestDto.toPendingReceived(id: String): FriendRequest = FriendRequest(
 
 fun RequestDto.toPendingSent(id: String): FriendRequest = FriendRequest(
     id = id,
-    userId = fromUserId,
-    username = fromUsername,
-    handle = fromHandle,
-    avatarUrl = fromAvatarUrl,
+    userId = toUserId,
+    username = toUsername,
+    handle = toHandle,
+    avatarUrl = toAvatarUrl,
     requestedAt = requestedAt?.time ?: 0L,
     source = FriendRequestSource.SEARCH
 )
