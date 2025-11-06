@@ -50,25 +50,31 @@ class FriendsRepositoryImpl @Inject constructor(
     override suspend fun acceptFriend(requestId: String) {
         auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         friendsSource.acceptFriend(requestId)
+        profileBatchLoader.invalidate(requestId)
     }
 
     override suspend fun declineFriend(requestId: String) {
         auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         friendsSource.declineFriend(requestId)
+        profileBatchLoader.invalidate(requestId)
     }
 
     override suspend fun cancelSentInvitationFriend(requestId: String) {
         auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         friendsSource.cancelSentInvitationFriend(requestId)
+        profileBatchLoader.invalidate(requestId)
+        profileBatchLoader.invalidate(requestId)
     }
 
     override suspend fun sendFriendInvitation(toUserId: String) {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         friendsSource.sendFriendInvitation(uid, toUserId)
+        profileBatchLoader.invalidate(toUserId)
     }
 
     override suspend fun removeFriend(friendId: String) {
         auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
         friendsSource.removeFriend(friendId)
+        profileBatchLoader.invalidate(friendId)
     }
 }

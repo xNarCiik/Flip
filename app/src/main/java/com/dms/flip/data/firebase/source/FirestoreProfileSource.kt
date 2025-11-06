@@ -3,6 +3,8 @@ package com.dms.flip.data.firebase.source
 import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RecentActivityDto
 import com.dms.flip.data.firebase.mapper.toRecentActivityDto
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
@@ -14,12 +16,12 @@ class FirestoreProfileSource @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : ProfileSource {
 
-    override suspend fun getPublicProfile(userId: String): PublicProfileDto? {
-        val snapshot = firestore.collection("public_profiles")
-            .document(userId)
+    override suspend fun getPublicProfilesChunk(userIds: List<String>): List<DocumentSnapshot> {
+        return firestore.collection("public_profiles")
+            .whereIn(FieldPath.documentId(), userIds)
             .get()
             .await()
-        return snapshot.toObject(PublicProfileDto::class.java)
+            .documents
     }
 
     override suspend fun getRecentActivities(

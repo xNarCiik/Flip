@@ -1,6 +1,7 @@
 package com.dms.flip.data.cache
 
 import android.util.Log
+import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
@@ -114,32 +115,40 @@ class ProfileBatchLoader @Inject constructor(
      */
     private suspend fun loadProfilesInParallel(userIds: List<String>): Map<String, PublicProfile> =
         coroutineScope {
-            Log.d(TAG, "⚡ Loading ${userIds.size} profiles in parallel...")
             val currentUid =
                 auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
 
-            val deferreds = userIds.map { otherUserId ->
+            // ✅ Diviser en chunks de 30 (limite Firestore whereIn)
+            val chunks = userIds.chunked(30)
+
+            Log.d(TAG, "⚡ Loading ${userIds.size} profiles in ${chunks.size} parallel chunks...")
+
+            val deferreds = chunks.map { chunk ->
                 async {
                     try {
-                        val profile = profileSource.getPublicProfile(otherUserId)
-                        profile?.let {
-                            otherUserId to it.toDomain(
-                                id = otherUserId,
-                                relationshipStatus = determineRelationship(currentUid, otherUserId)
-                            )
-                        }
+                        val snapshot = profileSource.getPublicProfilesChunk(chunk)
+                        snapshot.mapNotNull { doc ->
+                            val profile = doc.toObject(PublicProfileDto::class.java)
+                            profile?.let {
+                                doc.id to it.toDomain(
+                                    id = doc.id,
+                                    relationshipStatus = determineRelationship(currentUid, doc.id)
+                                )
+                            }
+                        }.toMap()
                     } catch (e: Exception) {
-                        Log.e(TAG, "❌ Failed to load profile for $otherUserId", e)
-                        null
+                        Log.e(TAG, "❌ Failed to load chunk", e)
+                        emptyMap()
                     }
                 }
             }
 
-            val results = deferreds.awaitAll().filterNotNull().toMap()
+            val results = deferreds.awaitAll().flatMap { it.toList() }.toMap()
             Log.d(TAG, "✅ Loaded ${results.size}/${userIds.size} profiles successfully")
             return@coroutineScope results
         }
 
+    // TODO VALUE UPDATED IN CLOUD FONCTION ?
     private suspend fun determineRelationship(
         currentUid: String,
         otherUserId: String

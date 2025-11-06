@@ -20,6 +20,7 @@ import com.dms.flip.domain.repository.SettingsRepository
 import com.dms.flip.domain.repository.StatisticsRepository
 import com.dms.flip.domain.repository.UserRepository
 import com.dms.flip.domain.repository.onboarding.OnboardingRepository
+import com.dms.flip.domain.session.UserSessionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -36,9 +37,10 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideAuthRepository(
-        firebaseAuth: FirebaseAuth
+        firebaseAuth: FirebaseAuth,
+        userSessionManager: UserSessionManager
     ): AuthRepository =
-        AuthRepository(auth = firebaseAuth)
+        AuthRepository(auth = firebaseAuth, userSessionManager = userSessionManager)
 
     @Provides
     @Singleton
