@@ -27,7 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,7 +91,7 @@ fun CommunityScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
                 .background(MaterialTheme.colorScheme.background)
         ) {
             val contentState = when {
@@ -168,6 +167,8 @@ fun CommunityScreen(
                                 posts = uiState.posts,
                                 expandedPostId = uiState.expandedPostId,
                                 currentUserId = uiState.currentUserId,
+                                isLoadingMore = uiState.isLoadingMorePosts,
+                                hasMorePages = uiState.feedNextCursor != null,
                                 onEvent = onEvent,
                                 onPostMenuClick = { selectedPost = it },
                                 onOwnCommentLongPress = { postId, comment ->

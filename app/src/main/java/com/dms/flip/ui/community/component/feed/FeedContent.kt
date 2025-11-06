@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +44,6 @@ import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPosts
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun FeedContent(
@@ -52,6 +51,8 @@ fun FeedContent(
     posts: List<Post>,
     expandedPostId: String?,
     currentUserId: String?,
+    isLoadingMore: Boolean = false,
+    hasMorePages: Boolean = true,
     onEvent: (CommunityEvent) -> Unit,
     onPostMenuClick: (Post) -> Unit,
     onOwnCommentLongPress: (String, PostComment) -> Unit,
@@ -61,16 +62,37 @@ fun FeedContent(
 ) {
     val listState = rememberLazyListState()
 
+    // Détection si on est en haut
     val isAtTop by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
         }
     }
 
+    // Détection si on est proche de la fin (3 items avant la fin)
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val totalItems = listState.layoutInfo.totalItemsCount
+
+            // Charger plus si on est à 3 items de la fin
+            lastVisibleIndex >= totalItems - 3 && totalItems > 0
+        }
+    }
+
+    // Notifier le scroll en haut
     LaunchedEffect(isAtTop) {
         onScrollStateChanged?.invoke(isAtTop)
     }
 
+    // Déclencher le chargement automatiquement
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && !isLoadingMore && hasMorePages) {
+            onEvent(CommunityEvent.OnLoadMorePosts)
+        }
+    }
+
+    // Scroll vers le haut quand demandé
     LaunchedEffect(scrollToTopTrigger) {
         if (scrollToTopTrigger > 0) {
             listState.animateScrollToItem(0)
@@ -97,7 +119,7 @@ fun FeedContent(
                     onEvent(CommunityEvent.OnAddComment(post.id, comment))
                 },
                 onCommentUserClick = { comment ->
-                    // TODO PUBLIC PROFIL IN COMMENT ? onEvent(CommunityEvent.OnViewProfile(comment.author))
+                    // TODO onEvent(CommunityEvent.OnViewProfile(comment.id))
                 },
                 onOwnCommentLongPress = { comment ->
                     onOwnCommentLongPress(post.id, comment)
@@ -123,6 +145,24 @@ fun FeedContent(
                     )
                 )
             )
+        }
+
+        // ✅ Indicateur de chargement en bas
+        if (isLoadingMore && hasMorePages) {
+            item(key = "loading_more") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 3.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
