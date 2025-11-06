@@ -6,6 +6,7 @@ import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.domain.model.community.Paged
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
@@ -126,17 +127,25 @@ class FirestoreFeedSource @Inject constructor(
 
     override fun observeComments(postId: String): Flow<List<Pair<String, CommentDto>>> = callbackFlow {
         Log.d(TAG, "🔵 START observing comments for post $postId")
-        
+
         val reg = firestore.collection("posts")
             .document(postId)
             .collection("comments")
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
+                    if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.w(TAG, "Listener 'comments' pour $postId détaché (post sûrement supprimé).")
+                        // Ne pas fermer en erreur. Le listener est déjà mort.
+                        // La mise à jour du feed principal (observeFriendsFeed) gérera la UI.
+                        return@addSnapshotListener
+                    }
+
                     Log.e(TAG, "❌ Error observing comments for $postId", err)
                     close(err)
                     return@addSnapshotListener
                 }
+
                 if (snap == null) {
                     Log.w(TAG, "⚠️ Null snapshot for comments of $postId")
                     return@addSnapshotListener
@@ -158,18 +167,23 @@ class FirestoreFeedSource @Inject constructor(
 
     override fun observePostLikeStatus(postId: String, uid: String): Flow<Boolean> = callbackFlow {
         Log.d(TAG, "🔵 START observing like status for post $postId by user $uid")
-        
+
         val reg = firestore.collection("posts")
             .document(postId)
             .collection("likes")
             .document(uid)
             .addSnapshotListener { snap, err ->
                 if (err != null) {
+                    if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.w(TAG, "Listener 'like status' pour $postId détaché (post sûrement supprimé).")
+                        return@addSnapshotListener
+                    }
+
                     Log.e(TAG, "❌ Error observing like status for $postId", err)
                     close(err)
                     return@addSnapshotListener
                 }
-                
+
                 val isLiked = snap?.exists() == true
                 Log.d(TAG, "✅ Like status updated for $postId: $isLiked")
                 trySend(isLiked)
@@ -183,17 +197,22 @@ class FirestoreFeedSource @Inject constructor(
 
     override fun observePostLikeCount(postId: String): Flow<Int> = callbackFlow {
         Log.d(TAG, "🔵 START observing like count for post $postId")
-        
+
         val reg = firestore.collection("posts")
             .document(postId)
             .collection("likes")
             .addSnapshotListener { snap, err ->
                 if (err != null) {
+                    if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.w(TAG, "Listener 'like count' pour $postId détaché (post sûrement supprimé).")
+                        return@addSnapshotListener
+                    }
+
                     Log.e(TAG, "❌ Error observing like count for $postId", err)
                     close(err)
                     return@addSnapshotListener
                 }
-                
+
                 val count = snap?.size() ?: 0
                 Log.d(TAG, "✅ Like count updated for $postId: $count likes")
                 trySend(count)
@@ -255,7 +274,6 @@ class FirestoreFeedSource @Inject constructor(
     }
 
     override suspend fun deletePost(postId: String) {
-        Log.d(TAG, "🗑️ Deleting post $postId")
         call("deletePost", mapOf("postId" to postId))
         Log.d(TAG, "✅ Post deleted successfully")
     }

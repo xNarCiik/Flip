@@ -128,42 +128,42 @@ fun CommunityScreen(
                 },
                 label = "CommunityContentTransition"
             ) { state ->
-                when (state) {
-                    CommunityContentState.Loading -> {
-                        FeedSkeleton(modifier = Modifier.fillMaxSize())
-                    }
-
-                    CommunityContentState.Empty -> {
-                        CommunityEmptyState(
-                            emoji = stringResource(id = R.string.community_empty_feed_emoji),
-                            title = stringResource(id = R.string.community_empty_feed_title),
-                            description = stringResource(id = R.string.community_empty_feed_description),
-                            actionText = stringResource(id = R.string.community_empty_feed_action),
-                            onActionClick = { onEvent(CommunityEvent.OnSearchClicked) }
-                        )
-                    }
-
-                    is CommunityContentState.Error -> {
-                        ErrorState(
-                            modifier = Modifier.fillMaxSize(),
-                            message = stringResource(id = state.messageRes),
-                            onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
-                        )
-                    }
-
-                    is CommunityContentState.Content -> {
-                        PullToRefreshBox(
+                PullToRefreshBox(
+                    state = pullState,
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { onEvent(CommunityEvent.OnRefresh(forceReload = true)) },
+                    indicator = {
+                        Indicator(
                             state = pullState,
                             isRefreshing = uiState.isRefreshing,
-                            onRefresh = { onEvent(CommunityEvent.OnRefresh(forceReload = true)) },
-                            indicator = {
-                                Indicator(
-                                    state = pullState,
-                                    isRefreshing = uiState.isRefreshing,
-                                    modifier = Modifier.align(Alignment.TopCenter)
-                                )
-                            }
-                        ) {
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
+                    }
+                ) {
+                    when (state) {
+                        CommunityContentState.Loading -> {
+                            FeedSkeleton(modifier = Modifier.fillMaxSize())
+                        }
+
+                        CommunityContentState.Empty -> {
+                            CommunityEmptyState(
+                                emoji = stringResource(id = R.string.community_empty_feed_emoji),
+                                title = stringResource(id = R.string.community_empty_feed_title),
+                                description = stringResource(id = R.string.community_empty_feed_description),
+                                actionText = stringResource(id = R.string.community_empty_feed_action),
+                                onActionClick = { onEvent(CommunityEvent.OnSearchClicked) }
+                            )
+                        }
+
+                        is CommunityContentState.Error -> {
+                            ErrorState(
+                                modifier = Modifier.fillMaxSize(),
+                                message = stringResource(id = state.messageRes),
+                                onRetry = { onEvent(CommunityEvent.OnRetryClicked) }
+                            )
+                        }
+
+                        is CommunityContentState.Content -> {
                             FeedContent(
                                 posts = uiState.posts,
                                 expandedPostId = uiState.expandedPostId,
@@ -209,7 +209,7 @@ fun CommunityScreen(
             post = post,
             onDismiss = { selectedPost = null },
             onViewProfile = {
-                onEvent(CommunityEvent.OnFriendClicked(post.author))
+                onEvent(CommunityEvent.OnViewProfile(post.author))
                 selectedPost = null
             },
             onDelete = { selectedPost = null }

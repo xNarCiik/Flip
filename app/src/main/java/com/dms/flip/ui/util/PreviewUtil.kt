@@ -6,13 +6,10 @@ import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.PleasureHistory
 import com.dms.flip.ui.community.CommunityUiState
-import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.FriendPleasure
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
-import com.dms.flip.domain.model.community.PleasureStatus
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RecentActivity
@@ -33,75 +30,39 @@ val previewDailyPleasure = Pleasure(
 )
 
 val previewFriends = listOf(
-    Friend(
+    PublicProfile(
         id = "1",
         username = "Amélie Dubois",
-        currentPleasure = FriendPleasure(
-            title = "Séance de méditation",
-            status = PleasureStatus.IN_PROGRESS,
-            category = PleasureCategory.WELLNESS
-        ),
         avatarUrl = null,
-        handle = "@amelie.db",
-        streak = 12,
-        isOnline = true,
-        favoriteCategory = PleasureCategory.WELLNESS
+        handle = "@amelie.db"
     ),
-    Friend(
+    PublicProfile(
         id = "2",
         username = "Lucas Bernard",
         handle = "@lucas.bernard",
-        streak = 24,
-        currentPleasure = FriendPleasure(
-            title = "Sortie running",
-            status = PleasureStatus.COMPLETED,
-            category = PleasureCategory.SPORT
-        ),
-        avatarUrl = null,
-        isOnline = false,
-        favoriteCategory = PleasureCategory.SPORT
+        currentStreak = 24,
+        avatarUrl = null
     ),
-    Friend(
+    PublicProfile(
         id = "3",
         username = "Chloé Lefèvre",
         handle = "@chloe.lefevre",
         avatarUrl = null,
-        streak = 25,
-        isOnline = true,
-        currentPleasure = FriendPleasure(
-            title = "Randonnée en forêt",
-            category = PleasureCategory.OUTDOOR,
-            status = PleasureStatus.COMPLETED
-        ),
-        favoriteCategory = PleasureCategory.OUTDOOR
+        currentStreak = 25
     ),
-    Friend(
+    PublicProfile(
         id = "4",
         username = "Théo Martin",
         handle = "@theo.martin",
         avatarUrl = null,
-        streak = 5,
-        isOnline = false,
-        currentPleasure = FriendPleasure(
-            title = "Préparer un brunch",
-            category = PleasureCategory.FOOD,
-            status = PleasureStatus.IN_PROGRESS
-        ),
-        favoriteCategory = PleasureCategory.FOOD
+        currentStreak = 5
     ),
-    Friend(
+    PublicProfile(
         id = "5",
         username = "Sophie Martin",
         handle = "@sophie.martin",
         avatarUrl = null,
-        streak = 15,
-        isOnline = true,
-        currentPleasure = FriendPleasure(
-            title = "Lecture inspirante",
-            category = PleasureCategory.CULTURE,
-            status = PleasureStatus.IN_PROGRESS
-        ),
-        favoriteCategory = PleasureCategory.CULTURE
+        currentStreak = 15,
     )
 )
 

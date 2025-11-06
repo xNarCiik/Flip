@@ -13,17 +13,14 @@ import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
 import com.dms.flip.data.mock.community.MockFeedRepository
 import com.dms.flip.data.mock.community.MockFriendsRequestsRepository
-import com.dms.flip.data.mock.community.MockProfileRepository
 import com.dms.flip.data.mock.community.MockSearchRepository
 import com.dms.flip.data.mock.community.MockSuggestionsRepository
 import com.dms.flip.data.repository.community.FeedRepositoryImpl
 import com.dms.flip.data.repository.community.FriendsRequestsRepositoryImpl
-import com.dms.flip.data.repository.community.ProfileRepositoryImpl
 import com.dms.flip.data.repository.community.SearchRepositoryImpl
 import com.dms.flip.data.repository.community.SuggestionsRepositoryImpl
 import com.dms.flip.domain.repository.community.FeedRepository
 import com.dms.flip.domain.repository.community.FriendsRequestsRepository
-import com.dms.flip.domain.repository.community.ProfileRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -89,15 +86,7 @@ object CommunityModule {
         mock: Lazy<MockSearchRepository>
     ): SearchRepository =
         if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
-
-    @Provides
-    @Singleton
-    fun provideProfileRepository(
-        impl: Lazy<ProfileRepositoryImpl>,
-        mock: Lazy<MockProfileRepository>
-    ): ProfileRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
-
+    
     @Provides
     @Singleton
     fun provideRequestsRepository(

@@ -76,7 +76,7 @@ fun PostHeader(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    if (post.author.streak > 0) {
+                    if (post.author.currentStreak > 0) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -88,7 +88,7 @@ fun PostHeader(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = post.author.streak.toString(),
+                                text = post.author.currentStreak.toString(),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = FireStreakColor

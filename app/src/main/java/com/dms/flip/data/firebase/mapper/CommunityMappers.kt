@@ -1,13 +1,11 @@
 package com.dms.flip.data.firebase.mapper
 
 import com.dms.flip.data.firebase.dto.CommentDto
-import com.dms.flip.data.firebase.dto.FriendDto
 import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RecentActivityDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.dto.SuggestionDto
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
@@ -23,7 +21,7 @@ private fun String.toPleasureCategoryOrNull(): PleasureCategory? =
 
 fun PostDto.toDomain(
     id: String,
-    author: Friend,
+    author: PublicProfile,
     comments: List<PostComment> = emptyList(),
     isLiked: Boolean = false,
     likesCount: Int
@@ -42,7 +40,7 @@ fun PostDto.toDomain(
     comments = comments
 )
 
-fun CommentDto.toDomain(id: String, profile: Friend): PostComment = PostComment(
+fun CommentDto.toDomain(id: String, profile: PublicProfile): PostComment = PostComment(
     id = id,
     userId = profile.id,
     username = profile.username,
@@ -50,13 +48,6 @@ fun CommentDto.toDomain(id: String, profile: Friend): PostComment = PostComment(
     avatarUrl = profile.avatarUrl,
     content = content,
     timestamp = timestamp?.time ?: 0L
-)
-
-fun FriendDto.toDomain(id: String): Friend = Friend(
-    id = id,
-    username = username,
-    handle = handle,
-    avatarUrl = avatarUrl
 )
 
 fun RequestDto.toPendingReceived(id: String): FriendRequest = FriendRequest(
@@ -89,8 +80,8 @@ fun SuggestionDto.toDomain(id: String): FriendSuggestion = FriendSuggestion(
 
 fun PublicProfileDto.toDomain(
     id: String,
-    recentActivities: List<RecentActivity>,
-    relationshipStatus: RelationshipStatus
+    recentActivities: List<RecentActivity> = listOf(),
+    relationshipStatus: RelationshipStatus = RelationshipStatus.NONE // TODO
 ): PublicProfile = PublicProfile(
     id = id,
     username = username,

@@ -7,10 +7,10 @@ import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.repository.StorageRepository
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.repository.community.FeedRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -85,7 +85,7 @@ class FeedRepositoryImpl @Inject constructor(
     private fun observePostWithRealTimeUpdates(
         postId: String,
         postDto: PostDto,
-        author: Friend,
+        author: PublicProfile,
         currentUserId: String
     ): Flow<Post> {
         Log.d(TAG, "🔵 Setting up real-time updates for post $postId")
@@ -125,11 +125,11 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Crée un Friend de fallback si le profil n'a pas pu être chargé
+     * Crée un Profile de fallback si le profil n'a pas pu être chargé
      */
-    private fun createFallbackProfile(userId: String): Friend {
+    private fun createFallbackProfile(userId: String): PublicProfile {
         Log.w(TAG, "⚠️ Using fallback profile for user $userId")
-        return Friend(
+        return PublicProfile(
             id = userId,
             username = "Utilisateur inconnu",
             handle = "",
@@ -215,10 +215,14 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deletePost(postId: String) {
-        Log.d(TAG, "🗑️ Deleting post $postId")
         feedSource.deletePost(postId)
         // ✅ Les listeners temps réel mettront à jour automatiquement
         Log.d(TAG, "✅ Post deleted, waiting for real-time update...")
+    }
+
+    // TODO Put in other repo?
+    override suspend fun getPublicProfile(userId: String): PublicProfile? {
+        return profileBatchLoader.loadProfile(userId = userId)
     }
 
     /**

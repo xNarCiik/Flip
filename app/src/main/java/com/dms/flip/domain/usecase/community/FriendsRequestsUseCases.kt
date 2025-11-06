@@ -1,7 +1,7 @@
 package com.dms.flip.domain.usecase.community
 
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.repository.community.FriendsRequestsRepository
 import com.dms.flip.domain.util.Result
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +10,7 @@ import javax.inject.Inject
 class ObserveFriendsUseCase @Inject constructor(
     private val friendsRepository: FriendsRequestsRepository
 ) {
-    operator fun invoke(): Flow<List<Friend>> = friendsRepository.observeFriends()
+    operator fun invoke(): Flow<List<PublicProfile>> = friendsRepository.observeFriends()
 }
 
 class ObservePendingReceivedUseCase @Inject constructor(

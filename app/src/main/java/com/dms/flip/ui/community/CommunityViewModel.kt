@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dms.flip.data.repository.community.FeedRepositoryImpl
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.Paged
@@ -17,7 +16,6 @@ import com.dms.flip.domain.usecase.community.CancelSentRequestUseCase
 import com.dms.flip.domain.usecase.community.DeclineFriendRequestUseCase
 import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
 import com.dms.flip.domain.usecase.community.DeletePostUseCase
-import com.dms.flip.domain.usecase.community.GetPublicProfileUseCase
 import com.dms.flip.domain.usecase.community.HideSuggestionUseCase
 import com.dms.flip.domain.usecase.community.ObserveFriendsFeedUseCase
 import com.dms.flip.domain.usecase.community.ObserveFriendsUseCase
@@ -57,7 +55,7 @@ private const val TAG = "CommunityViewModel"
 
 private data class CommunityData(
     val feed: Paged<Post>,
-    val friends: List<Friend>,
+    val friends: List<PublicProfile>,
     val pendingReceived: List<FriendRequest>,
     val pendingSent: List<FriendRequest>,
     val suggestions: List<FriendSuggestion>
@@ -65,12 +63,12 @@ private data class CommunityData(
 
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
+    private val observeFriendsUseCase: ObserveFriendsUseCase,
     private val observeFriendsFeedUseCase: ObserveFriendsFeedUseCase,
     private val toggleLikeUseCase: ToggleLikeUseCase,
     private val addCommentUseCase: AddCommentUseCase,
     private val deleteCommentUseCase: DeleteCommentUseCase,
     private val deletePostUseCase: DeletePostUseCase,
-    private val observeFriendsUseCase: ObserveFriendsUseCase,
     private val removeFriendUseCase: RemoveFriendUseCase,
     private val observePendingReceivedUseCase: ObservePendingReceivedUseCase,
     private val observePendingSentUseCase: ObservePendingSentUseCase,
@@ -81,7 +79,6 @@ class CommunityViewModel @Inject constructor(
     private val observeSuggestionsUseCase: ObserveSuggestionsUseCase,
     private val hideSuggestionUseCase: HideSuggestionUseCase,
     private val searchUsersUseCase: SearchUsersUseCase,
-    private val getPublicProfileUseCase: GetPublicProfileUseCase,
     private val feedRepository: FeedRepositoryImpl,
     getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
@@ -89,16 +86,12 @@ class CommunityViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CommunityUiState())
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
 
-    private val _publicProfiles = MutableStateFlow<Map<String, PublicProfile>>(emptyMap())
-    val publicProfiles: StateFlow<Map<String, PublicProfile>> = _publicProfiles.asStateFlow()
-
     private val searchQuery = MutableStateFlow("")
     private var observationJob: Job? = null
     private var searchJob: Job? = null
     private var refreshJob: Job? = null
     private var cacheCleanupJob: Job? = null
     private var isLoadingMoreFeed = false
-    private val loadingProfiles = mutableSetOf<String>()
     private var isScrolledToTop = true
     private var lastSeenPostTimestamp: Long = System.currentTimeMillis()
 
@@ -128,12 +121,14 @@ class CommunityViewModel @Inject constructor(
 
     private fun logCacheStats() {
         val stats = feedRepository.getCacheStats()
-        Log.d(TAG, """
+        Log.d(
+            TAG, """
             📊 Cache Stats:
               - Total entries: ${stats.totalEntries}
               - Valid entries: ${stats.validEntries}
               - Expired entries: ${stats.expiredEntries}
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     fun refresh(forceReload: Boolean = false) {
@@ -197,6 +192,9 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
+    suspend fun getPublicProfileById(userId: String): PublicProfile? =
+        feedRepository.getPublicProfile(userId = userId)
+
     private fun handleNewPostsAlertClicked() {
         Log.d(TAG, "📌 New posts alert clicked")
         _uiState.update {
@@ -205,7 +203,8 @@ class CommunityViewModel @Inject constructor(
                 newPostsCount = 0
             )
         }
-        lastSeenPostTimestamp = _uiState.value.posts.firstOrNull()?.timestamp ?: System.currentTimeMillis()
+        lastSeenPostTimestamp =
+            _uiState.value.posts.firstOrNull()?.timestamp ?: System.currentTimeMillis()
     }
 
     private fun handleScrolledToTop() {
@@ -217,7 +216,8 @@ class CommunityViewModel @Inject constructor(
                     newPostsCount = 0
                 )
             }
-            lastSeenPostTimestamp = _uiState.value.posts.firstOrNull()?.timestamp ?: System.currentTimeMillis()
+            lastSeenPostTimestamp =
+                _uiState.value.posts.firstOrNull()?.timestamp ?: System.currentTimeMillis()
         }
     }
 
@@ -230,36 +230,6 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun loadPublicProfile(userId: String) {
-        if (_publicProfiles.value.containsKey(userId)) return
-        val shouldLoad = synchronized(loadingProfiles) {
-            if (loadingProfiles.contains(userId)) {
-                false
-            } else {
-                loadingProfiles.add(userId)
-                true
-            }
-        }
-        if (!shouldLoad) return
-        viewModelScope.launch {
-            try {
-                when (val result = getPublicProfileUseCase(userId)) {
-                    is Result.Ok -> {
-                        _publicProfiles.update { current -> current + (userId to result.data) }
-                    }
-
-                    is Result.Err -> {
-                        _uiState.update { it.copy(errorMessage = mapErrorMessage(result.throwable)) }
-                    }
-                }
-            } finally {
-                synchronized(loadingProfiles) {
-                    loadingProfiles.remove(userId)
-                }
-            }
-        }
-    }
-
     private fun ensureObservationsStarted() {
         if (observationJob != null) {
             Log.d(TAG, "⚠️ Observations already started, skipping")
@@ -268,41 +238,52 @@ class CommunityViewModel @Inject constructor(
 
         Log.d(TAG, "🔵 Starting observations...")
 
+        _uiState.update { it.copy(isLoadingInitial = true) }
+
         val feedFlow = observeFriendsFeedUseCase(FEED_PAGE_SIZE)
             .catch { throwable ->
                 Log.e(TAG, "❌ Error in feed flow", throwable)
                 handleError(throwable)
-                val currentState = _uiState.value
-                emit(Paged(currentState.posts.toList(), currentState.feedNextCursor))
+                emit(Paged(emptyList(), null))
             }
 
         val friendsFlow = observeFriendsUseCase()
             .catch { throwable ->
                 Log.e(TAG, "❌ Error in friends flow", throwable)
                 handleError(throwable)
-                emit(_uiState.value.friends.toList())
+                emit(emptyList())
             }
 
         val pendingReceivedFlow = observePendingReceivedUseCase()
             .catch { throwable ->
                 Log.e(TAG, "❌ Error in pending received flow", throwable)
                 handleError(throwable)
-                emit(_uiState.value.pendingRequests.toList())
+                emit(emptyList())
             }
 
         val pendingSentFlow = observePendingSentUseCase()
             .catch { throwable ->
                 Log.e(TAG, "❌ Error in pending sent flow", throwable)
                 handleError(throwable)
-                emit(_uiState.value.sentRequests.toList())
+                emit(emptyList())
             }
 
         val suggestionsFlow = observeSuggestionsUseCase()
             .catch { throwable ->
                 Log.e(TAG, "❌ Error in suggestions flow", throwable)
                 handleError(throwable)
-                emit(_uiState.value.suggestions.toList())
+                emit(emptyList())
             }
+
+        var hasReceivedData = false
+
+        viewModelScope.launch {
+            delay(3000)
+            if (!hasReceivedData) {
+                Log.w(TAG, "⚠️ No data received after 3s, stopping loading state")
+                _uiState.update { it.copy(isLoadingInitial = false) }
+            }
+        }
 
         observationJob = combine(
             feedFlow, friendsFlow, pendingReceivedFlow, pendingSentFlow, suggestionsFlow
@@ -316,7 +297,11 @@ class CommunityViewModel @Inject constructor(
             )
         }
             .onEach { data ->
-                Log.d(TAG, "📥 Received update: ${data.feed.items.size} posts, ${data.friends.size} friends")
+                hasReceivedData = true
+                Log.d(
+                    TAG,
+                    "📥 Received update: ${data.feed.items.size} posts, ${data.friends.size} friends"
+                )
 
                 val currentPosts = _uiState.value.posts
                 val newPosts = data.feed.items
@@ -407,6 +392,7 @@ class CommunityViewModel @Inject constructor(
                     }
                     handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 }
+
                 is Result.Ok -> {
                     Log.d(TAG, "✅ Like toggled successfully, waiting for real-time confirmation")
                 }
@@ -429,6 +415,7 @@ class CommunityViewModel @Inject constructor(
                     Log.e(TAG, "❌ Failed to add comment", result.throwable)
                     handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 }
+
                 is Result.Ok -> {
                     Log.d(TAG, "✅ Comment added successfully: ${result.data.id}")
                 }
@@ -444,6 +431,7 @@ class CommunityViewModel @Inject constructor(
                 is Result.Ok -> {
                     Log.d(TAG, "✅ Comment deleted successfully")
                 }
+
                 is Result.Err -> {
                     Log.e(TAG, "❌ Failed to delete comment", result.throwable)
                     handleError(result.throwable, stopInitial = false, stopRefresh = false)
@@ -477,6 +465,7 @@ class CommunityViewModel @Inject constructor(
                     }
                     handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 }
+
                 is Result.Ok -> {
                     Log.d(TAG, "✅ Post deleted successfully")
                 }
@@ -484,7 +473,7 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    private fun removeFriend(friend: Friend) {
+    private fun removeFriend(friend: PublicProfile) {
         val actionKey = "remove_friend_${friend.id}"
         pendingActions[actionKey]?.cancel()
 

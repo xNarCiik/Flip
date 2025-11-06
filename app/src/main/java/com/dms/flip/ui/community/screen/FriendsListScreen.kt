@@ -16,7 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dms.flip.R
-import com.dms.flip.domain.model.community.Friend
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
@@ -36,7 +36,7 @@ fun FriendsListScreen(
     onEvent: (CommunityEvent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    var selectedFriend by remember { mutableStateOf<Friend?>(null) }
+    var selectedFriend by remember { mutableStateOf<PublicProfile?>(null) }
 
     Column(
         modifier = modifier
@@ -79,7 +79,7 @@ fun FriendsListScreen(
                         items(items = uiState.friends, key = { it.id }) { friend ->
                             FriendListItem(
                                 friend = friend,
-                                onClick = { onEvent(CommunityEvent.OnFriendClicked(friend)) },
+                                onClick = { onEvent(CommunityEvent.OnViewProfile(friend)) },
                                 onMenuClick = { selectedFriend = friend }
                             )
                         }
@@ -94,7 +94,7 @@ fun FriendsListScreen(
             friend = friend,
             onDismiss = { selectedFriend = null },
             onViewProfile = {
-                onEvent(CommunityEvent.OnFriendClicked(friend))
+                onEvent(CommunityEvent.OnViewProfile(friend))
                 selectedFriend = null
             },
             onInvite = {

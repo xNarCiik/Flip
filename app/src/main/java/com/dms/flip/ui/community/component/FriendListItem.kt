@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.dms.flip.domain.model.community.Friend
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.ui.component.CommunityAvatar
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -31,7 +31,7 @@ import com.dms.flip.ui.util.previewFriends
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun FriendListItem(
-    friend: Friend,
+    friend: PublicProfile,
     onClick: () -> Unit,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier

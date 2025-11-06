@@ -4,6 +4,7 @@ import android.net.Uri
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.PostComment
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.repository.community.FeedRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,6 +26,12 @@ class MockFeedRepository @Inject constructor(
                 Paged(limited, nextCursor)
             }
         }
+
+    override suspend fun getPublicProfile(userId: String): PublicProfile {
+        val baseProfile = dataSource.getPublicProfile(userId)
+        val relationship = dataSource.determineRelationship(userId)
+        return baseProfile.copy(relationshipStatus = relationship)
+    }
 
     override suspend fun createPost(
         content: String,

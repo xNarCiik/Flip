@@ -4,6 +4,7 @@ import android.net.Uri
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
+import com.dms.flip.domain.model.community.PublicProfile
 import kotlinx.coroutines.flow.Flow
 
 interface FeedRepository {
@@ -11,7 +12,9 @@ interface FeedRepository {
      * Observe le feed des amis en temps réel
      */
     fun observeFriendsFeed(limit: Int, cursor: String? = null): Flow<Paged<Post>>
-    
+
+    suspend fun getPublicProfile(userId: String): PublicProfile?
+
     /**
      * Crée un nouveau post
      */

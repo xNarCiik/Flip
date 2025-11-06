@@ -1,9 +1,9 @@
 package com.dms.flip.ui.community
 
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.Post
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.UserSearchResult
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -14,7 +14,7 @@ sealed class ActionStatus {
 
 data class CommunityUiState(
     val posts: PersistentList<Post> = persistentListOf(),
-    val friends: PersistentList<Friend> = persistentListOf(),
+    val friends: PersistentList<PublicProfile> = persistentListOf(),
     val pendingRequests: PersistentList<FriendRequest> = persistentListOf(),
     val sentRequests: PersistentList<FriendRequest> = persistentListOf(),
     val suggestions: PersistentList<FriendSuggestion> = persistentListOf(),
@@ -43,9 +43,9 @@ sealed interface CommunityEvent {
     data class OnAddComment(val postId: String, val comment: String) : CommunityEvent
     data class OnToggleComments(val postId: String) : CommunityEvent
 
-    data class OnFriendClicked(val friend: Friend) : CommunityEvent
-    data class OnInviteFriendToPleasure(val friend: Friend) : CommunityEvent
-    data class OnRemoveFriend(val friend: Friend) : CommunityEvent
+    data class OnViewProfile(val profile: PublicProfile) : CommunityEvent
+    data class OnInviteFriendToPleasure(val friend: PublicProfile) : CommunityEvent
+    data class OnRemoveFriend(val friend: PublicProfile) : CommunityEvent
 
     data class OnAddSuggestion(val suggestion: FriendSuggestion) : CommunityEvent
     data class OnHideSuggestion(val suggestion: FriendSuggestion) : CommunityEvent
@@ -57,8 +57,6 @@ sealed interface CommunityEvent {
     data class OnSearchQueryChanged(val query: String) : CommunityEvent
     data class OnSearchResultClicked(val result: UserSearchResult) : CommunityEvent
     data class OnAddUserFromSearch(val userId: String) : CommunityEvent
-
-    data class OnViewProfile(val userId: String) : CommunityEvent
 
     data class OnDeleteComment(val postId: String, val commentId: String) : CommunityEvent
     data class OnDeletePost(val postId: String) : CommunityEvent

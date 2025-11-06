@@ -2,14 +2,11 @@ package com.dms.flip.data.mock.community
 
 import android.net.Uri
 import com.dms.flip.domain.model.community.PleasureCategory
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
-import com.dms.flip.domain.model.community.FriendPleasure
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.PostComment
-import com.dms.flip.domain.model.community.PleasureStatus
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.RecentActivity
@@ -26,142 +23,73 @@ import javax.inject.Singleton
 @Singleton
 class MockCommunityDataSource @Inject constructor() {
 
-    private val currentUser = Friend(
+    private val currentUser = PublicProfile(
         id = "UVavanPylhSnMnH6oGJI9isqypN2",
         username = "Damien Legagnoux",
         handle = "@dams_lgx",
         avatarUrl = "https://firebasestorage.googleapis.com/v0/b/daily-joy-16ce8.firebasestorage.app/o/avatars%2FO9v4fig59HWnnA2J0HeDC6gpwWZ2%2F1762194156609.jpg?alt=media&token=fe22e453-f3b2-4300-8060-621626b86c11",
-        streak = 18,
-        isOnline = true,
-        currentPleasure = FriendPleasure(
-            title = "Balade photo du soir",
-            category = PleasureCategory.CREATIVE,
-            status = PleasureStatus.IN_PROGRESS
-        ),
-        favoriteCategory = PleasureCategory.CREATIVE
+        currentStreak = 18,
+        relationshipStatus = RelationshipStatus.NONE
     )
 
     private val knownUsers = mutableMapOf(
-        "friend_emma" to Friend(
+        "friend_emma" to PublicProfile(
             id = "friend_emma",
             username = "La mère michel",
             handle = "@mamamiaa",
             avatarUrl = "https://scontent.cdninstagram.com/v/t51.2885-19/401916050_1385369609057390_7192697213845317191_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=108&ccb=7-5&_nc_sid=bf7eb4&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy4xMDgwLkMzIn0%3D&_nc_ohc=qVn4MJ0HHO8Q7kNvwE3sWZq&_nc_oc=AdnN5gfuDIdeBymllMgcFHOxMhnigLeek2XkVwqWUTTebGKBhuB6flhsdWlRLtMuGAqHKypBzlCj85vALRT2gqaQ&_nc_zt=24&_nc_ht=scontent.cdninstagram.com&oh=00_Afj5BzdOX_yWaafK_LftZtkDaLQKoDS7764rsMN3rzg83w&oe=690C9EC1",
-            streak = 7,
-            isOnline = true,
-            currentPleasure = FriendPleasure(
-                title = "Session de lecture du soir",
-                category = PleasureCategory.CULTURE,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.CULTURE
+            currentStreak = 7
         ),
-        "friend_dams" to Friend(
+        "friend_dams" to PublicProfile(
             id = "friend_dams",
             username = "Dams",
             handle = "@dams_lgx",
             avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/456069928_491069416973778_8102649957987195103_n.jpg?stp=dst-jpg_s320x320_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=106&_nc_oc=Q6cZ2QF9Xmw8N1iCgPnDUx4Kw5eFhwS3qI0R99yeBe-y42tLx3zBCIwn8bY6oBnCdDRrNf45Ar-rBNTqnF0iqNQABwa1&_nc_ohc=WBRH9bfze2oQ7kNvwHjBN7q&_nc_gid=VUXDXVDh4eW4ZxG7unEuRw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfjL_VrAPaR7xo4kyqWyvnFPkZUfbbOazo6OesOUw6FlwQ&oe=690C8B45&_nc_sid=10d13b",
-            streak = 12,
-            isOnline = false,
-            currentPleasure = FriendPleasure(
-                title = "Yoga matinal",
-                category = PleasureCategory.WELLNESS,
-                status = PleasureStatus.COMPLETED
-            ),
-            favoriteCategory = PleasureCategory.WELLNESS
+            currentStreak = 12
         ),
-        "friend_kimy" to Friend(
+        "friend_kimy" to PublicProfile(
             id = "friend_kimy",
             username = "Kimimi",
             handle = "@kimy_david",
             avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/572111130_18544577635056527_2214624452472528223_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=111&_nc_oc=Q6cZ2QFNCvY6ONexfO4sERI2xlvmYiLuGlVXDrbduhjZgMD-3p_FljbXdI_UkzkbQ8vGS9Q6DR46J7UlpoGyAbHu8_W3&_nc_ohc=Ap7jGp6iUywQ7kNvwHp_WuH&_nc_gid=d7UwzgG3pzj7Lrftftwovg&edm=AP4sbd4BAAAA&ccb=7-5&oh=00_AfhWzi0TPaWhSrC5Dz4U3WAa8omuqnWYMnEqKAQ2obcKJA&oe=690C9C64&_nc_sid=7a9f4b",
-            streak = 3,
-            isOnline = true,
-            currentPleasure = FriendPleasure(
-                title = "Course au parc",
-                category = PleasureCategory.OUTDOOR,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.OUTDOOR
+            currentStreak = 3
         ),
-        "friend_anthony" to Friend(
+        "friend_anthony" to PublicProfile(
             id = "friend_anthony",
             username = "Anthony Arrighi",
             handle = "@anthony.arrighi",
-            streak = 21,
-            isOnline = false,
+            currentStreak = 21,
             avatarUrl = "https://instagram.frns1-1.fna.fbcdn.net/v/t51.2885-19/502718768_18065806517284093_1519982854029510988_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.frns1-1.fna.fbcdn.net&_nc_cat=101&_nc_oc=Q6cZ2QEy3HjmzcGaILUbcmVoA9q6AHMXG1TFUix8HiPDQ_AOrVopsbF71uGlAxTqozBUzUToobuM3mXdUl9z7psxZkuJ&_nc_ohc=uvm_14EYNKAQ7kNvwE5xPEQ&_nc_gid=K1DszhkAKf_TUzYVIt-ioQ&edm=ALGbJPMBAAAA&ccb=7-5&oh=00_AfjzMC3dODdrpoe7MiIcYAJ8omBEYX-bH6mKcoCF5WdZxg&oe=690C8181&_nc_sid=7d3ac5",
-            currentPleasure = FriendPleasure(
-                title = "Atelier peinture",
-                category = PleasureCategory.CREATIVE,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.CREATIVE
         ),
-        "friend_thomas" to Friend(
+        "friend_thomas" to PublicProfile(
             id = "friend_thomas",
             username = "Thomas Garcia",
             handle = "@thomas",
-            streak = 9,
-            isOnline = true,
-            currentPleasure = FriendPleasure(
-                title = "Cours de guitare",
-                category = PleasureCategory.CULTURE,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.CULTURE
+            currentStreak = 9
         ),
-        "friend_marie" to Friend(
+        "friend_marie" to PublicProfile(
             id = "friend_marie",
             username = "Marie Dubois",
             handle = "@marie",
-            streak = 5,
-            isOnline = false,
-            currentPleasure = FriendPleasure(
-                title = "Atelier poterie",
-                category = PleasureCategory.CREATIVE,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.CREATIVE
+            currentStreak = 5,
         ),
-        "friend_nicolas" to Friend(
+        "friend_nicolas" to PublicProfile(
             id = "friend_nicolas",
             username = "Nicolas Petit",
             handle = "@nicolas",
-            streak = 2,
-            isOnline = true,
-            currentPleasure = FriendPleasure(
-                title = "Session de natation",
-                category = PleasureCategory.SPORT,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.SPORT
+            currentStreak = 2
         ),
-        "friend_claire" to Friend(
+        "friend_claire" to PublicProfile(
             id = "friend_claire",
             username = "Claire Rossi",
             handle = "@claire",
-            streak = 16,
-            isOnline = false,
-            currentPleasure = FriendPleasure(
-                title = "Atelier cuisine italienne",
-                category = PleasureCategory.FOOD,
-                status = PleasureStatus.COMPLETED
-            ),
-            favoriteCategory = PleasureCategory.FOOD
+            currentStreak = 16
         ),
-        "friend_bastien" to Friend(
+        "friend_bastien" to PublicProfile(
             id = "friend_bastien",
             username = "Bastien Fournier",
             handle = "@bastien",
-            streak = 11,
-            isOnline = true,
-            currentPleasure = FriendPleasure(
-                title = "Atelier théâtre",
-                category = PleasureCategory.CULTURE,
-                status = PleasureStatus.IN_PROGRESS
-            ),
-            favoriteCategory = PleasureCategory.CULTURE
+            currentStreak = 11
         )
     )
 
@@ -172,7 +100,7 @@ class MockCommunityDataSource @Inject constructor() {
             knownUsers.getValue("friend_kimy")
         )
     )
-    val friends: StateFlow<List<Friend>> = _friends.asStateFlow()
+    val friends: StateFlow<List<PublicProfile>> = _friends.asStateFlow()
 
     private val now = System.currentTimeMillis()
 
@@ -332,7 +260,7 @@ class MockCommunityDataSource @Inject constructor() {
             bio = "Toujours à la recherche d'une nouvelle inspiration créative.",
             friendsCount = _friends.value.size,
             daysCompleted = 142,
-            currentStreak = currentUser.streak,
+            currentStreak = currentUser.currentStreak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_camille_photo",
@@ -359,7 +287,7 @@ class MockCommunityDataSource @Inject constructor() {
             bio = "Lecteur compulsif et amateur de cafés littéraires.",
             friendsCount = 58,
             daysCompleted = 97,
-            currentStreak = knownUsers.getValue("friend_emma").streak,
+            currentStreak = knownUsers.getValue("friend_emma").currentStreak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_alex_reading",
@@ -385,7 +313,7 @@ class MockCommunityDataSource @Inject constructor() {
             bio = "Toujours partante pour un cours de yoga au lever du soleil.",
             friendsCount = 74,
             daysCompleted = 163,
-            currentStreak = knownUsers.getValue("friend_dams").streak,
+            currentStreak = knownUsers.getValue("friend_dams").currentStreak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_lea_yoga",
@@ -411,7 +339,7 @@ class MockCommunityDataSource @Inject constructor() {
             bio = "Toujours prêt pour une nouvelle aventure sportive.",
             friendsCount = 36,
             daysCompleted = 52,
-            currentStreak = knownUsers.getValue("friend_kimy").streak,
+            currentStreak = knownUsers.getValue("friend_kimy").currentStreak,
             recentActivities = listOf(
                 RecentActivity(
                     id = "activity_quentin_run",
@@ -435,7 +363,7 @@ class MockCommunityDataSource @Inject constructor() {
         registerUser(currentUser)
     }
 
-    fun addFriend(friend: Friend) {
+    fun addFriend(friend: PublicProfile) {
         registerUser(friend)
         _friends.update { current ->
             current.filterNot { it.id == friend.id } + friend
@@ -448,7 +376,7 @@ class MockCommunityDataSource @Inject constructor() {
 
     fun addPendingReceived(request: FriendRequest) {
         registerUser(
-            Friend(
+            PublicProfile(
                 id = request.userId,
                 username = request.username,
                 handle = request.handle,
@@ -466,7 +394,7 @@ class MockCommunityDataSource @Inject constructor() {
 
     fun addPendingSent(request: FriendRequest) {
         registerUser(
-            Friend(
+            PublicProfile(
                 id = request.userId,
                 username = request.username,
                 handle = request.handle,
@@ -599,8 +527,7 @@ class MockCommunityDataSource @Inject constructor() {
     }
 
     fun getPublicProfile(userId: String): PublicProfile {
-        val friend = getUser(userId)
-        return knownProfiles.getOrPut(userId) { createDefaultProfile(friend) }
+        return knownProfiles.getOrPut(userId) { getUser(userId) }
     }
 
     fun determineRelationship(userId: String): RelationshipStatus {
@@ -613,7 +540,7 @@ class MockCommunityDataSource @Inject constructor() {
         }
     }
 
-    fun getCurrentUser(): Friend = currentUser
+    fun getCurrentUser(): PublicProfile = currentUser
 
     fun getFriendIds(): Set<String> = _friends.value.map { it.id }.toSet()
 
@@ -621,34 +548,33 @@ class MockCommunityDataSource @Inject constructor() {
 
     fun getPendingSentIds(): Set<String> = _pendingSent.value.map { it.userId }.toSet()
 
-    fun getUser(userId: String): Friend =
+    fun getUser(userId: String): PublicProfile =
         knownUsers.getOrPut(userId) { createPlaceholderUser(userId) }
 
     fun nextRequestId(): String = "request_${UUID.randomUUID()}"
 
     fun nextCommentId(): String = "comment_${UUID.randomUUID()}"
 
-    private fun registerUser(friend: Friend) {
+    private fun registerUser(friend: PublicProfile) {
         knownUsers[friend.id] = friend
         if (!knownProfiles.containsKey(friend.id)) {
             knownProfiles[friend.id] = createDefaultProfile(friend)
         }
     }
 
-    private fun createPlaceholderUser(userId: String): Friend {
+    private fun createPlaceholderUser(userId: String): PublicProfile {
         val sanitizedId = userId.lowercase().replace("[^a-z0-9]".toRegex(), "")
         val handleSuffix = sanitizedId.takeIf { it.isNotBlank() } ?: "ami"
         val username = "Invité ${handleSuffix.takeLast(4).ifBlank { "Flip" }}"
-        return Friend(
+        return PublicProfile(
             id = userId,
             username = username,
             handle = "@${handleSuffix.take(12)}",
-            avatarUrl = null,
-            favoriteCategory = PleasureCategory.OTHER
+            avatarUrl = null
         )
     }
 
-    private fun createDefaultProfile(friend: Friend): PublicProfile {
+    private fun createDefaultProfile(friend: PublicProfile): PublicProfile {
         return PublicProfile(
             id = friend.id,
             username = friend.username,
@@ -657,18 +583,8 @@ class MockCommunityDataSource @Inject constructor() {
             bio = "Toujours partant pour une nouvelle expérience.",
             friendsCount = (_friends.value.size + 3).coerceAtLeast(10),
             daysCompleted = 42,
-            currentStreak = friend.streak,
-            recentActivities = friend.currentPleasure?.let { pleasure ->
-                listOf(
-                    RecentActivity(
-                        id = "activity_${friend.id}_current",
-                        pleasureTitle = pleasure.title,
-                        category = pleasure.category,
-                        completedAt = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1),
-                        isCompleted = pleasure.status == PleasureStatus.COMPLETED
-                    )
-                )
-            } ?: emptyList(),
+            currentStreak = friend.currentStreak,
+            recentActivities = emptyList(),
             relationshipStatus = determineRelationship(friend.id)
         )
     }

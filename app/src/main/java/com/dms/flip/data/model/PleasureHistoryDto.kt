@@ -44,7 +44,7 @@ fun PleasureHistory.toFirestoreCreateData(): Map<String, Any?> {
     )
 
     pleasureTitle?.let { data["pleasureTitle"] = it }
-    pleasureCategory?.let { data["pleasureCategory"] = it.name }
+    pleasureCategory.let { data["pleasureCategory"] = it.name }
     pleasureDescription?.let { data["pleasureDescription"] = it }
 
     return data

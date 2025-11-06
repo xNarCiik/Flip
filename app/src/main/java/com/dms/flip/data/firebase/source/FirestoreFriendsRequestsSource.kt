@@ -1,6 +1,6 @@
 package com.dms.flip.data.firebase.source
 
-import com.dms.flip.data.firebase.dto.FriendDto
+import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.mapper.toRequestDto
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.jvm.java
 
 @Singleton
 class FirestoreFriendsRequestsSource @Inject constructor(
@@ -20,10 +21,11 @@ class FirestoreFriendsRequestsSource @Inject constructor(
     private val functions: FirebaseFunctions
 ) : FriendsRequestsSource {
 
-    override fun observeFriends(uid: String): Flow<List<Pair<String, FriendDto>>> = callbackFlow {
+    override fun observeFriends(uid: String): Flow<List<Pair<String, PublicProfileDto>>> = callbackFlow {
         val friendsCollection = firestore.collection("users")
             .document(uid)
             .collection("friends")
+
         var registration: ListenerRegistration? = null
         val job = launch {
             registration = friendsCollection.addSnapshotListener { snapshot, error ->
@@ -34,12 +36,13 @@ class FirestoreFriendsRequestsSource @Inject constructor(
                 if (snapshot == null) return@addSnapshotListener
                 this@callbackFlow.launch {
                     val friends = snapshot.documents.mapNotNull { doc ->
-                        fetchFriendProfile(doc.id)
+                        fetchPublicProfile(doc.id)
                     }
                     trySend(friends)
                 }
             }
         }
+
         awaitClose {
             registration?.remove()
             job.cancel()
@@ -179,13 +182,13 @@ class FirestoreFriendsRequestsSource @Inject constructor(
         return snapshot.documents.mapNotNull { it.getString("toUserId") }.toSet()
     }
 
-    private suspend fun fetchFriendProfile(friendId: String): Pair<String, FriendDto>? {
+    private suspend fun fetchPublicProfile(profileId: String): Pair<String, PublicProfileDto>? {
         val profileSnapshot = firestore.collection("public_profiles")
-            .document(friendId)
+            .document(profileId)
             .get()
             .await()
         if (!profileSnapshot.exists()) return null
-        val dto = profileSnapshot.toObject(FriendDto::class.java)
-        return dto?.let { friendId to it }
+        val dto = profileSnapshot.toObject(PublicProfileDto::class.java)
+        return dto?.let { profileId to it }
     }
 }

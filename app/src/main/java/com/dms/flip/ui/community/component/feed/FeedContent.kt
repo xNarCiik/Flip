@@ -92,12 +92,12 @@ fun FeedContent(
                 onLike = { onEvent(CommunityEvent.OnPostLiked(post.id)) },
                 onComment = { onEvent(CommunityEvent.OnToggleComments(post.id)) },
                 onMenu = { onPostMenuClick(post) },
-                onFriendClick = { onEvent(CommunityEvent.OnFriendClicked(post.author)) },
+                onFriendClick = { onEvent(CommunityEvent.OnViewProfile(post.author)) },
                 onAddComment = { comment ->
                     onEvent(CommunityEvent.OnAddComment(post.id, comment))
                 },
                 onCommentUserClick = { comment ->
-                    onEvent(CommunityEvent.OnViewProfile(comment.userId))
+                    // TODO PUBLIC PROFIL IN COMMENT ? onEvent(CommunityEvent.OnViewProfile(comment.author))
                 },
                 onOwnCommentLongPress = { comment ->
                     onOwnCommentLongPress(post.id, comment)

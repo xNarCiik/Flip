@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.ui.community.screen.CommunityScreen
 import com.dms.flip.ui.community.screen.FriendsListScreen
 import com.dms.flip.ui.community.screen.InvitationsScreen
@@ -75,15 +76,9 @@ fun CommunityNavHost(
                             navController.navigate(CommunityRoute.Invitations.route)
                         }
 
-                        is CommunityEvent.OnFriendClicked -> {
-                            navController.navigate(
-                                CommunityRoute.Profile.createRoute(event.friend.id)
-                            )
-                        }
-
                         is CommunityEvent.OnViewProfile -> {
                             navController.navigate(
-                                CommunityRoute.Profile.createRoute(event.userId)
+                                CommunityRoute.Profile.createRoute(event.profile.id)
                             )
                         }
 
@@ -100,7 +95,7 @@ fun CommunityNavHost(
                     when (event) {
                         is CommunityEvent.OnViewProfile -> {
                             navController.navigate(
-                                CommunityRoute.Profile.createRoute(event.userId)
+                                CommunityRoute.Profile.createRoute(event.profile.id)
                             )
                         }
 
@@ -124,9 +119,9 @@ fun CommunityNavHost(
                             navController.navigate(CommunityRoute.Invitations.route)
                         }
 
-                        is CommunityEvent.OnFriendClicked -> {
+                        is CommunityEvent.OnViewProfile -> {
                             navController.navigate(
-                                CommunityRoute.Profile.createRoute(event.friend.id)
+                                CommunityRoute.Profile.createRoute(event.profile.id)
                             )
                         }
 
@@ -165,33 +160,65 @@ fun CommunityNavHost(
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId")
 
-            if (userId != null) {
-                val profiles by viewModel.publicProfiles.collectAsState()
-                LaunchedEffect(userId) { viewModel.loadPublicProfile(userId) }
-                val profile = profiles[userId]
+            if (userId.isNullOrBlank()) {
+                LaunchedEffect(Unit) {
+                    navController.navigateUp()
+                }
+                return@composable
+            }
 
-                if (profile != null) {
-                    PublicProfileScreen(
-                        profile = profile,
-                        isCurrentUser = profile.id == uiState.currentUserId,
-                        onAddFriend = {
-                            viewModel.onEvent(CommunityEvent.OnAddUserFromSearch(userId))
-                            navController.navigateUp()
-                        },
-                        onAcceptFriendRequest = {
-                            viewModel.onEvent(
-                                CommunityEvent.OnAcceptFriendRequestFromProfile(
-                                    userId
+            var profile by remember { mutableStateOf<PublicProfile?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            // Charger le profil
+            LaunchedEffect(userId) {
+                isLoading = true
+                error = null
+                try {
+                    profile = viewModel.getPublicProfileById(userId)
+                    if (profile == null) {
+                        error = "Profil introuvable"
+                    }
+                } catch (e: Exception) {
+                    error = "Erreur lors du chargement du profil"
+                } finally {
+                    isLoading = false
+                }
+            }
+
+            // TODO: Refacto to PublicProfileScreen
+            when {
+                isLoading -> {
+                    // LoadingScreen()
+                }
+
+                error != null -> {
+                    // ErrorScreen(message = error, onRetry = { navController.navigateUp() })
+                }
+
+                else -> {
+                    profile?.let {
+                        PublicProfileScreen(
+                            profile = it,
+                            isCurrentUser = it.id == uiState.currentUserId,
+                            onAddFriend = {
+                                viewModel.onEvent(CommunityEvent.OnAddUserFromSearch(userId))
+                                navController.navigateUp()
+                            },
+                            onAcceptFriendRequest = {
+                                viewModel.onEvent(
+                                    CommunityEvent.OnAcceptFriendRequestFromProfile(userId)
                                 )
-                            )
-                            navController.navigateUp()
-                        },
-                        onOptionsClick = {
-                            viewModel.onEvent(CommunityEvent.OnRemoveFriendFromProfile(userId))
-                            navController.navigateUp()
-                        },
-                        onNavigateBack = { navController.navigateUp() }
-                    )
+                                navController.navigateUp()
+                            },
+                            onOptionsClick = {
+                                viewModel.onEvent(CommunityEvent.OnRemoveFriendFromProfile(userId))
+                                navController.navigateUp()
+                            },
+                            onNavigateBack = { navController.navigateUp() }
+                        )
+                    }
                 }
             }
         }

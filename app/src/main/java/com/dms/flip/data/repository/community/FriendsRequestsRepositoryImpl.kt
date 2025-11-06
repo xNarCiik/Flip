@@ -4,8 +4,8 @@ import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.mapper.toPendingReceived
 import com.dms.flip.data.firebase.mapper.toPendingSent
 import com.dms.flip.data.firebase.source.FriendsRequestsSource
-import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.FriendRequest
+import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.repository.community.FriendsRequestsRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
@@ -55,7 +55,7 @@ class FriendsRequestsRepositoryImpl @Inject constructor(
         friendsRequestsSource.sendFriendInvitation(uid, toUserId)
     }
 
-    override fun observeFriends(): Flow<List<Friend>> {
+    override fun observeFriends(): Flow<List<PublicProfile>> {
         val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
         return friendsRequestsSource.observeFriends(uid).map { friends ->
             friends.map { (id, dto) -> dto.toDomain(id) }

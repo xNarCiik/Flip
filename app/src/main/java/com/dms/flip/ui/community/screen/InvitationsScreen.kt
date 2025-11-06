@@ -77,7 +77,10 @@ fun InvitationsScreen(
                                             request = request,
                                             onAccept = { onEvent(CommunityEvent.OnAcceptFriendRequest(request)) },
                                             onDecline = { onEvent(CommunityEvent.OnDeclineFriendRequest(request)) },
-                                            onClick = { onEvent(CommunityEvent.OnViewProfile(request.userId)) }
+                                            onClick = {
+                                                // TODO REQUEST WITH PUBLIC PROFILE
+                                                //onEvent(CommunityEvent.OnViewProfile(request.id))
+                                            }
                                         )
                                     }
                                 }
@@ -91,7 +94,10 @@ fun InvitationsScreen(
                                         SentRequestItem(
                                             request = request,
                                             onCancel = { onEvent(CommunityEvent.OnCancelSentRequest(request)) },
-                                            onClick = { onEvent(CommunityEvent.OnViewProfile(request.userId)) }
+                                            // TODO REQUEST WITH PUBLIC PROFILE
+                                            onClick = {
+                                                //onEvent(CommunityEvent.OnViewProfile(request.userId))
+                                            }
                                         )
                                     }
                                 }
@@ -104,7 +110,10 @@ fun InvitationsScreen(
                                     suggestions = uiState.suggestions,
                                     onAdd = { onEvent(CommunityEvent.OnAddSuggestion(it)) },
                                     onHide = { onEvent(CommunityEvent.OnHideSuggestion(it)) },
-                                    onSuggestionClick = { onEvent(CommunityEvent.OnViewProfile(it.id)) }
+                                    onSuggestionClick = {
+                                        // TODO REQUEST WITH PUBLIC PROFILE
+                                        //onEvent(CommunityEvent.OnViewProfile(it.id))
+                                    }
                                 )
                             }
                         }

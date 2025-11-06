@@ -2,7 +2,7 @@ package com.dms.flip.domain.model.community
 
 data class Post(
     val id: String,
-    val author: Friend,
+    val author: PublicProfile,
     val photoUrl: String? = null,
     val photoUrlThumb: String? = null,
     val content: String,
@@ -24,28 +24,6 @@ data class PostComment(
     val content: String,
     val timestamp: Long
 )
-
-data class Friend(
-    val id: String,
-    val username: String,
-    val handle: String,
-    val avatarUrl: String? = null,
-    val streak: Int = 0,
-    val isOnline: Boolean = false,
-    val currentPleasure: FriendPleasure? = null,
-    val favoriteCategory: PleasureCategory? = null
-)
-
-data class FriendPleasure(
-    val title: String,
-    val category: PleasureCategory,
-    val status: PleasureStatus
-)
-
-enum class PleasureStatus {
-    IN_PROGRESS,
-    COMPLETED
-}
 
 data class FriendSuggestion(
     val id: String,
