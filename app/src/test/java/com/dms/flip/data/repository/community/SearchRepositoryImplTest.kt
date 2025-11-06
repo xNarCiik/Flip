@@ -1,9 +1,8 @@
 package com.dms.flip.data.repository.community
 
 import com.dms.flip.data.firebase.dto.PublicProfileDto
-import com.dms.flip.data.firebase.dto.FriendDto
 import com.dms.flip.data.firebase.dto.RequestDto
-import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.SearchResultDto
 import com.dms.flip.data.firebase.source.SearchSource
 import com.google.common.truth.Truth.assertThat
@@ -22,7 +21,7 @@ class SearchRepositoryImplTest {
     private lateinit var auth: FirebaseAuth
     private lateinit var user: FirebaseUser
     private lateinit var searchSource: FakeSearchSource
-    private lateinit var friendsSource: FakeFriendsRequestsSource
+    private lateinit var friendsSource: FakeFriendsSource
     private lateinit var repository: SearchRepositoryImpl
 
     @Before
@@ -32,7 +31,7 @@ class SearchRepositoryImplTest {
         whenever(auth.currentUser).thenReturn(user)
         whenever(user.uid).thenReturn("uid")
         searchSource = FakeSearchSource()
-        friendsSource = FakeFriendsRequestsSource()
+        friendsSource = FakeFriendsSource()
         repository = SearchRepositoryImpl(auth, searchSource, friendsSource, friendsSource)
     }
 
@@ -65,16 +64,14 @@ class SearchRepositoryImplTest {
         override suspend fun searchUsers(query: String, limit: Int): List<SearchResultDto> = results
     }
 
-    private class FakeFriendsRequestsSource : FriendsRequestsSource {
+    private class FakeFriendsSource : FriendsSource {
         var pendingReceived: Set<String> = emptySet()
         var pendingSent: Set<String> = emptySet()
         var friendIds: Set<String> = emptySet()
-
-        override fun observeFriends(uid: String): Flow<List<Pair<String, FriendDto>>> =
-            flowOf(emptyList())
-
+        override fun observeFriendIds(uid: String): Flow<List<String>> = flowOf(emptyList())
         override fun observePendingReceived(uid: String) =
             flowOf(emptyList<Pair<String, RequestDto>>())
+
         override fun observePendingSent(uid: String) = flowOf(emptyList<Pair<String, RequestDto>>())
         override suspend fun acceptFriend(requestId: String) {}
         override suspend fun declineFriend(requestId: String) {}

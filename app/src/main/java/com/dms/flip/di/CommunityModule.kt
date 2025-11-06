@@ -4,23 +4,23 @@ import com.dms.flip.BuildConfig
 import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.firebase.source.FirestoreFeedSource
 import com.dms.flip.data.firebase.source.FirestoreProfileSource
-import com.dms.flip.data.firebase.source.FirestoreFriendsRequestsSource
+import com.dms.flip.data.firebase.source.FirestoreFriendsSource
 import com.dms.flip.data.firebase.source.FirestoreSearchSource
 import com.dms.flip.data.firebase.source.FirestoreSuggestionsSource
-import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
 import com.dms.flip.data.mock.community.MockFeedRepository
-import com.dms.flip.data.mock.community.MockFriendsRequestsRepository
+import com.dms.flip.data.mock.community.MockFriendsRepository
 import com.dms.flip.data.mock.community.MockSearchRepository
 import com.dms.flip.data.mock.community.MockSuggestionsRepository
 import com.dms.flip.data.repository.community.FeedRepositoryImpl
-import com.dms.flip.data.repository.community.FriendsRequestsRepositoryImpl
+import com.dms.flip.data.repository.community.FriendsRepositoryImpl
 import com.dms.flip.data.repository.community.SearchRepositoryImpl
 import com.dms.flip.data.repository.community.SuggestionsRepositoryImpl
 import com.dms.flip.domain.repository.community.FeedRepository
-import com.dms.flip.domain.repository.community.FriendsRequestsRepository
+import com.dms.flip.domain.repository.community.FriendsRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -46,7 +46,7 @@ object CommunityModule {
     fun provideFriendsRequestsSource(
         firestore: FirebaseFirestore,
         firebaseFunctions: FirebaseFunctions
-    ): FriendsRequestsSource = FirestoreFriendsRequestsSource(firestore, firebaseFunctions)
+    ): FriendsSource = FirestoreFriendsSource(firestore, firebaseFunctions)
 
     @Provides
     @Singleton
@@ -86,12 +86,12 @@ object CommunityModule {
         mock: Lazy<MockSearchRepository>
     ): SearchRepository =
         if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
-    
+
     @Provides
     @Singleton
     fun provideRequestsRepository(
-        impl: Lazy<FriendsRequestsRepositoryImpl>,
-        mock: Lazy<MockFriendsRequestsRepository>
-    ): FriendsRequestsRepository =
+        impl: Lazy<FriendsRepositoryImpl>,
+        mock: Lazy<MockFriendsRepository>
+    ): FriendsRepository =
         if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
 }

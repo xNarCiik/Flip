@@ -3,15 +3,15 @@ package com.dms.flip.data.mock.community
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendRequestSource
 import com.dms.flip.domain.model.community.PublicProfile
-import com.dms.flip.domain.repository.community.FriendsRequestsRepository
+import com.dms.flip.domain.repository.community.FriendsRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MockFriendsRequestsRepository @Inject constructor(
+class MockFriendsRepository @Inject constructor(
     private val dataSource: MockCommunityDataSource
-) : FriendsRequestsRepository {
+) : FriendsRepository {
     override fun observeFriends(): Flow<List<PublicProfile>> = dataSource.friends
 
     override fun observePendingReceived(): Flow<List<FriendRequest>> = dataSource.pendingReceived

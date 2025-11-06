@@ -1,6 +1,5 @@
 package com.dms.flip.data.firebase.source
 
-import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import com.dms.flip.data.firebase.mapper.toRequestDto
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,15 +12,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.jvm.java
 
 @Singleton
-class FirestoreFriendsRequestsSource @Inject constructor(
+class FirestoreFriendsSource @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val functions: FirebaseFunctions
-) : FriendsRequestsSource {
+) : FriendsSource {
 
-    override fun observeFriends(uid: String): Flow<List<Pair<String, PublicProfileDto>>> = callbackFlow {
+    override fun observeFriendIds(uid: String): Flow<List<String>> = callbackFlow {
         val friendsCollection = firestore.collection("users")
             .document(uid)
             .collection("friends")
@@ -34,12 +32,9 @@ class FirestoreFriendsRequestsSource @Inject constructor(
                     return@addSnapshotListener
                 }
                 if (snapshot == null) return@addSnapshotListener
-                this@callbackFlow.launch {
-                    val friends = snapshot.documents.mapNotNull { doc ->
-                        fetchPublicProfile(doc.id)
-                    }
-                    trySend(friends)
-                }
+
+                val friendIds = snapshot.documents.map { it.id }
+                trySend(friendIds)
             }
         }
 
@@ -180,15 +175,5 @@ class FirestoreFriendsRequestsSource @Inject constructor(
             .get()
             .await()
         return snapshot.documents.mapNotNull { it.getString("toUserId") }.toSet()
-    }
-
-    private suspend fun fetchPublicProfile(profileId: String): Pair<String, PublicProfileDto>? {
-        val profileSnapshot = firestore.collection("public_profiles")
-            .document(profileId)
-            .get()
-            .await()
-        if (!profileSnapshot.exists()) return null
-        val dto = profileSnapshot.toObject(PublicProfileDto::class.java)
-        return dto?.let { profileId to it }
     }
 }

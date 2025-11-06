@@ -2,7 +2,7 @@ package com.dms.flip.data.cache
 
 import android.util.Log
 import com.dms.flip.data.firebase.mapper.toDomain
-import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
@@ -31,7 +31,7 @@ import javax.inject.Singleton
 class ProfileBatchLoader @Inject constructor(
     private val auth: FirebaseAuth,
     private val profileSource: ProfileSource,
-    private val friendsRequestsSource: FriendsRequestsSource
+    private val friendsSource: FriendsSource
 ) {
     private val cache = ConcurrentHashMap<String, CachedProfile>()
     private val mutex = Mutex()
@@ -60,11 +60,11 @@ class ProfileBatchLoader @Inject constructor(
      */
     suspend fun loadProfiles(userIds: List<String>): Map<String, PublicProfile> = mutex.withLock {
         if (userIds.isEmpty()) {
-            Log.d(TAG, "📭 No profiles to load")
+            Log.d(TAG, "🔭 No profiles to load")
             return emptyMap()
         }
 
-        Log.d(TAG, "📥 Loading ${userIds.size} profiles...")
+        Log.d(TAG, "🔥 Loading ${userIds.size} profiles...")
         val now = System.currentTimeMillis()
 
         // Séparer entre profils en cache et profils à charger
@@ -105,7 +105,7 @@ class ProfileBatchLoader @Inject constructor(
      * Charge un seul profil (utilise le cache si disponible).
      */
     suspend fun loadProfile(userId: String): PublicProfile? {
-        Log.d(TAG, "📥 Loading profile for user $userId")
+        Log.d(TAG, "🔥 Loading profile for user $userId")
         return loadProfiles(listOf(userId))[userId]
     }
 
@@ -146,13 +146,13 @@ class ProfileBatchLoader @Inject constructor(
     ): RelationshipStatus {
         if (currentUid == otherUserId) return RelationshipStatus.FRIEND
 
-        val friends = friendsRequestsSource.getFriendIds(currentUid)
+        val friends = friendsSource.getFriendIds(currentUid)
         if (friends.contains(otherUserId)) return RelationshipStatus.FRIEND
 
-        val pendingSent = friendsRequestsSource.getPendingSentIds(currentUid)
+        val pendingSent = friendsSource.getPendingSentIds(currentUid)
         if (pendingSent.contains(otherUserId)) return RelationshipStatus.PENDING_SENT
 
-        val pendingReceived = friendsRequestsSource.getPendingReceivedIds(currentUid)
+        val pendingReceived = friendsSource.getPendingReceivedIds(currentUid)
         if (pendingReceived.contains(otherUserId)) return RelationshipStatus.PENDING_RECEIVED
 
         return RelationshipStatus.NONE

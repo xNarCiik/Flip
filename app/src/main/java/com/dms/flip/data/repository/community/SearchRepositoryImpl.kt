@@ -1,6 +1,6 @@
 package com.dms.flip.data.repository.community
 
-import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.model.community.UserSearchResult
@@ -13,8 +13,8 @@ import javax.inject.Singleton
 class SearchRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val searchSource: SearchSource,
-    private val friendsSource: FriendsRequestsSource,
-    private val friendsRequestsSource: FriendsRequestsSource
+    private val friendsSource: FriendsSource,
+    private val friendsRequestsSource: FriendsSource
 ) : SearchRepository {
 
     override suspend fun searchUsers(query: String, limit: Int): List<UserSearchResult> {

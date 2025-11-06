@@ -1,11 +1,10 @@
 package com.dms.flip.data.firebase.source
 
-import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RequestDto
 import kotlinx.coroutines.flow.Flow
 
-interface FriendsRequestsSource {
-    fun observeFriends(uid: String):Flow<List<Pair<String, PublicProfileDto>>>
+interface FriendsSource {
+    fun observeFriendIds(uid: String): Flow<List<String>>
     fun observePendingReceived(uid: String): Flow<List<Pair<String, RequestDto>>>
     fun observePendingSent(uid: String): Flow<List<Pair<String, RequestDto>>>
     suspend fun acceptFriend(requestId: String)

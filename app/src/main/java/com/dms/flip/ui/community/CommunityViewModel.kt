@@ -278,7 +278,7 @@ class CommunityViewModel @Inject constructor(
         var hasReceivedData = false
 
         viewModelScope.launch {
-            delay(3000)
+            delay(5000)
             if (!hasReceivedData) {
                 Log.w(TAG, "⚠️ No data received after 3s, stopping loading state")
                 _uiState.update { it.copy(isLoadingInitial = false) }

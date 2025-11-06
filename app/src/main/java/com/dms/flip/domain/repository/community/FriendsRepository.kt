@@ -4,7 +4,7 @@ import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.PublicProfile
 import kotlinx.coroutines.flow.Flow
 
-interface FriendsRequestsRepository {
+interface FriendsRepository {
     fun observeFriends(): Flow<List<PublicProfile>>
     fun observePendingReceived(): Flow<List<FriendRequest>>
     fun observePendingSent(): Flow<List<FriendRequest>>
