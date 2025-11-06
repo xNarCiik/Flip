@@ -59,15 +59,15 @@ fun PostOptionsDialog(
                         Text(
                             text = stringResource(
                                 id = R.string.community_post_view_profile,
-                                post.friend.username
+                                post.author.username
                             ),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },
                     leadingContent = {
                         CommunityAvatar(
-                            imageUrl = post.friend.avatarUrl,
-                            fallbackText = post.friend.username.firstOrNull()?.uppercase() ?: "?",
+                            imageUrl = post.author.avatarUrl,
+                            fallbackText = post.author.username.firstOrNull()?.uppercase() ?: "?",
                             size = 48.dp
                         )
                     },

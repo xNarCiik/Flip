@@ -108,7 +108,7 @@ val previewFriends = listOf(
 val previewPosts = listOf(
     Post(
         id = "p1",
-        friend = previewFriends[0],
+        author = previewFriends[0],
         content = "Magnifique session de méditation ce matin ! Je me sens tellement apaisé 🧘‍♀️✨",
         timestamp = System.currentTimeMillis() - 300000, // 5min ago
         likesCount = 12,
@@ -145,7 +145,7 @@ val previewPosts = listOf(
     ),
     Post(
         id = "p2",
-        friend = previewFriends[1],
+        author = previewFriends[1],
         content = "Course matinale sous le soleil, parfait pour commencer la journée ! 🏃‍♂️☀️",
         timestamp = System.currentTimeMillis() - 1920000, // 32min ago
         likesCount = 28,
@@ -174,7 +174,7 @@ val previewPosts = listOf(
     ),
     Post(
         id = "p3",
-        friend = previewFriends[2],
+        author = previewFriends[2],
         content = "La nature est tellement ressourçante. Cette randonnée était exactement ce dont j'avais besoin 🌲💚",
         timestamp = System.currentTimeMillis() - 3600000, // 1h ago
         likesCount = 45,
@@ -219,7 +219,7 @@ val previewPosts = listOf(
     ),
     Post(
         id = "p4",
-        friend = previewFriends[3],
+        author = previewFriends[3],
         content = "Préparation d'un délicieux petit-déjeuner healthy 🥑🍳 La journée commence bien !",
         timestamp = System.currentTimeMillis() - 7200000, // 2h ago
         likesCount = 34,
@@ -256,7 +256,7 @@ val previewPosts = listOf(
     ),
     Post(
         id = "p5",
-        friend = previewFriends[4],
+        author = previewFriends[4],
         content = "Lecture de mon nouveau livre préféré avec un bon café ☕📖 Moment parfait",
         timestamp = System.currentTimeMillis() - 10800000, // 3h ago
         likesCount = 21,

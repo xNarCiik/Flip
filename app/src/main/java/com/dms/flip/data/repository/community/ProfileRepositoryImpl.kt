@@ -1,8 +1,8 @@
 package com.dms.flip.data.repository.community
 
 import com.dms.flip.data.firebase.mapper.toDomain
-import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.repository.community.ProfileRepository

@@ -2,7 +2,7 @@ package com.dms.flip.domain.model.community
 
 data class Post(
     val id: String,
-    val friend: Friend,
+    val author: Friend,
     val photoUrl: String? = null,
     val photoUrlThumb: String? = null,
     val content: String,

@@ -236,7 +236,7 @@ class MockCommunityDataSource @Inject constructor() {
         listOf(
             Post(
                 id = "post_lea_morning_yoga",
-                friend = currentUser,
+                author = currentUser,
                 content = "Séance de méditation terminé \uD83D\uDCA8",
                 timestamp = now - TimeUnit.HOURS.toMillis(2),
                 likesCount = 18,
@@ -259,7 +259,7 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             Post(
                 id = "post_alex_evening_reading",
-                friend = knownUsers.getValue("friend_emma"),
+                author = knownUsers.getValue("friend_emma"),
                 content = "Heureuseeeeee",
                 timestamp = now - TimeUnit.HOURS.toMillis(5),
                 likesCount = 24,
@@ -286,7 +286,7 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             Post(
                 id = "post_kimy",
-                friend = knownUsers.getValue("friend_kimy"),
+                author = knownUsers.getValue("friend_kimy"),
                 content = "Bon bah c'est repartie, au revoir les copainsss",
                 timestamp = now - TimeUnit.DAYS.toMillis(1),
                 likesCount = 32,
@@ -303,7 +303,7 @@ class MockCommunityDataSource @Inject constructor() {
             ),
             Post(
                 id = "post_anthony",
-                friend = knownUsers.getValue("friend_anthony"),
+                author = knownUsers.getValue("friend_anthony"),
                 content = "Oh minceeee",
                 timestamp = now - TimeUnit.DAYS.toMillis(1),
                 likesCount = 32,
@@ -554,7 +554,7 @@ class MockCommunityDataSource @Inject constructor() {
     fun removePost(postId: String, userId: String) {
         _feedPosts.update { posts ->
             val target = posts.firstOrNull { it.id == postId }
-            if (target?.friend?.id != userId) {
+            if (target?.author?.id != userId) {
                 posts
             } else {
                 posts.filterNot { it.id == postId }

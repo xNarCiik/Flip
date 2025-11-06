@@ -41,7 +41,7 @@ class CommunityMappersTest {
         )
 
         assertThat(post.id).isEqualTo("post")
-        assertThat(post.friend).isEqualTo(friend)
+        assertThat(post.author).isEqualTo(friend)
         assertThat(post.pleasureCategory?.name).isEqualTo("WELLNESS")
         assertThat(post.comments).hasSize(1)
         assertThat(post.isLiked).isTrue()

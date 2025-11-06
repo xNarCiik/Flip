@@ -19,12 +19,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,9 +44,11 @@ import com.dms.flip.ui.community.CommunityEvent
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
 import com.dms.flip.ui.util.previewPosts
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun FeedContent(
+    modifier: Modifier = Modifier,
     posts: List<Post>,
     expandedPostId: String?,
     currentUserId: String?,
@@ -48,15 +56,35 @@ fun FeedContent(
     onPostMenuClick: (Post) -> Unit,
     onOwnCommentLongPress: (String, PostComment) -> Unit,
     onOwnPostLongPress: (Post) -> Unit,
-    modifier: Modifier = Modifier
+    scrollToTopTrigger: Int = 0,
+    onScrollStateChanged: ((Boolean) -> Unit)? = null
 ) {
+    val listState = rememberLazyListState()
+
+    val isAtTop by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+        }
+    }
+
+    LaunchedEffect(isAtTop) {
+        onScrollStateChanged?.invoke(isAtTop)
+    }
+
+    LaunchedEffect(scrollToTopTrigger) {
+        if (scrollToTopTrigger > 0) {
+            listState.animateScrollToItem(0)
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(items = posts, key = { it.id }) { post ->
-            val isOwnPost = post.friend.id == currentUserId
+            val isOwnPost = post.author.id == currentUserId
             PostCard(
                 post = post,
                 isExpanded = post.id == expandedPostId,
@@ -64,7 +92,7 @@ fun FeedContent(
                 onLike = { onEvent(CommunityEvent.OnPostLiked(post.id)) },
                 onComment = { onEvent(CommunityEvent.OnToggleComments(post.id)) },
                 onMenu = { onPostMenuClick(post) },
-                onFriendClick = { onEvent(CommunityEvent.OnFriendClicked(post.friend)) },
+                onFriendClick = { onEvent(CommunityEvent.OnFriendClicked(post.author)) },
                 onAddComment = { comment ->
                     onEvent(CommunityEvent.OnAddComment(post.id, comment))
                 },
@@ -90,7 +118,7 @@ fun FeedContent(
                         stiffness = Spring.StiffnessLow
                     ),
                     placementSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        dampingRatio = Spring.DampingRatioNoBouncy,
                         stiffness = Spring.StiffnessLow
                     )
                 )
@@ -257,7 +285,7 @@ private fun FeedPreview(
             FeedContent(
                 posts = posts,
                 expandedPostId = posts.firstOrNull()?.id,
-                currentUserId = posts.firstOrNull()?.friend?.id,
+                currentUserId = posts.firstOrNull()?.author?.id,
                 onEvent = {},
                 onPostMenuClick = {},
                 onOwnCommentLongPress = { _, _ -> },

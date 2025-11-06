@@ -25,10 +25,11 @@ fun PostDto.toDomain(
     id: String,
     author: Friend,
     comments: List<PostComment> = emptyList(),
-    isLiked: Boolean = false
+    isLiked: Boolean = false,
+    likesCount: Int
 ): Post = Post(
     id = id,
-    friend = author,
+    author = author,
     content = content,
     timestamp = timestamp?.time ?: 0L,
     photoUrl = photoUrl,

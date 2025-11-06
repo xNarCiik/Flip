@@ -1,6 +1,5 @@
 package com.dms.flip.ui.community.component.feed
 
-import android.R.attr.iconTint
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -25,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -210,7 +208,7 @@ private fun PostCardPreview() {
                 onCommentUserClick = { _ -> },
                 onOwnCommentLongPress = { _ -> },
                 onOwnPostLongPress = {},
-                currentUserId = previewPosts.first().friend.id
+                currentUserId = previewPosts.first().author.id
             )
         }
     }

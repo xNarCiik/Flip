@@ -52,8 +52,8 @@ fun PostHeader(
                 .clickable(onClick = onFriendClick)
         ) {
             CommunityAvatar(
-                imageUrl = post.friend.avatarUrl,
-                fallbackText = post.friend.username.firstOrNull()?.uppercase() ?: "?",
+                imageUrl = post.author.avatarUrl,
+                fallbackText = post.author.username.firstOrNull()?.uppercase() ?: "?",
                 size = 40.dp,
                 borderColor = categoryColor
             )
@@ -65,7 +65,7 @@ fun PostHeader(
                 ) {
                     val displayName = if (isOwnPost) {
                         stringResource(id = R.string.community_comment_author_me)
-                    } else post.friend.username
+                    } else post.author.username
 
                     Text(
                         text = displayName,
@@ -76,7 +76,7 @@ fun PostHeader(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    if (post.friend.streak > 0) {
+                    if (post.author.streak > 0) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -88,7 +88,7 @@ fun PostHeader(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = post.friend.streak.toString(),
+                                text = post.author.streak.toString(),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = FireStreakColor

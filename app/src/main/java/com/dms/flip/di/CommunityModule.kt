@@ -7,8 +7,8 @@ import com.dms.flip.data.firebase.source.FirestoreProfileSource
 import com.dms.flip.data.firebase.source.FirestoreFriendsRequestsSource
 import com.dms.flip.data.firebase.source.FirestoreSearchSource
 import com.dms.flip.data.firebase.source.FirestoreSuggestionsSource
-import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.FriendsRequestsSource
+import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
 import com.dms.flip.data.mock.community.MockFeedRepository

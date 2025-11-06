@@ -28,7 +28,10 @@ data class CommunityUiState(
     val isSearching: Boolean = false,
     val errorMessage: String? = null,
     val currentUserId: String? = null,
-    val actionStatus: Map<String, ActionStatus> = emptyMap()
+    val actionStatus: Map<String, ActionStatus> = emptyMap(),
+    val newPostsCount: Int = 0,
+    val showNewPostsAlert: Boolean = false,
+    val scrollToTopTrigger: Int = 0,
 )
 
 sealed interface CommunityEvent {
@@ -66,4 +69,6 @@ sealed interface CommunityEvent {
     data object OnLoadMorePosts : CommunityEvent
     data object OnRetryClicked : CommunityEvent
     data class OnRefresh(val forceReload: Boolean = false) : CommunityEvent
+    data object OnNewPostsAlertClicked : CommunityEvent
+    data class OnFeedScrolled(val isAtTop: Boolean) : CommunityEvent
 }

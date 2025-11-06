@@ -11,10 +11,11 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -26,10 +27,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.dms.flip.R
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
@@ -38,9 +41,10 @@ import com.dms.flip.ui.community.CommunityUiState
 import com.dms.flip.ui.community.component.CommunityEmptyState
 import com.dms.flip.ui.community.component.CommunityTopBar
 import com.dms.flip.ui.community.component.DeleteConfirmationDialog
+import com.dms.flip.ui.community.component.PostOptionsDialog
 import com.dms.flip.ui.community.component.feed.FeedContent
 import com.dms.flip.ui.community.component.feed.FeedSkeleton
-import com.dms.flip.ui.community.component.PostOptionsDialog
+import com.dms.flip.ui.community.component.feed.NewPostsAlert
 import com.dms.flip.ui.component.ErrorState
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -67,21 +71,35 @@ fun CommunityScreen(
         mutableStateOf<Pair<String, PostComment>?>(null)
     }
     var postPendingDeletion by remember { mutableStateOf<Post?>(null) }
+    var scrollToTopTrigger by remember { mutableStateOf(0) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        CommunityTopBar(
-            pendingRequestsCount = uiState.pendingRequests.size,
-            onFriendsListClick = { onEvent(CommunityEvent.OnFriendsListClicked) },
-            onInvitationsClick = { onEvent(CommunityEvent.OnInvitationsClicked) }
-        )
-
-        Box(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            CommunityTopBar(
+                pendingRequestsCount = uiState.pendingRequests.size,
+                onFriendsListClick = { onEvent(CommunityEvent.OnFriendsListClicked) },
+                onInvitationsClick = { onEvent(CommunityEvent.OnInvitationsClicked) }
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
             val contentState = when {
-                uiState.errorMessage != null && uiState.posts.isEmpty() -> CommunityContentState.Error(R.string.generic_error_message)
+                uiState.errorMessage != null && uiState.posts.isEmpty() -> CommunityContentState.Error(
+                    R.string.generic_error_message
+                )
+
                 uiState.isLoadingInitial && uiState.posts.isEmpty() -> CommunityContentState.Loading
                 uiState.posts.isEmpty() -> CommunityContentState.Empty
                 else -> CommunityContentState.Content
@@ -134,7 +152,7 @@ fun CommunityScreen(
                     }
 
                     is CommunityContentState.Content -> {
-						PullToRefreshBox(
+                        PullToRefreshBox(
                             state = pullState,
                             isRefreshing = uiState.isRefreshing,
                             onRefresh = { onEvent(CommunityEvent.OnRefresh(forceReload = true)) },
@@ -157,12 +175,26 @@ fun CommunityScreen(
                                 },
                                 onOwnPostLongPress = { post ->
                                     postPendingDeletion = post
+                                },
+                                scrollToTopTrigger = scrollToTopTrigger,
+                                onScrollStateChanged = {
+                                    onEvent(CommunityEvent.OnFeedScrolled(it))
                                 }
                             )
                         }
                     }
                 }
             }
+
+            NewPostsAlert(
+                visible = uiState.showNewPostsAlert,
+                postCount = uiState.newPostsCount,
+                onClick = {
+                    onEvent(CommunityEvent.OnNewPostsAlertClicked)
+                    scrollToTopTrigger++
+                },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
 
             if (uiState.errorMessage != null && uiState.posts.isNotEmpty()) {
                 LaunchedEffect(uiState.errorMessage) {
@@ -172,14 +204,12 @@ fun CommunityScreen(
         }
     }
 
-    SnackbarHost(hostState = snackbarHostState)
-
     selectedPost?.let { post ->
         PostOptionsDialog(
             post = post,
             onDismiss = { selectedPost = null },
             onViewProfile = {
-                onEvent(CommunityEvent.OnFriendClicked(post.friend))
+                onEvent(CommunityEvent.OnFriendClicked(post.author))
                 selectedPost = null
             },
             onDelete = { selectedPost = null }

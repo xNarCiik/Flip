@@ -4,8 +4,6 @@ import com.dms.flip.data.firebase.dto.CommentDto
 import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.data.firebase.dto.PublicProfileDto
 import com.dms.flip.data.firebase.dto.RecentActivityDto
-import com.dms.flip.data.firebase.source.FeedSource
-import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.domain.model.community.Paged
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.auth.FirebaseAuth
@@ -55,7 +53,7 @@ class FeedRepositoryImplTest {
 
         assertThat(page.items).hasSize(1)
         val post = page.items.first()
-        assertThat(post.friend.username).isEqualTo("Alice")
+        assertThat(post.author.username).isEqualTo("Alice")
         assertThat(post.isLiked).isTrue()
         assertThat(post.comments).hasSize(1)
     }

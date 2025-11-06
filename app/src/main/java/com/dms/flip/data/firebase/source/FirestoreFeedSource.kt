@@ -1,10 +1,13 @@
 package com.dms.flip.data.firebase.source
 
+import android.util.Log
 import com.dms.flip.data.firebase.dto.CommentDto
 import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.domain.model.community.Paged
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.HttpsCallableResult
 import kotlinx.coroutines.channels.awaitClose
@@ -27,6 +30,8 @@ class FirestoreFeedSource @Inject constructor(
         limit: Int,
         cursor: String?
     ): Flow<Paged<FeedSource.PostDocument>> = callbackFlow {
+        Log.d(TAG, "🔵 START observeFriendsFeed for user $uid (cursor: $cursor)")
+        
         val friendIds = (firestore.collection("users")
             .document(uid)
             .collection("friends")
@@ -34,34 +39,69 @@ class FirestoreFeedSource @Inject constructor(
             .await()
             .documents.map { it.id } + uid)
 
+        Log.d(TAG, "👥 Found ${friendIds.size} friends (including self)")
+
         val chunks = friendIds.chunked(10)
         if (chunks.isEmpty()) {
+            Log.d(TAG, "❌ No friends found, returning empty feed")
             trySend(Paged(emptyList(), null))
             close()
             return@callbackFlow
         }
 
-        val chunkFlows = chunks.map { ids ->
+        // ✅ Récupérer le document cursor si fourni
+        var cursorDocument: DocumentSnapshot? = null
+        if (cursor != null) {
+            try {
+                cursorDocument = firestore.collection("posts")
+                    .document(cursor)
+                    .get()
+                    .await()
+                Log.d(TAG, "📍 Cursor document loaded: ${cursorDocument.id}")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to load cursor document", e)
+            }
+        }
+
+        val chunkFlows = chunks.mapIndexed { index, ids ->
             callbackFlow {
-                val q = firestore.collection("posts")
+                Log.d(TAG, "🔷 START chunk $index with ${ids.size} friends")
+                
+                var query = firestore.collection("posts")
                     .whereIn("authorId", ids)
                     .orderBy("timestamp", Query.Direction.DESCENDING)
-                    .limit(limit.toLong())
+                
+                // ✅ Appliquer le cursor si disponible
+                if (cursorDocument != null && cursorDocument.exists()) {
+                    query = query.startAfter(cursorDocument)
+                }
+                
+                query = query.limit(limit.toLong())
 
-                val reg = q.addSnapshotListener { snap, err ->
+                val reg = query.addSnapshotListener { snap, err ->
                     if (err != null) {
+                        Log.e(TAG, "❌ Error in chunk $index", err)
                         close(err)
                         return@addSnapshotListener
                     }
-                    if (snap == null) return@addSnapshotListener
+                    if (snap == null) {
+                        Log.w(TAG, "⚠️ Null snapshot in chunk $index")
+                        return@addSnapshotListener
+                    }
+                    
                     val docs = snap.documents.mapNotNull { d ->
                         d.toObject(PostDto::class.java)?.let { dto ->
                             FeedSource.PostDocument(d.id, dto)
                         }
                     }
+                    
+                    Log.d(TAG, "✅ Chunk $index updated: ${docs.size} posts")
                     trySend(docs)
                 }
-                awaitClose { reg.remove() }
+                awaitClose { 
+                    Log.d(TAG, "🔴 STOP chunk $index")
+                    reg.remove() 
+                }
             }
         }
 
@@ -73,11 +113,96 @@ class FirestoreFeedSource @Inject constructor(
                     .sortedByDescending { it.data.timestamp }
                     .take(limit)
             }.collect { posts ->
+                Log.d(TAG, "📦 Feed updated: ${posts.size} posts total")
                 trySend(Paged(posts, posts.lastOrNull()?.id))
             }
         }
 
-        awaitClose { job.cancel() }
+        awaitClose { 
+            Log.d(TAG, "🔴 STOP observeFriendsFeed")
+            job.cancel() 
+        }
+    }
+
+    override fun observeComments(postId: String): Flow<List<Pair<String, CommentDto>>> = callbackFlow {
+        Log.d(TAG, "🔵 START observing comments for post $postId")
+        
+        val reg = firestore.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e(TAG, "❌ Error observing comments for $postId", err)
+                    close(err)
+                    return@addSnapshotListener
+                }
+                if (snap == null) {
+                    Log.w(TAG, "⚠️ Null snapshot for comments of $postId")
+                    return@addSnapshotListener
+                }
+                
+                val comments = snap.documents.mapNotNull { d ->
+                    d.toObject(CommentDto::class.java)?.let { dto -> d.id to dto }
+                }
+                
+                Log.d(TAG, "✅ Comments updated for $postId: ${comments.size} comments")
+                trySend(comments)
+            }
+        
+        awaitClose { 
+            Log.d(TAG, "🔴 STOP observing comments for post $postId")
+            reg.remove() 
+        }
+    }
+
+    override fun observePostLikeStatus(postId: String, uid: String): Flow<Boolean> = callbackFlow {
+        Log.d(TAG, "🔵 START observing like status for post $postId by user $uid")
+        
+        val reg = firestore.collection("posts")
+            .document(postId)
+            .collection("likes")
+            .document(uid)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e(TAG, "❌ Error observing like status for $postId", err)
+                    close(err)
+                    return@addSnapshotListener
+                }
+                
+                val isLiked = snap?.exists() == true
+                Log.d(TAG, "✅ Like status updated for $postId: $isLiked")
+                trySend(isLiked)
+            }
+        
+        awaitClose { 
+            Log.d(TAG, "🔴 STOP observing like status for post $postId")
+            reg.remove() 
+        }
+    }
+
+    override fun observePostLikeCount(postId: String): Flow<Int> = callbackFlow {
+        Log.d(TAG, "🔵 START observing like count for post $postId")
+        
+        val reg = firestore.collection("posts")
+            .document(postId)
+            .collection("likes")
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e(TAG, "❌ Error observing like count for $postId", err)
+                    close(err)
+                    return@addSnapshotListener
+                }
+                
+                val count = snap?.size() ?: 0
+                Log.d(TAG, "✅ Like count updated for $postId: $count likes")
+                trySend(count)
+            }
+        
+        awaitClose { 
+            Log.d(TAG, "🔴 STOP observing like count for post $postId")
+            reg.remove() 
+        }
     }
 
     override suspend fun createPost(
@@ -86,6 +211,7 @@ class FirestoreFeedSource @Inject constructor(
         pleasureTitle: String?,
         photoUrl: String?
     ) {
+        Log.d(TAG, "📝 Creating post...")
         call(
             name = "createPost",
             data = mapOf(
@@ -95,13 +221,17 @@ class FirestoreFeedSource @Inject constructor(
                 "photoUrl" to photoUrl
             )
         )
+        Log.d(TAG, "✅ Post created successfully")
     }
 
     override suspend fun toggleLike(postId: String) {
+        Log.d(TAG, "❤️ Toggling like for post $postId")
         call("toggleLike", mapOf("postId" to postId))
+        Log.d(TAG, "✅ Like toggled successfully")
     }
 
     override suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto> {
+        Log.d(TAG, "💬 Adding comment to post $postId")
         val res = call("addComment", mapOf("postId" to postId, "content" to comment.content))
         val data = res as Map<*, *>
         val id = data["id"] as String
@@ -113,18 +243,24 @@ class FirestoreFeedSource @Inject constructor(
             avatarUrl = c["avatarUrl"] as? String,
             content = c["content"] as String
         )
+        Log.d(TAG, "✅ Comment added successfully: $id")
         return id to saved
     }
 
     override suspend fun deleteComment(postId: String, commentId: String) {
+        Log.d(TAG, "🗑️ Deleting comment $commentId from post $postId")
         call("deleteComment", mapOf("postId" to postId, "commentId" to commentId))
+        Log.d(TAG, "✅ Comment deleted successfully")
     }
 
     override suspend fun deletePost(postId: String) {
+        Log.d(TAG, "🗑️ Deleting post $postId")
         call("deletePost", mapOf("postId" to postId))
+        Log.d(TAG, "✅ Post deleted successfully")
     }
 
     override suspend fun getComments(postId: String, limit: Int): List<Pair<String, CommentDto>> {
+        Log.d(TAG, "📖 Getting comments snapshot for post $postId (limit: $limit)")
         val snap = firestore.collection("posts")
             .document(postId)
             .collection("comments")
@@ -133,30 +269,71 @@ class FirestoreFeedSource @Inject constructor(
             .get()
             .await()
 
-        return snap.documents.mapNotNull { d ->
+        val comments = snap.documents.mapNotNull { d ->
             d.toObject(CommentDto::class.java)?.let { dto -> d.id to dto }
         }
+        
+        Log.d(TAG, "✅ Retrieved ${comments.size} comments")
+        return comments
     }
 
     override suspend fun isPostLiked(postId: String, uid: String): Boolean {
+        Log.d(TAG, "❤️ Checking if post $postId is liked by user $uid")
         val doc = firestore.collection("posts").document(postId)
             .collection("likes").document(uid)
             .get().await()
-        return doc.exists()
+        val isLiked = doc.exists()
+        Log.d(TAG, "✅ Like status: $isLiked")
+        return isLiked
     }
 
-    // ———————————————————————————————————————
+    override suspend fun getLikeCount(postId: String): Int {
+        Log.d(TAG, "❤️ Getting like count for post $postId")
+        val snap = firestore.collection("posts")
+            .document(postId)
+            .collection("likes")
+            .get()
+            .await()
+        val count = snap.size()
+        Log.d(TAG, "✅ Like count: $count")
+        return count
+    }
+
+    override suspend fun refreshPost(postId: String): PostDto? {
+        Log.d(TAG, "🔄 Forcing refresh from server for post $postId")
+        return try {
+            val doc = firestore.collection("posts")
+                .document(postId)
+                .get(Source.SERVER) // ✅ Force fetch depuis le serveur
+                .await()
+            val post = doc.toObject(PostDto::class.java)
+            Log.d(TAG, "✅ Post refreshed successfully")
+            post
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to refresh post", e)
+            null
+        }
+    }
+
+    // ————————————————————————————————————————
     // Helpers
-    // ———————————————————————————————————————
+    // ————————————————————————————————————————
     private suspend fun call(name: String, data: Map<String, Any?>): Any? {
         try {
+            Log.d(TAG, "☁️ Calling cloud function: $name")
             val result: HttpsCallableResult = functions
                 .getHttpsCallable(name)
                 .call(data)
                 .await()
+            Log.d(TAG, "✅ Cloud function $name completed successfully")
             return result.data
         } catch (exception: Exception) {
-            return null // TODO REMOVE ITS ONLY FOR DEBUG
+            Log.e(TAG, "❌ Cloud function $name failed", exception)
+            throw exception
         }
+    }
+
+    companion object {
+        private const val TAG = "FirestoreFeedSource"
     }
 }
