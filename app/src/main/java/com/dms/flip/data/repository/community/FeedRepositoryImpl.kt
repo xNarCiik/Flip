@@ -1,18 +1,19 @@
 package com.dms.flip.data.repository.community
 
+import android.net.Uri
 import android.util.Log
 import com.dms.flip.data.cache.ProfileBatchLoader
-import com.dms.flip.data.firebase.dto.CommentDto
 import com.dms.flip.data.firebase.dto.PostDto
 import com.dms.flip.data.firebase.mapper.toDomain
 import com.dms.flip.data.firebase.source.FeedSource
-import com.dms.flip.data.firebase.source.ProfileSource
+import com.dms.flip.data.repository.StorageRepository
 import com.dms.flip.domain.model.community.Friend
-import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.Paged
+import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.repository.community.FeedRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -27,33 +28,35 @@ import javax.inject.Singleton
 @Singleton
 class FeedRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore,
+    private val storageRepository: StorageRepository,
     private val feedSource: FeedSource,
     private val profileBatchLoader: ProfileBatchLoader
 ) : FeedRepository {
 
     override fun observeFriendsFeed(limit: Int, cursor: String?): Flow<Paged<Post>> {
         val uid = auth.currentUser?.uid ?: return flowOf(Paged(emptyList(), null))
-        
+
         Log.d(TAG, "🔵 START observeFriendsFeed (limit: $limit, cursor: $cursor)")
 
         return feedSource.observeFriendsFeed(uid, limit, cursor)
             .map { page ->
                 Log.d(TAG, "📦 Received ${page.items.size} posts from Firestore")
-                
+
                 // ✅ OPTIMISATION 1 : Batch load de tous les auteurs en UNE opération
                 val authorIds = page.items.map { it.data.authorId }.distinct()
                 Log.d(TAG, "👥 Loading ${authorIds.size} unique authors...")
-                
+
                 val authorProfiles = profileBatchLoader.loadProfiles(authorIds)
                 Log.d(TAG, "✅ Loaded ${authorProfiles.size} author profiles")
-                
+
                 // ✅ OPTIMISATION 2 : Créer les Flows de posts avec les profils déjà chargés
                 val posts = coroutineScope {
                     page.items.map { document ->
                         async {
-                            val author = authorProfiles[document.data.authorId] 
-                                ?: createFallbackFriend(document.data.authorId)
-                            
+                            val author = authorProfiles[document.data.authorId]
+                                ?: createFallbackProfile(document.data.authorId)
+
                             observePostWithRealTimeUpdates(
                                 postId = document.id,
                                 postDto = document.data,
@@ -63,9 +66,9 @@ class FeedRepositoryImpl @Inject constructor(
                         }
                     }.awaitAll()
                 }
-                
+
                 Log.d(TAG, "🔄 Created ${posts.size} post flows with real-time updates")
-                
+
                 // Combiner tous les Flows de posts
                 combine(posts) { postArray ->
                     Log.d(TAG, "📤 Emitting page with ${postArray.size} posts")
@@ -77,7 +80,7 @@ class FeedRepositoryImpl @Inject constructor(
 
     /**
      * ✅ Observer un post avec mises à jour en temps réel
-     * Version optimisée qui reçoit déjà l'auteur pour éviter les requêtes redondantes
+     * Refactorisé pour charger les profils des commentateurs
      */
     private fun observePostWithRealTimeUpdates(
         postId: String,
@@ -86,24 +89,31 @@ class FeedRepositoryImpl @Inject constructor(
         currentUserId: String
     ): Flow<Post> {
         Log.d(TAG, "🔵 Setting up real-time updates for post $postId")
-        
+
         return combine(
             feedSource.observeComments(postId),
             feedSource.observePostLikeStatus(postId, currentUserId),
             feedSource.observePostLikeCount(postId)
         ) { comments, isLiked, likeCount ->
-            // Charger les profils des commentateurs en batch
+
+            // ✅ Batch load des profils de commentateurs
             val commenterIds = comments.map { (_, dto) -> dto.userId }.distinct()
             val commenterProfiles = if (commenterIds.isNotEmpty()) {
+                Log.d(TAG, "👥 Loading ${commenterIds.size} unique commenters for post $postId")
                 profileBatchLoader.loadProfiles(commenterIds)
             } else {
                 emptyMap()
             }
-            
+
+            // ✅ Enrichir les DTOs avec les profils chargés
             val domainComments = comments.map { (id, dto) ->
-                dto.toDomain(id)
+                val profile = commenterProfiles[dto.userId]
+                dto.toDomain(
+                    id = id,
+                    profile = profile ?: createFallbackProfile(dto.userId)
+                )
             }
-            
+
             postDto.toDomain(
                 id = postId,
                 author = author,
@@ -117,26 +127,63 @@ class FeedRepositoryImpl @Inject constructor(
     /**
      * Crée un Friend de fallback si le profil n'a pas pu être chargé
      */
-    private fun createFallbackFriend(userId: String): Friend {
-        Log.w(TAG, "⚠️ Using fallback friend for user $userId")
+    private fun createFallbackProfile(userId: String): Friend {
+        Log.w(TAG, "⚠️ Using fallback profile for user $userId")
         return Friend(
             id = userId,
-            username = "Unknown User",
+            username = "Utilisateur inconnu",
             handle = "",
-            avatarUrl = null,
-            streak = 0
+            avatarUrl = null
         )
     }
 
+    /**
+     * 1. Génère un PostId
+     * 2. Uploade l'image (si présente) vers le chemin "posts/uid/postId/original.jpg"
+     * 3. Appelle la Cloud Function createPost
+     */
     override suspend fun createPost(
         content: String,
         pleasureCategory: String?,
         pleasureTitle: String?,
-        photoUrl: String?
+        photoUri: Uri?
     ) {
-        Log.d(TAG, "📝 Creating post...")
-        feedSource.createPost(content, pleasureCategory, pleasureTitle, photoUrl)
-        Log.d(TAG, "✅ Post created successfully")
+        val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
+
+        // 1. Générer l'ID côté client
+        val postId = firestore.collection("posts").document().id
+        var hasImage = false
+
+        try {
+            // 2. Uploader l'image si elle existe
+            if (photoUri != null) {
+                Log.d(TAG, "🔼 Uploading image for post $postId...")
+
+                storageRepository.uploadPostImage(uid, postId, photoUri)
+
+                Log.d(TAG, "✅ Image uploaded for post $postId")
+                hasImage = true
+            }
+
+            // 3. Appeler la Cloud Function
+            Log.d(TAG, "📝 Creating post document $postId...")
+            feedSource.createPost(postId, content, pleasureCategory, pleasureTitle, hasImage)
+            Log.d(TAG, "✅ Post $postId créé")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to create post $postId", e)
+
+            if (hasImage) {
+                Log.w(TAG, "Post creation failed, rolling back image upload for $postId")
+                try {
+                    storageRepository.deletePostImage(uid, postId)
+                    Log.d(TAG, "✅ Image rollback successful for $postId")
+                } catch (deleteError: Exception) {
+                    Log.e(TAG, "❌ CRITICAL: Failed to rollback image for $postId", deleteError)
+                }
+            }
+            throw e
+        }
     }
 
     override suspend fun toggleLike(postId: String) {
@@ -148,23 +195,16 @@ class FeedRepositoryImpl @Inject constructor(
 
     override suspend fun addComment(postId: String, content: String): PostComment {
         val uid = auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
-        
+
         Log.d(TAG, "💬 Adding comment to post $postId")
-        
+
         // ✅ Utiliser le cache pour le profil
-        val friend = profileBatchLoader.loadProfile(uid)
-        
-        val comment = CommentDto(
-            userId = uid,
-            username = friend?.username ?: "",
-            userHandle = friend?.handle ?: "",
-            avatarUrl = friend?.avatarUrl,
-            content = content
-        )
-        
-        val (id, dto) = feedSource.addComment(postId, comment)
+        val friend = profileBatchLoader.loadProfile(uid) ?: createFallbackProfile(uid)
+
+        val (id, dto) = feedSource.addComment(postId, content)
+
         Log.d(TAG, "✅ Comment added: $id, waiting for real-time update...")
-        return dto.toDomain(id)
+        return dto.toDomain(id, friend)
     }
 
     override suspend fun deleteComment(postId: String, commentId: String) {
@@ -180,32 +220,32 @@ class FeedRepositoryImpl @Inject constructor(
         // ✅ Les listeners temps réel mettront à jour automatiquement
         Log.d(TAG, "✅ Post deleted, waiting for real-time update...")
     }
-    
+
     /**
-     * ✅ NOUVELLE MÉTHODE : Invalider le cache d'un profil
+     * Invalider le cache d'un profil
      * À appeler après une mise à jour de profil
      */
     fun invalidateProfileCache(userId: String) {
         Log.d(TAG, "🗑️ Invalidating profile cache for $userId")
         profileBatchLoader.invalidate(userId)
     }
-    
+
     /**
-     * ✅ NOUVELLE MÉTHODE : Prefetch des profils pour la pagination
+     * Prefetch des profils pour la pagination
      * À appeler avant de charger la page suivante
      */
     suspend fun prefetchProfiles(userIds: List<String>) {
         Log.d(TAG, "🔮 Prefetching ${userIds.size} profiles")
         profileBatchLoader.prefetch(userIds)
     }
-    
+
     /**
-     * ✅ NOUVELLE MÉTHODE : Obtenir les stats du cache
+     * ✅ Obtenir les stats du cache
      */
     fun getCacheStats() = profileBatchLoader.getCacheStats()
-    
+
     /**
-     * ✅ NOUVELLE MÉTHODE : Nettoyer les entrées expirées
+     * ✅ Nettoyer les entrées expirées
      */
     fun cleanupExpiredCache() {
         Log.d(TAG, "🧹 Cleaning up expired cache entries")

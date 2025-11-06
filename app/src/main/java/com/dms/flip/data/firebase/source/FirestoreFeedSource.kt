@@ -206,22 +206,24 @@ class FirestoreFeedSource @Inject constructor(
     }
 
     override suspend fun createPost(
+        postId: String,
         content: String,
         pleasureCategory: String?,
         pleasureTitle: String?,
-        photoUrl: String?
+        hasImage: Boolean
     ) {
-        Log.d(TAG, "📝 Creating post...")
+        Log.d(TAG, "📝 Creating post document $postId...")
         call(
             name = "createPost",
             data = mapOf(
+                "postId" to postId,
                 "content" to content,
                 "pleasureCategory" to pleasureCategory,
                 "pleasureTitle" to pleasureTitle,
-                "photoUrl" to photoUrl
+                "hasImage" to hasImage
             )
         )
-        Log.d(TAG, "✅ Post created successfully")
+        Log.d(TAG, "✅ Post document $postId created successfully")
     }
 
     override suspend fun toggleLike(postId: String) {
@@ -230,17 +232,16 @@ class FirestoreFeedSource @Inject constructor(
         Log.d(TAG, "✅ Like toggled successfully")
     }
 
-    override suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto> {
+    override suspend fun addComment(postId: String, content: String): Pair<String, CommentDto> {
         Log.d(TAG, "💬 Adding comment to post $postId")
-        val res = call("addComment", mapOf("postId" to postId, "content" to comment.content))
+        val res = call("addComment", mapOf("postId" to postId, "content" to content))
+
         val data = res as Map<*, *>
         val id = data["id"] as String
         val c = (data["comment"] as Map<*, *>)
+
         val saved = CommentDto(
             userId = c["userId"] as String,
-            username = c["username"] as? String ?: "",
-            userHandle = c["userHandle"] as? String ?: "",
-            avatarUrl = c["avatarUrl"] as? String,
             content = c["content"] as String
         )
         Log.d(TAG, "✅ Comment added successfully: $id")

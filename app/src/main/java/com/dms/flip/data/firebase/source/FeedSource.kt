@@ -36,10 +36,11 @@ interface FeedSource {
      * Crée un nouveau post
      */
     suspend fun createPost(
+        postId: String,
         content: String,
         pleasureCategory: String?,
         pleasureTitle: String?,
-        photoUrl: String?
+        hasImage: Boolean
     )
 
     /**
@@ -50,7 +51,7 @@ interface FeedSource {
     /**
      * Ajoute un commentaire à un post
      */
-    suspend fun addComment(postId: String, comment: CommentDto): Pair<String, CommentDto>
+    suspend fun addComment(postId: String, content: String): Pair<String, CommentDto>
 
     /**
      * Supprime un commentaire

@@ -42,12 +42,12 @@ fun PostDto.toDomain(
     comments = comments
 )
 
-fun CommentDto.toDomain(id: String): PostComment = PostComment(
+fun CommentDto.toDomain(id: String, profile: Friend): PostComment = PostComment(
     id = id,
-    userId = userId,
-    username = username,
-    userHandle = userHandle,
-    avatarUrl = avatarUrl,
+    userId = profile.id,
+    username = profile.username,
+    userHandle = profile.handle,
+    avatarUrl = profile.avatarUrl,
     content = content,
     timestamp = timestamp?.time ?: 0L
 )

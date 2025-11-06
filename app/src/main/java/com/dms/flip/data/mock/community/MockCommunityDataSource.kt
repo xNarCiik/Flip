@@ -1,5 +1,6 @@
 package com.dms.flip.data.mock.community
 
+import android.net.Uri
 import com.dms.flip.domain.model.community.PleasureCategory
 import com.dms.flip.domain.model.community.Friend
 import com.dms.flip.domain.model.community.Post
@@ -489,7 +490,7 @@ class MockCommunityDataSource @Inject constructor() {
         content: String,
         pleasureCategory: String?,
         pleasureTitle: String?,
-        photoUrl: String?
+        photoUri: Uri?
     ) {
     }/*: Post {
         return Post()

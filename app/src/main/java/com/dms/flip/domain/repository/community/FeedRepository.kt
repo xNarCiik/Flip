@@ -1,5 +1,6 @@
 package com.dms.flip.domain.repository.community
 
+import android.net.Uri
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
@@ -18,7 +19,7 @@ interface FeedRepository {
         content: String,
         pleasureCategory: String? = null,
         pleasureTitle: String? = null,
-        photoUrl: String? = null
+        photoUri: Uri? = null
     )
     
     /**

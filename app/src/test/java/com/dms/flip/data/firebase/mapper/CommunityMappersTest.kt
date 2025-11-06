@@ -36,7 +36,7 @@ class CommunityMappersTest {
         val post = dto.toDomain(
             id = "post",
             author = friend,
-            comments = listOf(commentDto.toDomain("comment")),
+            comments = listOf(commentDto.toDomain("comment",)),
             isLiked = true
         )
 

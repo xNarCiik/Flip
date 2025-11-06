@@ -1,5 +1,6 @@
 package com.dms.flip.data.mock.community
 
+import android.net.Uri
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.PostComment
@@ -29,9 +30,9 @@ class MockFeedRepository @Inject constructor(
         content: String,
         pleasureCategory: String?,
         pleasureTitle: String?,
-        photoUrl: String?
+        photoUri: Uri?
     ) {
-        dataSource.createPost(content, pleasureCategory, pleasureTitle, photoUrl)
+        dataSource.createPost(content, pleasureCategory, pleasureTitle, photoUri)
     }
 
     override suspend fun toggleLike(postId: String) {
