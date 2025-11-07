@@ -19,14 +19,6 @@ import javax.inject.Singleton
 
 /**
  * Cache et batch loader pour les profils utilisateur.
- *
- * OBJECTIF : Résoudre le problème N+1 en chargeant plusieurs profils en une seule opération.
- *
- * EXEMPLE :
- * - Avant : 10 posts de 10 auteurs différents = 10 appels réseau séquentiels (2 secondes)
- * - Après : 10 posts de 10 auteurs différents = 1 appel batch (0.2 secondes)
- *
- * Économie : 90% de latence, 90% de requêtes réseau
  */
 @Singleton
 class ProfileBatchLoader @Inject constructor(
@@ -37,14 +29,12 @@ class ProfileBatchLoader @Inject constructor(
     private val cache = ConcurrentHashMap<String, CachedProfile>()
     private val mutex = Mutex()
 
-    // Durée de validité du cache (10 minutes)
-    private val cacheDuration = 10 * 60 * 1000L
-
     data class CachedProfile(
         val profile: PublicProfile,
         val timestamp: Long = System.currentTimeMillis()
     ) {
-        fun isExpired(duration: Long = 5 * 60 * 1000L): Boolean =
+        // Durée de validité du cache (10 minutes)
+        fun isExpired(duration: Long = 10 * 60 * 1000L): Boolean =
             System.currentTimeMillis() - timestamp > duration
     }
 

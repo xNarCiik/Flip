@@ -23,8 +23,7 @@ fun PostDto.toDomain(
     id: String,
     author: PublicProfile,
     comments: List<PostComment> = emptyList(),
-    isLiked: Boolean = false,
-    likesCount: Int
+    isLiked: Boolean = false
 ): Post = Post(
     id = id,
     author = author,

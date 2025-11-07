@@ -3,6 +3,7 @@ package com.dms.flip.ui.community
 import com.dms.flip.domain.model.community.FriendRequest
 import com.dms.flip.domain.model.community.FriendSuggestion
 import com.dms.flip.domain.model.community.Post
+import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.UserSearchResult
 import kotlinx.collections.immutable.PersistentList
@@ -32,7 +33,10 @@ data class CommunityUiState(
     val newPostsCount: Int = 0,
     val showNewPostsAlert: Boolean = false,
     val scrollToTopTrigger: Int = 0,
+    val activeComments: Map<String, List<PostComment>> = emptyMap(),
+    val isLoadingComments: Map<String, Boolean> = emptyMap()
 )
+
 
 sealed interface CommunityEvent {
     data object OnSearchClicked : CommunityEvent

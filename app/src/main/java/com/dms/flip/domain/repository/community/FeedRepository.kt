@@ -15,6 +15,10 @@ interface FeedRepository {
 
     suspend fun getPublicProfile(userId: String): PublicProfile?
 
+    suspend fun fetchComments(postId: String, limit: Int): List<PostComment>
+
+    suspend fun refreshPost(postId: String): Post?
+
     /**
      * Crée un nouveau post
      */

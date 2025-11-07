@@ -11,13 +11,10 @@ import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PublicProfile
 import com.dms.flip.domain.model.community.RelationshipStatus
 import com.dms.flip.domain.usecase.community.AcceptFriendRequestUseCase
-import com.dms.flip.domain.usecase.community.AddCommentUseCase
 import com.dms.flip.domain.usecase.community.CancelSentRequestUseCase
 import com.dms.flip.domain.usecase.community.DeclineFriendRequestUseCase
-import com.dms.flip.domain.usecase.community.DeleteCommentUseCase
-import com.dms.flip.domain.usecase.community.DeletePostUseCase
+import com.dms.flip.domain.usecase.community.FeedUseCases
 import com.dms.flip.domain.usecase.community.HideSuggestionUseCase
-import com.dms.flip.domain.usecase.community.ObserveFriendsFeedUseCase
 import com.dms.flip.domain.usecase.community.ObserveFriendsUseCase
 import com.dms.flip.domain.usecase.community.ObservePendingReceivedUseCase
 import com.dms.flip.domain.usecase.community.ObservePendingSentUseCase
@@ -25,7 +22,6 @@ import com.dms.flip.domain.usecase.community.ObserveSuggestionsUseCase
 import com.dms.flip.domain.usecase.community.RemoveFriendUseCase
 import com.dms.flip.domain.usecase.community.SearchUsersUseCase
 import com.dms.flip.domain.usecase.community.SendFriendRequestUseCase
-import com.dms.flip.domain.usecase.community.ToggleLikeUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import com.dms.flip.domain.util.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +47,7 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
 
 private const val FEED_PAGE_SIZE = 20
+private const val COMMENTS_PAGE_SIZE = 50
 private const val TAG = "CommunityViewModel"
 
 private data class CommunityData(
@@ -64,11 +61,7 @@ private data class CommunityData(
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
     private val observeFriendsUseCase: ObserveFriendsUseCase,
-    private val observeFriendsFeedUseCase: ObserveFriendsFeedUseCase,
-    private val toggleLikeUseCase: ToggleLikeUseCase,
-    private val addCommentUseCase: AddCommentUseCase,
-    private val deleteCommentUseCase: DeleteCommentUseCase,
-    private val deletePostUseCase: DeletePostUseCase,
+    private val feedUseCases: FeedUseCases,
     private val removeFriendUseCase: RemoveFriendUseCase,
     private val observePendingReceivedUseCase: ObservePendingReceivedUseCase,
     private val observePendingSentUseCase: ObservePendingSentUseCase,
@@ -96,6 +89,9 @@ class CommunityViewModel @Inject constructor(
     private var lastSeenPostTimestamp: Long = System.currentTimeMillis()
 
     private val pendingActions = mutableMapOf<String, Job>()
+
+    // 💬 Jobs de chargement des commentaires pour éviter les appels multiples
+    private val commentLoadingJobs = mutableMapOf<String, Job>()
 
     init {
         observeSearch()
@@ -144,7 +140,7 @@ class CommunityViewModel @Inject constructor(
             } else {
                 try {
                     Log.d(TAG, "🔄 Soft refresh: taking first emission")
-                    val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE).first()
+                    val page = feedUseCases.observeFriendsFeed(FEED_PAGE_SIZE, null).first()
                     _uiState.update { it.copy(posts = page.items.toPersistentList()) }
                     Log.d(TAG, "✅ Soft refresh completed: ${page.items.size} posts")
                 } catch (t: Throwable) {
@@ -213,7 +209,8 @@ class CommunityViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     showNewPostsAlert = false,
-                    newPostsCount = 0
+                    newPostsCount = 0,
+                    scrollToTopTrigger = it.scrollToTopTrigger + 1
                 )
             }
             lastSeenPostTimestamp =
@@ -221,254 +218,376 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun onScrollStateChanged(isAtTop: Boolean) {
-        val wasAtTop = isScrolledToTop
-        isScrolledToTop = isAtTop
-
-        if (isAtTop && !wasAtTop && _uiState.value.showNewPostsAlert) {
-            handleScrolledToTop()
-        }
+    private fun handleScrolledAwayFromTop() {
+        isScrolledToTop = false
     }
 
-    private fun ensureObservationsStarted() {
-        if (observationJob != null) {
-            Log.d(TAG, "⚠️ Observations already started, skipping")
-            return
+    private fun onScrollStateChanged(isAtTop: Boolean) {
+        if (isAtTop && !isScrolledToTop) {
+            handleScrolledToTop()
+        } else if (!isAtTop && isScrolledToTop) {
+            handleScrolledAwayFromTop()
         }
-
-        Log.d(TAG, "🔵 Starting observations...")
-
-        _uiState.update { it.copy(isLoadingInitial = true) }
-
-        val feedFlow = observeFriendsFeedUseCase(FEED_PAGE_SIZE)
-            .catch { throwable ->
-                Log.e(TAG, "❌ Error in feed flow", throwable)
-                handleError(throwable)
-                emit(Paged(emptyList(), null))
-            }
-
-        val friendsFlow = observeFriendsUseCase()
-            .catch { throwable ->
-                Log.e(TAG, "❌ Error in friends flow", throwable)
-                handleError(throwable)
-                emit(emptyList())
-            }
-
-        val pendingReceivedFlow = observePendingReceivedUseCase()
-            .catch { throwable ->
-                Log.e(TAG, "❌ Error in pending received flow", throwable)
-                handleError(throwable)
-                emit(emptyList())
-            }
-
-        val pendingSentFlow = observePendingSentUseCase()
-            .catch { throwable ->
-                Log.e(TAG, "❌ Error in pending sent flow", throwable)
-                handleError(throwable)
-                emit(emptyList())
-            }
-
-        val suggestionsFlow = observeSuggestionsUseCase()
-            .catch { throwable ->
-                Log.e(TAG, "❌ Error in suggestions flow", throwable)
-                handleError(throwable)
-                emit(emptyList())
-            }
-
-        var hasReceivedData = false
-
-        viewModelScope.launch {
-            delay(5000)
-            if (!hasReceivedData) {
-                Log.w(TAG, "⚠️ No data received after 3s, stopping loading state")
-                _uiState.update { it.copy(isLoadingInitial = false) }
-            }
-        }
-
-        observationJob = combine(
-            feedFlow, friendsFlow, pendingReceivedFlow, pendingSentFlow, suggestionsFlow
-        ) { feed, friends, received, sent, suggestions ->
-            CommunityData(
-                feed = feed,
-                friends = friends,
-                pendingReceived = received,
-                pendingSent = sent,
-                suggestions = suggestions
-            )
-        }
-            .onEach { data ->
-                hasReceivedData = true
-                Log.d(
-                    TAG,
-                    "📥 Received update: ${data.feed.items.size} posts, ${data.friends.size} friends"
-                )
-
-                val currentPosts = _uiState.value.posts
-                val newPosts = data.feed.items
-
-                val hasNewPosts = if (currentPosts.isNotEmpty() && newPosts.isNotEmpty()) {
-                    val newestCurrentTimestamp = currentPosts.firstOrNull()?.timestamp ?: 0
-                    newPosts.any { it.timestamp > newestCurrentTimestamp }
-                } else {
-                    false
-                }
-
-                if (hasNewPosts && !isScrolledToTop && !_uiState.value.isRefreshing) {
-                    val newPostCount = newPosts.count { it.timestamp > lastSeenPostTimestamp }
-                    if (newPostCount > 0) {
-                        Log.d(TAG, "🆕 $newPostCount new posts detected")
-                        _uiState.update { state ->
-                            state.copy(
-                                showNewPostsAlert = true,
-                                newPostsCount = newPostCount
-                            )
-                        }
-                    }
-                }
-
-                _uiState.update { state ->
-                    state.copy(
-                        posts = data.feed.items.toPersistentList(),
-                        feedNextCursor = data.feed.nextCursor,
-                        friends = data.friends.toPersistentList(),
-                        pendingRequests = data.pendingReceived.toPersistentList(),
-                        sentRequests = data.pendingSent.toPersistentList(),
-                        suggestions = data.suggestions.toPersistentList(),
-                        isLoadingInitial = false
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-
-        Log.d(TAG, "✅ Observations started successfully")
     }
 
     private fun loadInitial(force: Boolean = false) {
-        if (force) {
-            Log.d(TAG, "♻️ Force loading initial data")
-            cancelObservations()
-        }
-        if (!force && observationJob != null) {
-            Log.d(TAG, "⚠️ Initial data already loading, skipping")
+        if (observationJob?.isActive == true && !force) {
+            Log.d(TAG, "⏭️ Observations already active, skipping loadInitial")
             return
         }
 
-        Log.d(TAG, "🔵 Loading initial data...")
-        _uiState.update { it.copy(isLoadingInitial = true, errorMessage = null) }
-        lastSeenPostTimestamp = System.currentTimeMillis()
+        Log.d(TAG, "🚀 Loading initial community data (force: $force)")
+        if (force) {
+            cancelObservations()
+        }
+
+        _uiState.update {
+            it.copy(
+                isLoadingInitial = true,
+                errorMessage = null
+            )
+        }
+
         ensureObservationsStarted()
     }
 
+    private fun ensureObservationsStarted() {
+        if (observationJob?.isActive == true) {
+            Log.d(TAG, "⏭️ Observations already running")
+            return
+        }
+
+        Log.d(TAG, "👀 Starting fresh observations")
+        val observeFriendsFeedUseCase = feedUseCases.observeFriendsFeed
+
+        observationJob = viewModelScope.launch {
+            try {
+                combine(
+                    observeFriendsFeedUseCase(FEED_PAGE_SIZE, null),
+                    observeFriendsUseCase(),
+                    observePendingReceivedUseCase(),
+                    observePendingSentUseCase(),
+                    observeSuggestionsUseCase()
+                ) { feed, friends, pendingReceived, pendingSent, suggestions ->
+                    CommunityData(feed, friends, pendingReceived, pendingSent, suggestions)
+                }
+                    .catch { t ->
+                        Log.e(TAG, "❌ Error in data observation", t)
+                        handleError(t, stopInitial = true, stopRefresh = false)
+                    }
+                    .distinctUntilChanged()
+                    .collect { data ->
+                        val (feed, friends, pendingReceived, pendingSent, suggestions) = data
+
+                        val friendsList = friends.sortedBy { it.username }.toPersistentList()
+                        val pendingReceivedList =
+                            pendingReceived.sortedBy { it.username }.toPersistentList()
+                        val pendingSentList =
+                            pendingSent.sortedBy { it.username }.toPersistentList()
+
+                        val newPostsCount =
+                            if (!isScrolledToTop) feed.items.count { it.timestamp > lastSeenPostTimestamp } else 0
+
+                        _uiState.update { state ->
+                            state.copy(
+                                posts = feed.items.toPersistentList(),
+                                friends = friendsList,
+                                pendingRequests = pendingReceivedList,
+                                sentRequests = pendingSentList,
+                                suggestions = suggestions.toPersistentList(),
+                                feedNextCursor = feed.nextCursor,
+                                isLoadingInitial = false,
+                                newPostsCount = newPostsCount,
+                                showNewPostsAlert = newPostsCount > 0,
+                                errorMessage = null
+                            )
+                        }
+
+                        if (_uiState.value.isLoadingInitial) {
+                            lastSeenPostTimestamp =
+                                feed.items.firstOrNull()?.timestamp ?: System.currentTimeMillis()
+                        }
+                    }
+            } catch (t: Throwable) {
+                Log.e(TAG, "❌ Fatal error in observations", t)
+                handleError(t, stopInitial = true, stopRefresh = false)
+            }
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 💬 GESTION DES COMMENTAIRES À LA DEMANDE
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    /**
+     * Toggle l'affichage des commentaires pour un post.
+     * Si les commentaires ne sont pas chargés, les charge depuis Firestore.
+     * Si déjà chargés, les masque simplement.
+     */
+    private fun toggleComments(postId: String) {
+        val currentState = _uiState.value
+        val isCurrentlyExpanded = currentState.expandedPostId == postId
+        val hasComments = currentState.activeComments.containsKey(postId)
+
+        if (isCurrentlyExpanded) {
+            // 🔽 Fermer les commentaires (les garder en cache)
+            Log.d(TAG, "🔽 Collapsing comments for post $postId")
+            _uiState.update { it.copy(expandedPostId = null) }
+        } else {
+            // 🔼 Ouvrir les commentaires
+            Log.d(TAG, "🔼 Expanding comments for post $postId")
+            _uiState.update { it.copy(expandedPostId = postId) }
+
+            // Charger les commentaires si pas déjà en cache
+            if (!hasComments) {
+                loadComments(postId)
+            }
+        }
+    }
+
+    /**
+     * Charge les commentaires d'un post depuis Firestore.
+     * Évite les appels multiples grâce au tracking des jobs.
+     */
+    private fun loadComments(postId: String) {
+        // Éviter les appels multiples pour le même post
+        if (commentLoadingJobs.containsKey(postId)) {
+            Log.d(TAG, "⏭️ Already loading comments for post $postId, skipping")
+            return
+        }
+
+        // Ne pas recharger si déjà en cache
+        if (_uiState.value.activeComments.containsKey(postId)) {
+            Log.d(TAG, "📦 Comments already cached for post $postId")
+            return
+        }
+
+        Log.d(TAG, "💬 Loading comments for post $postId")
+
+        // Marquer comme en cours de chargement
+        _uiState.update { state ->
+            state.copy(
+                isLoadingComments = state.isLoadingComments + (postId to true)
+            )
+        }
+
+        commentLoadingJobs[postId] = viewModelScope.launch {
+            try {
+                val comments = feedUseCases.fetchComments(postId, COMMENTS_PAGE_SIZE)
+                Log.d(TAG, "✅ Loaded ${comments.size} comments for post $postId")
+
+                _uiState.update { state ->
+                    state.copy(
+                        activeComments = state.activeComments + (postId to comments),
+                        isLoadingComments = state.isLoadingComments - postId
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to load comments for post $postId", e)
+                _uiState.update { state ->
+                    state.copy(
+                        isLoadingComments = state.isLoadingComments - postId
+                    )
+                }
+                // On n'affiche pas d'erreur globale pour les commentaires
+            } finally {
+                commentLoadingJobs.remove(postId)
+            }
+        }
+    }
+
+    /**
+     * Ajoute un commentaire optimiste puis synchronise avec le serveur.
+     */
+    private fun addComment(postId: String, content: String) {
+        if (content.isBlank()) {
+            Log.w(TAG, "⚠️ Empty comment, skipping")
+            return
+        }
+
+        val actionKey = "comment_$postId"
+        pendingActions[actionKey]?.cancel()
+
+        Log.d(TAG, "💬 Adding comment to post $postId")
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            try {
+                // ✅ Appel serveur
+                val newComment = feedUseCases.addComment(postId, content)
+                Log.d(TAG, "✅ Comment added successfully: ${newComment.id}")
+
+                // ✅ Mettre à jour le cache local des commentaires
+                _uiState.update { state ->
+                    val currentComments = state.activeComments[postId] ?: emptyList()
+                    val updatedComments = currentComments + newComment
+
+                    state.copy(
+                        activeComments = state.activeComments + (postId to updatedComments),
+                        actionStatus = state.actionStatus - actionKey
+                    )
+                }
+
+                // ✅ Rafraîchir le post pour mettre à jour le compteur de commentaires
+                refreshPostInList(postId)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to add comment", e)
+                _uiState.update { state ->
+                    state.copy(actionStatus = state.actionStatus - actionKey)
+                }
+                handleError(e, stopInitial = false, stopRefresh = false)
+            } finally {
+                pendingActions.remove(actionKey)
+            }
+        }
+    }
+
+    /**
+     * Supprime un commentaire du post.
+     */
+    private fun deleteComment(postId: String, commentId: String) {
+        val actionKey = "delete_comment_${postId}_$commentId"
+        pendingActions[actionKey]?.cancel()
+
+        Log.d(TAG, "🗑️ Deleting comment $commentId from post $postId")
+
+        // ✅ Optimistic update: retirer le commentaire immédiatement
+        _uiState.update { state ->
+            val currentComments = state.activeComments[postId] ?: emptyList()
+            val updatedComments = currentComments.filter { it.id != commentId }
+
+            state.copy(
+                activeComments = state.activeComments + (postId to updatedComments),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
+            )
+        }
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            try {
+                feedUseCases.deleteComment(postId, commentId)
+                Log.d(TAG, "✅ Comment deleted successfully")
+
+                _uiState.update { state ->
+                    state.copy(actionStatus = state.actionStatus - actionKey)
+                }
+
+                // ✅ Rafraîchir le post pour mettre à jour le compteur
+                refreshPostInList(postId)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to delete comment", e)
+
+                // ❌ Rollback: remettre le commentaire
+                _uiState.update { state ->
+                    // On ne peut pas facilement le rollback sans re-fetch,
+                    // donc on invalide le cache et force un reload
+                    state.copy(
+                        activeComments = state.activeComments - postId,
+                        actionStatus = state.actionStatus - actionKey
+                    )
+                }
+
+                handleError(e, stopInitial = false, stopRefresh = false)
+            } finally {
+                pendingActions.remove(actionKey)
+            }
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🔄 REFRESH INDIVIDUEL D'UN POST
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    /**
+     * Rafraîchit les données d'un post spécifique dans la liste
+     * (utile après ajout/suppression de commentaire pour mettre à jour le compteur).
+     */
+    private fun refreshPostInList(postId: String) {
+        viewModelScope.launch {
+            try {
+                val refreshedPost = feedUseCases.refreshPost(postId)
+                if (refreshedPost != null) {
+                    _uiState.update { state ->
+                        state.copy(
+                            posts = state.posts.updatePost(postId) { refreshedPost }
+                        )
+                    }
+                    Log.d(TAG, "✅ Post $postId refreshed in list")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "⚠️ Failed to refresh post $postId in list", e)
+                // Non-bloquant, on ne remonte pas l'erreur
+            }
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // AUTRES ACTIONS (INCHANGÉ)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     private fun togglePostLike(postId: String) {
+        val actionKey = "like_$postId"
+        pendingActions[actionKey]?.cancel()
+
         val currentPost = _uiState.value.posts.find { it.id == postId } ?: return
         val wasLiked = currentPost.isLiked
-
-        Log.d(TAG, "❤️ Toggling like for post $postId (currently: $wasLiked)")
+        val newLikesCount = if (wasLiked) currentPost.likesCount - 1 else currentPost.likesCount + 1
 
         _uiState.update { state ->
             state.copy(
                 posts = state.posts.updatePost(postId) { post ->
-                    post.copy(
-                        isLiked = !wasLiked,
-                        likesCount = if (wasLiked) post.likesCount - 1 else post.likesCount + 1
-                    )
-                }
+                    post.copy(isLiked = !wasLiked, likesCount = newLikesCount)
+                },
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
             )
         }
 
-        viewModelScope.launch {
-            when (val result = toggleLikeUseCase(postId)) {
-                is Result.Err -> {
-                    Log.e(TAG, "❌ Failed to toggle like", result.throwable)
-                    _uiState.update { state ->
-                        state.copy(
-                            posts = state.posts.updatePost(postId) { post ->
-                                post.copy(
-                                    isLiked = wasLiked,
-                                    likesCount = if (wasLiked) post.likesCount + 1 else post.likesCount - 1
-                                )
-                            }
-                        )
-                    }
-                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+        pendingActions[actionKey] = viewModelScope.launch {
+            delay(300)
+            try {
+                feedUseCases.toggleLike(postId)
+                _uiState.update { state ->
+                    state.copy(actionStatus = state.actionStatus - actionKey)
                 }
-
-                is Result.Ok -> {
-                    Log.d(TAG, "✅ Like toggled successfully, waiting for real-time confirmation")
+            } catch (e: Exception) {
+                _uiState.update { state ->
+                    state.copy(
+                        posts = state.posts.updatePost(postId) { post ->
+                            post.copy(isLiked = wasLiked, likesCount = currentPost.likesCount)
+                        },
+                        actionStatus = state.actionStatus - actionKey
+                    )
                 }
-            }
-        }
-    }
-
-    private fun toggleComments(postId: String) {
-        _uiState.update { state ->
-            state.copy(expandedPostId = if (state.expandedPostId == postId) null else postId)
-        }
-    }
-
-    private fun addComment(postId: String, comment: String) {
-        Log.d(TAG, "💬 Adding comment to post $postId")
-
-        viewModelScope.launch {
-            when (val result = addCommentUseCase(postId, comment)) {
-                is Result.Err -> {
-                    Log.e(TAG, "❌ Failed to add comment", result.throwable)
-                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                }
-
-                is Result.Ok -> {
-                    Log.d(TAG, "✅ Comment added successfully: ${result.data.id}")
-                }
-            }
-        }
-    }
-
-    private fun deleteComment(postId: String, commentId: String) {
-        Log.d(TAG, "🗑️ Deleting comment $commentId from post $postId")
-
-        viewModelScope.launch {
-            when (val result = deleteCommentUseCase(postId, commentId)) {
-                is Result.Ok -> {
-                    Log.d(TAG, "✅ Comment deleted successfully")
-                }
-
-                is Result.Err -> {
-                    Log.e(TAG, "❌ Failed to delete comment", result.throwable)
-                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
-                }
+            } finally {
+                pendingActions.remove(actionKey)
             }
         }
     }
 
     private fun deletePost(postId: String) {
-        Log.d(TAG, "🗑️ Deleting post $postId")
-
-        val previousPosts = _uiState.value.posts
-        val previousExpanded = _uiState.value.expandedPostId
+        val actionKey = "delete_post_$postId"
+        pendingActions[actionKey]?.cancel()
 
         _uiState.update { state ->
             state.copy(
-                posts = state.posts.filterNot { it.id == postId }.toPersistentList(),
-                expandedPostId = state.expandedPostId.takeUnless { it == postId }
+                posts = state.posts.filter { it.id != postId }.toPersistentList(),
+                actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
             )
         }
 
-        viewModelScope.launch {
-            when (val result = deletePostUseCase(postId)) {
-                is Result.Err -> {
-                    Log.e(TAG, "❌ Failed to delete post", result.throwable)
-                    _uiState.update { state ->
-                        state.copy(
-                            posts = previousPosts,
-                            expandedPostId = previousExpanded
-                        )
-                    }
-                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
+        pendingActions[actionKey] = viewModelScope.launch {
+            try {
+                feedUseCases.deletePost(postId)
+                _uiState.update { state ->
+                    state.copy(actionStatus = state.actionStatus - actionKey)
                 }
-
-                is Result.Ok -> {
-                    Log.d(TAG, "✅ Post deleted successfully")
+            } catch (e: Exception) {
+                _uiState.update { state ->
+                    state.copy(actionStatus = state.actionStatus - actionKey)
                 }
+                handleError(e, stopInitial = false, stopRefresh = false)
+            } finally {
+                pendingActions.remove(actionKey)
             }
         }
     }
@@ -508,11 +627,6 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    private fun removeFriendFromProfile(userId: String) {
-        val friend = _uiState.value.friends.firstOrNull { it.id == userId } ?: return
-        removeFriend(friend)
-    }
-
     private fun addSuggestion(suggestion: FriendSuggestion) {
         val actionKey = "add_suggestion_${suggestion.id}"
         pendingActions[actionKey]?.cancel()
@@ -527,20 +641,10 @@ class CommunityViewModel @Inject constructor(
 
         pendingActions[actionKey] = viewModelScope.launch {
             delay(300)
-            when (val sendResult = sendFriendRequestUseCase(suggestion.id)) {
+            when (val result = sendFriendRequestUseCase(suggestion.id)) {
                 is Result.Ok -> {
-                    when (hideSuggestionUseCase(suggestion.id)) {
-                        is Result.Err -> {
-                            _uiState.update { state ->
-                                state.copy(actionStatus = state.actionStatus - actionKey)
-                            }
-                        }
-
-                        else -> {
-                            _uiState.update { state ->
-                                state.copy(actionStatus = state.actionStatus - actionKey)
-                            }
-                        }
+                    _uiState.update { state ->
+                        state.copy(actionStatus = state.actionStatus - actionKey)
                     }
                 }
 
@@ -552,11 +656,7 @@ class CommunityViewModel @Inject constructor(
                             actionStatus = state.actionStatus - actionKey
                         )
                     }
-                    handleError(
-                        sendResult.throwable,
-                        stopInitial = false,
-                        stopRefresh = false
-                    )
+                    handleError(result.throwable, stopInitial = false, stopRefresh = false)
                 }
             }
             pendingActions.remove(actionKey)
@@ -600,12 +700,12 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun acceptFriendRequest(request: FriendRequest) {
-        val actionKey = "accept_request_${request.id}"
+        val actionKey = "accept_request_${request.userId}"
         pendingActions[actionKey]?.cancel()
 
         _uiState.update { state ->
             state.copy(
-                pendingRequests = state.pendingRequests.filter { it.id != request.id }
+                pendingRequests = state.pendingRequests.filter { it.userId != request.userId }
                     .toPersistentList(),
                 actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
             )
@@ -613,7 +713,7 @@ class CommunityViewModel @Inject constructor(
 
         pendingActions[actionKey] = viewModelScope.launch {
             delay(300)
-            when (val result = acceptFriendRequestUseCase(request.id)) {
+            when (val result = acceptFriendRequestUseCase(request.userId)) {
                 is Result.Ok -> {
                     _uiState.update { state ->
                         state.copy(actionStatus = state.actionStatus - actionKey)
@@ -636,18 +736,46 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun acceptFriendRequestFromProfile(userId: String) {
-        val request = _uiState.value.pendingRequests.firstOrNull { it.userId == userId }
-            ?: return
-        acceptFriendRequest(request)
+        val actionKey = "accept_request_from_profile_$userId"
+        pendingActions[actionKey]?.cancel()
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            when (val result = acceptFriendRequestUseCase(userId)) {
+                is Result.Ok -> Unit
+                is Result.Err -> handleError(
+                    result.throwable,
+                    stopInitial = false,
+                    stopRefresh = false
+                )
+            }
+            pendingActions.remove(actionKey)
+        }
+    }
+
+    private fun removeFriendFromProfile(userId: String) {
+        val actionKey = "remove_friend_from_profile_$userId"
+        pendingActions[actionKey]?.cancel()
+
+        pendingActions[actionKey] = viewModelScope.launch {
+            when (val result = removeFriendUseCase(userId)) {
+                is Result.Ok -> Unit
+                is Result.Err -> handleError(
+                    result.throwable,
+                    stopInitial = false,
+                    stopRefresh = false
+                )
+            }
+            pendingActions.remove(actionKey)
+        }
     }
 
     private fun declineFriendRequest(request: FriendRequest) {
-        val actionKey = "decline_request_${request.id}"
+        val actionKey = "decline_request_${request.userId}"
         pendingActions[actionKey]?.cancel()
 
         _uiState.update { state ->
             state.copy(
-                pendingRequests = state.pendingRequests.filter { it.id != request.id }
+                pendingRequests = state.pendingRequests.filter { it.userId != request.userId }
                     .toPersistentList(),
                 actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
             )
@@ -655,7 +783,7 @@ class CommunityViewModel @Inject constructor(
 
         pendingActions[actionKey] = viewModelScope.launch {
             delay(300)
-            when (val result = declineFriendRequestUseCase(request.id)) {
+            when (val result = declineFriendRequestUseCase(request.userId)) {
                 is Result.Ok -> {
                     _uiState.update { state ->
                         state.copy(actionStatus = state.actionStatus - actionKey)
@@ -678,12 +806,12 @@ class CommunityViewModel @Inject constructor(
     }
 
     private fun cancelFriendRequest(request: FriendRequest) {
-        val actionKey = "cancel_request_${request.id}"
+        val actionKey = "cancel_request_${request.userId}"
         pendingActions[actionKey]?.cancel()
 
         _uiState.update { state ->
             state.copy(
-                sentRequests = state.sentRequests.filter { it.id != request.id }
+                sentRequests = state.sentRequests.filter { it.userId != request.userId }
                     .toPersistentList(),
                 actionStatus = state.actionStatus + (actionKey to ActionStatus.Processing)
             )
@@ -691,7 +819,7 @@ class CommunityViewModel @Inject constructor(
 
         pendingActions[actionKey] = viewModelScope.launch {
             delay(300)
-            when (val result = cancelSentRequestUseCase(request.id)) {
+            when (val result = cancelSentRequestUseCase(request.userId)) {
                 is Result.Ok -> {
                     _uiState.update { state ->
                         state.copy(actionStatus = state.actionStatus - actionKey)
@@ -804,7 +932,7 @@ class CommunityViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val page = observeFriendsFeedUseCase(FEED_PAGE_SIZE, cursor).first()
+                val page = feedUseCases.observeFriendsFeed(FEED_PAGE_SIZE, cursor).first()
                 Log.d(TAG, "✅ Loaded ${page.items.size} more posts")
 
                 _uiState.update { state ->
@@ -889,6 +1017,10 @@ class CommunityViewModel @Inject constructor(
 
         refreshJob?.cancel()
         refreshJob = null
+
+        // ✅ Annuler tous les jobs de chargement de commentaires
+        commentLoadingJobs.values.forEach { it.cancel() }
+        commentLoadingJobs.clear()
 
         pendingActions.values.forEach { it.cancel() }
         pendingActions.clear()

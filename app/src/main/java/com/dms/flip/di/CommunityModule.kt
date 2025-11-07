@@ -1,7 +1,6 @@
 package com.dms.flip.di
 
 import com.dms.flip.BuildConfig
-import com.dms.flip.data.firebase.source.FeedSource
 import com.dms.flip.data.firebase.source.FirestoreFeedSource
 import com.dms.flip.data.firebase.source.FirestoreProfileSource
 import com.dms.flip.data.firebase.source.FirestoreFriendsSource
@@ -35,11 +34,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object CommunityModule {
-
-    @Provides
-    @Singleton
-    fun provideFeedSource(firestore: FirebaseFirestore, functions: FirebaseFunctions): FeedSource =
-        FirestoreFeedSource(firestore, functions)
 
     @Provides
     @Singleton

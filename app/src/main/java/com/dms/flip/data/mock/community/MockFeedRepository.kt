@@ -33,6 +33,17 @@ class MockFeedRepository @Inject constructor(
         return baseProfile.copy(relationshipStatus = relationship)
     }
 
+    override suspend fun fetchComments(
+        postId: String,
+        limit: Int
+    ): List<PostComment> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun refreshPost(postId: String): Post? {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun createPost(
         content: String,
         pleasureCategory: String?,

@@ -4,61 +4,62 @@ import com.dms.flip.domain.model.community.Paged
 import com.dms.flip.domain.model.community.Post
 import com.dms.flip.domain.model.community.PostComment
 import com.dms.flip.domain.repository.community.FeedRepository
-import com.dms.flip.domain.util.Result
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class ObserveFriendsFeedUseCase @Inject constructor(
-    private val feedRepository: FeedRepository
+class ObserveFriendsFeed @Inject constructor(
+    private val repo: FeedRepository
 ) {
-    operator fun invoke(limit: Int, cursor: String? = null): Flow<Paged<Post>> =
-        feedRepository.observeFriendsFeed(limit, cursor)
+    operator fun invoke(limit: Int, cursor: String?): Flow<Paged<Post>> =
+        repo.observeFriendsFeed(limit, cursor)
 }
 
-class ToggleLikeUseCase @Inject constructor(
-    private val feedRepository: FeedRepository
+class FetchComments @Inject constructor(
+    private val repo: FeedRepository
 ) {
-    suspend operator fun invoke(postId: String): Result<Unit> =
-        runCatching {
-            feedRepository.toggleLike(postId)
-        }.fold(
-            onSuccess = { Result.Ok(Unit) },
-            onFailure = { Result.Err(it) }
-        )
+    suspend operator fun invoke(postId: String, limit: Int): List<PostComment> =
+        repo.fetchComments(postId, limit)
 }
 
-class AddCommentUseCase @Inject constructor(
-    private val feedRepository: FeedRepository
+class ToggleLike @Inject constructor(
+    private val repo: FeedRepository
 ) {
-    suspend operator fun invoke(postId: String, content: String): Result<PostComment> =
-        runCatching {
-            feedRepository.addComment(postId, content)
-        }.fold(
-            onSuccess = { Result.Ok(it) },
-            onFailure = { Result.Err(it) }
-        )
+    suspend operator fun invoke(postId: String) = repo.toggleLike(postId)
 }
 
-class DeleteCommentUseCase @Inject constructor(
-    private val feedRepository: FeedRepository
+class AddComment @Inject constructor(
+    private val repo: FeedRepository
 ) {
-    suspend operator fun invoke(postId: String, commentId: String): Result<Unit> =
-        runCatching {
-            feedRepository.deleteComment(postId, commentId)
-        }.fold(
-            onSuccess = { Result.Ok(Unit) },
-            onFailure = { Result.Err(it) }
-        )
+    suspend operator fun invoke(postId: String, content: String): PostComment =
+        repo.addComment(postId, content)
 }
 
-class DeletePostUseCase @Inject constructor(
+class DeleteComment @Inject constructor(
+    private val repo: FeedRepository
+) {
+    suspend operator fun invoke(postId: String, commentId: String) =
+        repo.deleteComment(postId, commentId)
+}
+
+class DeletePost @Inject constructor(
     private val feedRepository: FeedRepository
 ) {
-    suspend operator fun invoke(postId: String): Result<Unit> =
-        runCatching {
-            feedRepository.deletePost(postId)
-        }.fold(
-            onSuccess = { Result.Ok(Unit) },
-            onFailure = { Result.Err(it) }
-        )
+    suspend operator fun invoke(postId: String) = feedRepository.deletePost(postId)
 }
+
+class RefreshPost @Inject constructor(
+    private val repo: FeedRepository
+) {
+    suspend operator fun invoke(postId: String): Post? =
+        repo.refreshPost(postId)
+}
+
+data class FeedUseCases @Inject constructor(
+    val observeFriendsFeed: ObserveFriendsFeed,
+    val fetchComments: FetchComments,
+    val toggleLike: ToggleLike,
+    val addComment: AddComment,
+    val deletePost: DeletePost,
+    val deleteComment: DeleteComment,
+    val refreshPost: RefreshPost
+)
