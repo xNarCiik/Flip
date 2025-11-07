@@ -1,7 +1,6 @@
 package com.dms.flip.ui.component
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +42,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dms.flip.R
-import com.dms.flip.ui.navigation.DailyPleasureRoute
 import com.dms.flip.ui.navigation.CommunityRootRoute
+import com.dms.flip.ui.navigation.DailyPleasureRoute
 import com.dms.flip.ui.navigation.WeeklyRoute
 import com.dms.flip.ui.theme.FlipTheme
 import com.dms.flip.ui.util.LightDarkPreview
@@ -88,52 +88,33 @@ fun BottomNavBar(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding(),
-        color = Color.Transparent,
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.95f))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top divider (visible)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
-                    .align(Alignment.TopCenter)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                tabBarItems.forEach { tabBarItem ->
-                    val isSelected =
-                        currentDestination?.route == tabBarItem.route::class.qualifiedName
-                    NavBarItem(
-                        isSelected = isSelected,
-                        icon = tabBarItem.icon,
-                        label = tabBarItem.title,
-                        badgeCount = tabBarItem.badgeCount,
-                        onClick = {
-                            if (!isSelected) {
-                                navController.navigate(tabBarItem.route) {
-                                    popUpTo(navController.graph.id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+            tabBarItems.forEach { tab ->
+                val isSelected =
+                    currentDestination?.route == tab.route::class.qualifiedName
+                NavBarItem(
+                    isSelected = isSelected,
+                    icon = tab.icon,
+                    label = tab.title,
+                    badgeCount = tab.badgeCount,
+                    onClick = {
+                        if (!isSelected) {
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
-                    )
-                }
+                    }
+                )
             }
         }
     }
@@ -147,28 +128,28 @@ private fun NavBarItem(
     badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
+    val activeColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+
     val iconColor by animateColorAsState(
-        targetValue = if (isSelected)
-            Color.White
-        else
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        targetValue = if (isSelected) activeColor else inactiveColor,
         animationSpec = tween(250),
         label = "iconColor"
     )
 
     val labelColor by animateColorAsState(
-        targetValue = if (isSelected)
-            Color.White
-        else
-            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        targetValue = if (isSelected) activeColor else inactiveColor,
         animationSpec = tween(250),
         label = "labelColor"
     )
 
-    val containerAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0f,
-        animationSpec = tween(250),
-        label = "containerAlpha"
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.05f)
+        else
+            Color.Transparent,
+        label = "bgColor"
     )
 
     Surface(
@@ -179,10 +160,7 @@ private fun NavBarItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(14.dp))
-                .background(
-                    MaterialTheme.colorScheme.surfaceVariant
-                        .copy(alpha = 0.25f * containerAlpha)
-                )
+                .background(bgColor)
                 .padding(horizontal = 18.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -191,13 +169,7 @@ private fun NavBarItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 if (badgeCount > 0) {
-                    BadgedBox(
-                        badge = {
-                            Badge {
-                                Text(text = badgeCount.toString())
-                            }
-                        }
-                    ) {
+                    BadgedBox(badge = { Badge { Text("$badgeCount") } }) {
                         Icon(
                             imageVector = icon,
                             contentDescription = label,

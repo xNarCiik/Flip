@@ -1,5 +1,6 @@
 package com.dms.flip.data.repository.community
 
+import android.R.attr.author
 import android.net.Uri
 import android.util.Log
 import com.dms.flip.data.cache.ProfileBatchLoader
@@ -53,7 +54,10 @@ class FeedRepositoryImpl @Inject constructor(
                 } catch (e: Exception) {
                     val message = e.message ?: ""
                     if (message.contains("PERMISSION_DENIED", ignoreCase = true)) {
-                        Log.w(TAG, "⚠️ Permission denied while loading authors — ignoring restricted users")
+                        Log.w(
+                            TAG,
+                            "⚠️ Permission denied while loading authors — ignoring restricted users"
+                        )
                         emptyMap()
                     } else {
                         Log.e(TAG, "❌ Unexpected error loading authors", e)
@@ -69,11 +73,15 @@ class FeedRepositoryImpl @Inject constructor(
                                 ?: createFallbackProfile(document.data.authorId)
 
                             try {
-                                observeLightPost(
-                                    postId = document.id,
-                                    postDto = document.data,
-                                    author = author,
-                                    currentUserId = uid
+                                val isLiked = feedSource.isPostLiked(document.id, uid)
+
+                                flowOf(
+                                    document.data.toDomain(
+                                        id = document.id,
+                                        author = author,
+                                        comments = emptyList(),
+                                        isLiked = isLiked
+                                    )
                                 )
                             } catch (e: Exception) {
                                 val msg = e.message ?: ""
@@ -106,59 +114,6 @@ class FeedRepositoryImpl @Inject constructor(
             .flatMapLatest { it }
     }
 
-    /**
-     * 🔦 Version “light” : only like status (temps réel) + infos statiques du post/auteur
-     * Pas de commentaires ici.
-     */
-    private fun observeLightPost(
-        postId: String,
-        postDto: PostDto,
-        author: PublicProfile,
-        currentUserId: String
-    ): Flow<Post> {
-        val likeFlow = feedSource.observePostLikeStatus(postId, currentUserId)
-
-        return likeFlow
-            .map { isLiked ->
-                postDto.toDomain(
-                    id = postId,
-                    author = author,
-                    comments = emptyList(),
-                    isLiked = isLiked
-                )
-            }
-            // éviter des recompositions inutiles si la projection n'a pas changé
-            .distinctUntilChanged()
-            // émettre un état initial en attendant le premier snapshot
-            .onStart {
-                emit(
-                    postDto.toDomain(
-                        id = postId,
-                        author = author,
-                        comments = emptyList(),
-                        isLiked = false
-                    )
-                )
-            }
-            // ignorer proprement un PERMISSION_DENIED
-            .catch { e ->
-                val msg = e.message.orEmpty()
-                if (msg.contains("PERMISSION_DENIED", ignoreCase = true)) {
-                    // On garde le post visible mais sans like local
-                    emit(
-                        postDto.toDomain(
-                            id = postId,
-                            author = author,
-                            comments = emptyList(),
-                            isLiked = false
-                        )
-                    )
-                } else {
-                    throw e
-                }
-            }
-    }
-
     // ——————————————
     // Chargements à la demande
     // ——————————————
@@ -175,8 +130,13 @@ class FeedRepositoryImpl @Inject constructor(
     override suspend fun refreshPost(postId: String): Post? {
         val uid = auth.currentUser?.uid ?: return null
         val dto = feedSource.refreshPost(postId) ?: return null
-        val author = profileBatchLoader.loadProfile(dto.authorId) ?: createFallbackProfile(dto.authorId)
-        val isLiked = try { feedSource.isPostLiked(postId, uid) } catch (_: Exception) { false }
+        val author =
+            profileBatchLoader.loadProfile(dto.authorId) ?: createFallbackProfile(dto.authorId)
+        val isLiked = try {
+            feedSource.isPostLiked(postId, uid)
+        } catch (_: Exception) {
+            false
+        }
         return dto.toDomain(
             id = postId,
             author = author,
@@ -241,5 +201,7 @@ class FeedRepositoryImpl @Inject constructor(
     fun getCacheStats() = profileBatchLoader.getCacheStats()
     fun cleanupExpiredCache() = profileBatchLoader.cleanupExpired()
 
-    companion object { private const val TAG = "FeedRepositoryImpl" }
+    companion object {
+        private const val TAG = "FeedRepositoryImpl"
+    }
 }

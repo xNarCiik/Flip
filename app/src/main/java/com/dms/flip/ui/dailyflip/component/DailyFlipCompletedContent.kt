@@ -3,7 +3,6 @@ package com.dms.flip.ui.dailyflip.component
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -13,7 +12,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,9 +30,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +55,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.*
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.dms.flip.R
 import com.dms.flip.domain.model.Pleasure
 import com.dms.flip.domain.model.community.icon
@@ -105,147 +127,174 @@ fun DailyFlipCompletedContent(
 
     val categoryColor = completedPleasure?.category?.iconTint ?: MaterialTheme.colorScheme.primary
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        AnimatedVisibility(
-            visible = showHero,
-            enter = fadeIn(tween(600, easing = FastOutSlowInEasing)) +
-                    scaleIn(
-                        initialScale = 0.85f,
-                        animationSpec = tween(600, easing = FastOutSlowInEasing)
-                    )
+    Box(modifier = modifier.fillMaxSize()) {
+        // Contenu scrollable
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp, bottom = 100.dp), // Espace pour le bouton sticky
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(130.dp)
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.radialGradient(
-                            listOf(categoryColor.copy(0.3f), Color.Transparent)
+            AnimatedVisibility(
+                visible = showHero,
+                enter = fadeIn(tween(600, easing = FastOutSlowInEasing)) +
+                        scaleIn(
+                            initialScale = 0.85f,
+                            animationSpec = tween(600, easing = FastOutSlowInEasing)
                         )
-                    ),
-                contentAlignment = Alignment.Center
             ) {
-                val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
-                    0.9f, 1.1f,
-                    animationSpec = infiniteRepeatable(
-                        tween(1200, easing = FastOutSlowInEasing),
-                        RepeatMode.Reverse
-                    ),
-                    label = "pulse"
-                )
                 Box(
                     modifier = Modifier
-                        .size((110 * pulse).dp)
+                        .size(130.dp)
+                        .clip(CircleShape)
                         .background(
                             brush = Brush.radialGradient(
-                                listOf(categoryColor.copy(0.25f), Color.Transparent)
-                            ),
-                            shape = CircleShape
-                        )
-                )
-                LottieAnimation(
-                    composition = checkmarkComposition,
-                    progress = { if (hasPlayedConfetti) 1f else checkmarkProgress },
-                    modifier = Modifier.size(110.dp)
-                )
-                this@Column.AnimatedVisibility(visible = playConfetti) {
+                                listOf(categoryColor.copy(0.3f), Color.Transparent)
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
+                        0.9f, 1.1f,
+                        animationSpec = infiniteRepeatable(
+                            tween(1200, easing = FastOutSlowInEasing),
+                            RepeatMode.Reverse
+                        ),
+                        label = "pulse"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size((110 * pulse).dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    listOf(categoryColor.copy(0.25f), Color.Transparent)
+                                ),
+                                shape = CircleShape
+                            )
+                    )
                     LottieAnimation(
-                        composition = confettiComposition,
-                        progress = { confettiProgress },
-                        modifier = Modifier.fillMaxSize()
+                        composition = checkmarkComposition,
+                        progress = { if (hasPlayedConfetti) 1f else checkmarkProgress },
+                        modifier = Modifier.size(110.dp)
+                    )
+                    this@Column.AnimatedVisibility(visible = playConfetti) {
+                        LottieAnimation(
+                            composition = confettiComposition,
+                            progress = { confettiProgress },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn(tween(600, delayMillis = 100)) +
+                        scaleIn(initialScale = 0.9f, animationSpec = tween(600))
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.daily_flip_completed_title),
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.daily_flip_completed_subtitle),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             }
-        }
 
-        AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(600, delayMillis = 100)) +
-                    scaleIn(initialScale = 0.9f, animationSpec = tween(600))
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn(tween(700, delayMillis = 250)) +
+                        scaleIn(initialScale = 0.95f, animationSpec = tween(700))
+            ) {
+                completedPleasure?.let {
+                    PleasureCard(
+                        icon = it.category.icon,
+                        iconTint = categoryColor,
+                        label = stringResource(R.string.daily_flip_completed_pleasure_label),
+                        title = it.title,
+                        description = it.description,
+                        isCompleted = true,
+                        showChevron = true,
+                        onClick = onPleasureClick
+                    )
+                }
+            }
+
+            val quotes = listOf(
+                "Chaque petit plaisir construit ton bonheur.",
+                "Les moments simples font les plus beaux souvenirs.",
+                "Savourer, c'est déjà vivre deux fois.",
+                "Aujourd'hui, tu t'es choisi. Et c'est beau."
+            )
+            val randomQuote = remember { quotes.random() }
+
+            AnimatedVisibility(
+                visible = showExtras,
+                enter = fadeIn(tween(700, delayMillis = 300)) +
+                        scaleIn(initialScale = 0.95f, animationSpec = tween(700))
+            ) {
                 Text(
-                    text = stringResource(R.string.daily_flip_completed_title),
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.daily_flip_completed_subtitle),
+                    text = "« $randomQuote »",
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center
                     ),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 12.dp)
                 )
+            }
+
+            AnimatedVisibility(
+                visible = showExtras,
+                enter = fadeIn(tween(800, delayMillis = 400)) +
+                        scaleIn(initialScale = 0.95f, animationSpec = tween(800))
+            ) {
+                NextDrawInfoCard()
             }
         }
 
-        AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(700, delayMillis = 250)) +
-                    scaleIn(initialScale = 0.95f, animationSpec = tween(700))
-        ) {
-            completedPleasure?.let {
-                PleasureCard(
-                    icon = it.category.icon,
-                    iconTint = categoryColor,
-                    label = stringResource(R.string.daily_flip_completed_pleasure_label),
-                    title = it.title,
-                    description = it.description,
-                    isCompleted = true,
-                    showChevron = true,
-                    onClick = onPleasureClick
+        // Dégradé de transition
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                            MaterialTheme.colorScheme.background
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
                 )
-            }
-        }
-
-        val quotes = listOf(
-            "Chaque petit plaisir construit ton bonheur.",
-            "Les moments simples font les plus beaux souvenirs.",
-            "Savourer, c'est déjà vivre deux fois.",
-            "Aujourd'hui, tu t'es choisi. Et c'est beau."
         )
-        val randomQuote = remember { quotes.random() }
 
+        // Bouton sticky en bas
         AnimatedVisibility(
             visible = showExtras,
-            enter = fadeIn(tween(700, delayMillis = 300)) +
-                    scaleIn(initialScale = 0.95f, animationSpec = tween(700))
-        ) {
-            Text(
-                text = "« $randomQuote »",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center
-                ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 12.dp)
-            )
-        }
-
-        AnimatedVisibility(
-            visible = showExtras,
-            enter = fadeIn(tween(800, delayMillis = 400)) +
-                    scaleIn(initialScale = 0.95f, animationSpec = tween(800))
-        ) {
-            NextDrawInfoCard()
-        }
-
-        AnimatedVisibility(
-            visible = showExtras,
-            enter = fadeIn(tween(900, delayMillis = 500))
+            enter = fadeIn(tween(900, delayMillis = 500)),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
         ) {
             val scale = remember { Animatable(1f) }
             LaunchedEffect(showExtras) {
@@ -258,33 +307,40 @@ fun DailyFlipCompletedContent(
                 }
             }
 
-            Button(
-                onClick = onShareClick,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp)
-                    .scale(scale.value)
-                    .shadow(
-                        elevation = 10.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        spotColor = categoryColor.copy(alpha = 0.3f)
-                    ),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = categoryColor,
-                    contentColor = Color.White
-                )
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.share_moment_button),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
+                Button(
+                    onClick = onShareClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .scale(scale.value)
+                        .shadow(
+                            elevation = 12.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            spotColor = categoryColor.copy(alpha = 0.35f)
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = categoryColor,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.share_moment_button),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
         }
     }

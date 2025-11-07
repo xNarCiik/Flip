@@ -58,35 +58,35 @@ val DarkColorScheme = darkColorScheme(
     outline = DarkOutline
 )
 
-// ========== LIGHT THEME COLORS ==========
-// TODO: À ajuster plus tard si nécessaire pour le mode clair
+// ========== LIGHT THEME COLORS (Mise à jour complète) ==========
 
-val LightPrimary = Color(0xFF2B6CB0) // Bleu moyen pour le light mode
+val LightPrimary = Color(0xFFE91E63) // Rose Flip (accent principal)
 val LightOnPrimary = Color(0xFFFFFFFF)
-val LightPrimaryContainer = Color(0xFFD4E3FF)
-val LightOnPrimaryContainer = Color(0xFF001B3D)
+val LightPrimaryContainer = Color(0xFFFFEBEE) // Fond rosé clair
+val LightOnPrimaryContainer = Color(0xFF31111D)
 
-val LightSecondary = Color(0xFF006874)
+val LightSecondary = Color(0xFFFF8A65) // Coral (utilisé pour actions et boutons)
 val LightOnSecondary = Color(0xFFFFFFFF)
-val LightSecondaryContainer = Color(0xFFB8EAFA)
-val LightOnSecondaryContainer = Color(0xFF001F24)
+val LightSecondaryContainer = Color(0xFFFFCCBC)
+val LightOnSecondaryContainer = Color(0xFF3E2723)
 
-val LightTertiary = Color(0xFF006D44)
+val LightTertiary = Color(0xFF7C4DFF) // Violet accent léger pour créativité
 val LightOnTertiary = Color(0xFFFFFFFF)
-val LightTertiaryContainer = Color(0xFF83FAAE)
-val LightOnTertiaryContainer = Color(0xFF002111)
+val LightTertiaryContainer = Color(0xFFEDE7F6)
+val LightOnTertiaryContainer = Color(0xFF1C006B)
 
 val LightError = Color(0xFFB3261E)
 val LightOnError = Color(0xFFFFFFFF)
 
-val LightBackground = Color(0xFFF6F7F8) // #f6f7f8 du HTML
+val LightBackground = Color(0xFFFFFFFF) // Fond blanc pur pour contraste et propreté
 val LightOnBackground = Color(0xFF1B1B1F)
-val LightSurface = Color(0xFFFAFAFA) // Fond des cartes claires
+
+val LightSurface = Color(0xFFFFFFFF) // Fond carte blanc
 val LightOnSurface = Color(0xFF1B1B1F)
-val LightSurfaceVariant = Color(0xFFE7E0EC) // Fond plus clair
+val LightSurfaceVariant = Color(0xFFF7F2F8) // Rosé très léger, utilisé sur cartes et dialogues
 val LightOnSurfaceVariant = Color(0xFF49454E)
-val LightSurfaceContainer = Color(0xFFECECEC) // Container cards light
-val LightOutline = Color(0xFF79747E)
+val LightSurfaceContainer = Color(0xFFF8F6F8) // Fond global légèrement teinté
+val LightOutline = Color(0xFFD0C6D6) // Bordures subtiles lavande-rosé
 
 val LightColorScheme = lightColorScheme(
     primary = LightPrimary,

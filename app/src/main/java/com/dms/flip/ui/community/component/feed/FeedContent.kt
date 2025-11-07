@@ -51,6 +51,8 @@ fun FeedContent(
     posts: List<Post>,
     expandedPostId: String?,
     currentUserId: String?,
+    activeComments: Map<String, List<PostComment>> = emptyMap(),
+    isLoadingComments: Map<String, Boolean> = emptyMap(),
     isLoadingMore: Boolean = false,
     hasMorePages: Boolean = true,
     onEvent: (CommunityEvent) -> Unit,
@@ -110,10 +112,16 @@ fun FeedContent(
     ) {
         items(items = posts, key = { it.id }) { post ->
             val isOwnPost = post.author.id == currentUserId
+            val isExpanded = post.id == expandedPostId
+            val comments = activeComments[post.id] ?: emptyList()
+            val isLoadingPostComments = isLoadingComments[post.id] ?: false
+
             PostCard(
                 post = post,
-                isExpanded = post.id == expandedPostId,
+                isExpanded = isExpanded,
                 isOwnPost = isOwnPost,
+                comments = comments,
+                isLoadingComments = isLoadingPostComments,
                 onLike = { onEvent(CommunityEvent.OnPostLiked(post.id)) },
                 onComment = { onEvent(CommunityEvent.OnToggleComments(post.id)) },
                 onMenu = { onPostMenuClick(post) },
@@ -122,7 +130,7 @@ fun FeedContent(
                     onEvent(CommunityEvent.OnAddComment(post.id, comment))
                 },
                 onCommentUserClick = { comment ->
-                    // TODO onEvent(CommunityEvent.OnViewProfile(comment.id))
+                    // TODO onEvent(CommunityEvent.OnViewProfile(comment.user))
                 },
                 onOwnCommentLongPress = { comment ->
                     onOwnCommentLongPress(post.id, comment)
@@ -329,6 +337,8 @@ private fun FeedPreview(
                 posts = posts,
                 expandedPostId = posts.firstOrNull()?.id,
                 currentUserId = posts.firstOrNull()?.author?.id,
+                activeComments = emptyMap(),
+                isLoadingComments = emptyMap(),
                 onEvent = {},
                 onPostMenuClick = {},
                 onOwnCommentLongPress = { _, _ -> },

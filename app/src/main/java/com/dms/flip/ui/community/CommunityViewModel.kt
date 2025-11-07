@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.minutes
 
 private const val FEED_PAGE_SIZE = 20
@@ -310,7 +311,9 @@ class CommunityViewModel @Inject constructor(
                     }
             } catch (t: Throwable) {
                 Log.e(TAG, "❌ Fatal error in observations", t)
-                handleError(t, stopInitial = true, stopRefresh = false)
+                if (t !is CancellationException) {
+                    handleError(t, stopInitial = true, stopRefresh = false)
+                }
             }
         }
     }
@@ -522,7 +525,7 @@ class CommunityViewModel @Inject constructor(
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // AUTRES ACTIONS (INCHANGÉ)
+    // AUTRES ACTIONS
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private fun togglePostLike(postId: String) {
@@ -550,6 +553,8 @@ class CommunityViewModel @Inject constructor(
                     state.copy(actionStatus = state.actionStatus - actionKey)
                 }
             } catch (e: Exception) {
+                // On ignore l'erreur et rollback
+                Log.e(TAG, "❌ Failed to toggle like", e)
                 _uiState.update { state ->
                     state.copy(
                         posts = state.posts.updatePost(postId) { post ->

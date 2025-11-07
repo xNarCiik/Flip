@@ -133,35 +133,6 @@ class FirestoreFeedSource @Inject constructor(
         }
     }
 
-    // ✅ On continue d’observer en temps réel UNIQUEMENT le like status
-    fun observePostLikeStatus(postId: String, uid: String): Flow<Boolean> = callbackFlow {
-        Log.d(TAG, "🔵 START observing like status for post $postId by user $uid")
-
-        val reg = firestore.collection("posts")
-            .document(postId)
-            .collection("likes")
-            .document(uid)
-            .addSnapshotListener { snap, err ->
-                if (err != null) {
-                    if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                        Log.w(TAG, "Listener 'like status' pour $postId détaché (post sûrement supprimé).")
-                        return@addSnapshotListener
-                    }
-                    Log.e(TAG, "❌ Error observing like status for $postId", err)
-                    close(err)
-                    return@addSnapshotListener
-                }
-                val isLiked = snap?.exists() == true
-                Log.d(TAG, "✅ Like status updated for $postId: $isLiked")
-                trySend(isLiked)
-            }
-
-        awaitClose {
-            Log.d(TAG, "🔴 STOP observing like status for post $postId")
-            reg.remove()
-        }
-    }
-
     // ✅ Chargement “à la demande” des commentaires
     suspend fun getComments(postId: String, limit: Int): List<Pair<String, CommentDto>> {
         Log.d(TAG, "📖 Getting comments snapshot for post $postId (limit: $limit)")

@@ -167,6 +167,8 @@ fun CommunityScreen(
                                 posts = uiState.posts,
                                 expandedPostId = uiState.expandedPostId,
                                 currentUserId = uiState.currentUserId,
+                                activeComments = uiState.activeComments,
+                                isLoadingComments = uiState.isLoadingComments,
                                 isLoadingMore = uiState.isLoadingMorePosts,
                                 hasMorePages = uiState.feedNextCursor != null,
                                 onEvent = onEvent,
