@@ -62,7 +62,7 @@ fun DailyFlipScreen(
 ) {
     val context = LocalContext.current
     val screenState = uiState.screenState
-    val avatarFallback = uiState.userInfo?.username?.firstOrNull()?.uppercase() ?: "?"
+    val avatarFallback = uiState.userInfo?.username?.firstOrNull()?.uppercase() ?: ""
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.isSharing, uiState.shareError, uiState.showShareBottomSheet) {

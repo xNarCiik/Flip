@@ -1,13 +1,8 @@
 package com.dms.flip.ui.community.component.feed
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,6 +51,7 @@ import com.dms.flip.ui.util.previewPosts
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun PostCard(
+    modifier: Modifier = Modifier,
     post: Post,
     isExpanded: Boolean,
     isOwnPost: Boolean,
@@ -69,8 +65,7 @@ fun PostCard(
     onCommentUserClick: (PostComment) -> Unit,
     onOwnCommentLongPress: (PostComment) -> Unit,
     onOwnPostLongPress: (() -> Unit)?,
-    currentUserId: String?,
-    modifier: Modifier = Modifier
+    currentUserId: String?
 ) {
     val haptic = LocalHapticFeedback.current
     val pressModifier = if (isOwnPost && onOwnPostLongPress != null) {
