@@ -13,15 +13,14 @@ import javax.inject.Singleton
 class SearchRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val searchSource: SearchSource,
-    private val friendsSource: FriendsSource,
-    private val friendsRequestsSource: FriendsSource
+    private val friendsSource: FriendsSource
 ) : SearchRepository {
 
     override suspend fun searchUsers(query: String, limit: Int): List<UserSearchResult> {
         val uid = auth.currentUser?.uid ?: return emptyList()
         val friends = friendsSource.getFriendIds(uid)
-        val pendingReceived = friendsRequestsSource.getPendingReceivedIds(uid)
-        val pendingSent = friendsRequestsSource.getPendingSentIds(uid)
+        val pendingReceived = friendsSource.getPendingReceivedIds(uid)
+        val pendingSent = friendsSource.getPendingSentIds(uid)
         return searchSource.searchUsers(query, limit)
             .filter { it.id != uid }
             .map { dto ->

@@ -118,9 +118,7 @@ class ProfileBatchLoader @Inject constructor(
             val currentUid =
                 auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
 
-            // ✅ Diviser en chunks de 30 (limite Firestore whereIn)
             val chunks = userIds.chunked(30)
-
             Log.d(TAG, "⚡ Loading ${userIds.size} profiles in ${chunks.size} parallel chunks...")
 
             val deferreds = chunks.map { chunk ->
@@ -137,8 +135,20 @@ class ProfileBatchLoader @Inject constructor(
                             }
                         }.toMap()
                     } catch (e: Exception) {
-                        Log.e(TAG, "❌ Failed to load chunk", e)
-                        emptyMap()
+                        val message = e.message ?: ""
+                        if (message.contains("PERMISSION_DENIED", ignoreCase = true)) {
+                            Log.w(TAG, "⚠️ Permission denied while loading chunk (${chunk.size} users). Ignoring.")
+
+                            chunk.forEach { userId ->
+                                cache.remove(userId)
+                                Log.d(TAG, "🗑️ Removed $userId from cache due to permission loss")
+                            }
+
+                            emptyMap()
+                        } else {
+                            Log.e(TAG, "❌ Failed to load chunk (${chunk.size} users)", e)
+                            emptyMap()
+                        }
                     }
                 }
             }

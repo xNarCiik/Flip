@@ -43,36 +43,74 @@ class FeedRepositoryImpl @Inject constructor(
             .map { page ->
                 Log.d(TAG, "📦 Received ${page.items.size} posts from Firestore")
 
-                // ✅ OPTIMISATION 1 : Batch load de tous les auteurs en UNE opération
                 val authorIds = page.items.map { it.data.authorId }.distinct()
                 Log.d(TAG, "👥 Loading ${authorIds.size} unique authors...")
 
-                val authorProfiles = profileBatchLoader.loadProfiles(authorIds)
+                val authorProfiles = try {
+                    profileBatchLoader.loadProfiles(authorIds)
+                } catch (e: Exception) {
+                    val message = e.message ?: ""
+                    if (message.contains("PERMISSION_DENIED", ignoreCase = true)) {
+                        Log.w(TAG, "⚠️ Permission denied while loading authors — ignoring restricted users")
+                        emptyMap()
+                    } else {
+                        Log.e(TAG, "❌ Unexpected error loading authors", e)
+                        emptyMap()
+                    }
+                }
+
                 Log.d(TAG, "✅ Loaded ${authorProfiles.size} author profiles")
 
-                // ✅ OPTIMISATION 2 : Créer les Flows de posts avec les profils déjà chargés
                 val posts = coroutineScope {
                     page.items.map { document ->
                         async {
                             val author = authorProfiles[document.data.authorId]
                                 ?: createFallbackProfile(document.data.authorId)
 
-                            observePostWithRealTimeUpdates(
-                                postId = document.id,
-                                postDto = document.data,
-                                author = author,
-                                currentUserId = uid
-                            )
+                            try {
+                                observePostWithRealTimeUpdates(
+                                    postId = document.id,
+                                    postDto = document.data,
+                                    author = author,
+                                    currentUserId = uid
+                                )
+                            } catch (e: Exception) {
+                                val msg = e.message ?: ""
+                                if (msg.contains("PERMISSION_DENIED", ignoreCase = true)) {
+                                    Log.w(TAG, "⚠️ Ignoring post ${document.id} (permission denied)")
+
+                                    flowOf(
+                                        document.data.toDomain(
+                                            id = document.id,
+                                            author = createFallbackProfile(document.data.authorId),
+                                            comments = emptyList(),
+                                            isLiked = false,
+                                            likesCount = 0
+                                        )
+                                    )
+                                } else {
+                                    Log.e(TAG, "❌ Failed to observe post ${document.id}", e)
+                                    flowOf(
+                                        document.data.toDomain(
+                                            id = document.id,
+                                            author = createFallbackProfile(document.data.authorId),
+                                            comments = emptyList(),
+                                            isLiked = false,
+                                            likesCount = 0
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }.awaitAll()
                 }
 
                 Log.d(TAG, "🔄 Created ${posts.size} post flows with real-time updates")
 
-                // Combiner tous les Flows de posts
                 combine(posts) { postArray ->
-                    Log.d(TAG, "📤 Emitting page with ${postArray.size} posts")
-                    Paged(postArray.toList(), page.nextCursor)
+                    val safePosts = postArray.filterNotNull()
+                    Log.d(TAG, "📤 Emitting page with ${safePosts.size} posts")
+                    Paged(safePosts, page.nextCursor)
                 }
             }
             .flatMapLatest { it }

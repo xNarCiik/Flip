@@ -50,7 +50,6 @@ class FirestoreFeedSource @Inject constructor(
             return@callbackFlow
         }
 
-        // ✅ Récupérer le document cursor si fourni
         var cursorDocument: DocumentSnapshot? = null
         if (cursor != null) {
             try {
@@ -67,41 +66,53 @@ class FirestoreFeedSource @Inject constructor(
         val chunkFlows = chunks.mapIndexed { index, ids ->
             callbackFlow {
                 Log.d(TAG, "🔷 START chunk $index with ${ids.size} friends")
-                
+
                 var query = firestore.collection("posts")
                     .whereIn("authorId", ids)
                     .orderBy("timestamp", Query.Direction.DESCENDING)
-                
-                // ✅ Appliquer le cursor si disponible
+
                 if (cursorDocument != null && cursorDocument.exists()) {
                     query = query.startAfter(cursorDocument)
                 }
-                
+
                 query = query.limit(limit.toLong())
 
-                val reg = query.addSnapshotListener { snap, err ->
+                val registration = query.addSnapshotListener { snap, err ->
                     if (err != null) {
+                        if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                            Log.w(
+                                TAG,
+                                "⚠️ Chunk $index skipped (permission denied for one or more authors)"
+                            )
+                            // 🔹 On ignore ce chunk, envoie une liste vide pour qu’il disparaisse du feed
+                            trySend(emptyList())
+                            return@addSnapshotListener
+                        }
+
                         Log.e(TAG, "❌ Error in chunk $index", err)
-                        close(err)
+                        trySend(emptyList())
                         return@addSnapshotListener
                     }
+
                     if (snap == null) {
                         Log.w(TAG, "⚠️ Null snapshot in chunk $index")
+                        trySend(emptyList())
                         return@addSnapshotListener
                     }
-                    
+
                     val docs = snap.documents.mapNotNull { d ->
                         d.toObject(PostDto::class.java)?.let { dto ->
                             FeedSource.PostDocument(d.id, dto)
                         }
                     }
-                    
+
                     Log.d(TAG, "✅ Chunk $index updated: ${docs.size} posts")
                     trySend(docs)
                 }
-                awaitClose { 
+
+                awaitClose {
                     Log.d(TAG, "🔴 STOP chunk $index")
-                    reg.remove() 
+                    registration.remove()
                 }
             }
         }
@@ -119,9 +130,9 @@ class FirestoreFeedSource @Inject constructor(
             }
         }
 
-        awaitClose { 
+        awaitClose {
             Log.d(TAG, "🔴 STOP observeFriendsFeed")
-            job.cancel() 
+            job.cancel()
         }
     }
 

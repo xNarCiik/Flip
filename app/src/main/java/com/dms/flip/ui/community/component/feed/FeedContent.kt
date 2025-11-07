@@ -72,11 +72,14 @@ fun FeedContent(
     // Détection si on est proche de la fin (3 items avant la fin)
     val shouldLoadMore by remember {
         derivedStateOf {
-            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
+            val layoutInfo = listState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
 
-            // Charger plus si on est à 3 items de la fin
-            lastVisibleIndex >= totalItems - 3 && totalItems > 0
+            // ✅ Charger plus uniquement si :
+            // 1. Il y a au moins 6 items (donc liste scrollable)
+            // 2. On est à moins de 3 items de la fin
+            totalItems > 6 && lastVisibleIndex >= totalItems - 3
         }
     }
 

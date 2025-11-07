@@ -9,20 +9,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CommunityAvatar(
     modifier: Modifier = Modifier,
@@ -31,8 +32,23 @@ fun CommunityAvatar(
     textStyle: TextStyle = MaterialTheme.typography.titleMedium,
     size: Dp = 48.dp,
     borderColor: Color = Color.Transparent,
-    borderWidth: Dp = 2.dp
+    borderWidth: Dp = 1.dp
 ) {
+    val context = LocalContext.current
+
+    // ✅ Memorize fallback for stability
+    val fallback = remember(fallbackText) { fallbackText.ifBlank { "?" } }
+
+    // ✅ Coil image request with full caching
+    val imageRequest = remember(imageUrl) {
+        ImageRequest.Builder(context)
+            .data(imageUrl)
+            .crossfade(true)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .build()
+    }
+
     Box(
         modifier = modifier
             .size(size)
@@ -41,32 +57,29 @@ fun CommunityAvatar(
                     Modifier
                         .border(
                             width = borderWidth,
-                            color = borderColor.copy(alpha = 0.6f),
+                            color = borderColor.copy(alpha = 0.5f),
                             shape = CircleShape
                         )
                         .padding(borderWidth)
-                } else {
-                    Modifier
-                }
+                } else Modifier
             )
             .clip(CircleShape)
-            .shadow(4.dp, CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center
     ) {
         if (!imageUrl.isNullOrBlank()) {
-            GlideImage(
-                model = imageUrl,
-                contentDescription = fallbackText,
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = "Avatar of $fallback",
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop
             )
         } else {
             Text(
-                text = fallbackText.ifBlank { "?" },
+                text = fallback,
                 style = textStyle,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
