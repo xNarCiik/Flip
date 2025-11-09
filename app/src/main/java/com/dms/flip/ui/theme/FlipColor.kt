@@ -58,35 +58,35 @@ val DarkColorScheme = darkColorScheme(
     outline = DarkOutline
 )
 
-// ========== LIGHT THEME COLORS (Mise à jour complète) ==========
+// ========== LIGHT THEME COLORS (Harmonisés avec le mode sombre) ==========
 
-val LightPrimary = Color(0xFFE91E63) // Rose Flip (accent principal)
+val LightPrimary = Color(0xFF3B5BF6) // Bleu principal cohérent avec la version sombre
 val LightOnPrimary = Color(0xFFFFFFFF)
-val LightPrimaryContainer = Color(0xFFFFEBEE) // Fond rosé clair
-val LightOnPrimaryContainer = Color(0xFF31111D)
+val LightPrimaryContainer = Color(0xFFE1E7FF)
+val LightOnPrimaryContainer = Color(0xFF00174B)
 
-val LightSecondary = Color(0xFFFF8A65) // Coral (utilisé pour actions et boutons)
+val LightSecondary = Color(0xFF6750FF) // Violet/bleu pour les actions secondaires
 val LightOnSecondary = Color(0xFFFFFFFF)
-val LightSecondaryContainer = Color(0xFFFFCCBC)
-val LightOnSecondaryContainer = Color(0xFF3E2723)
+val LightSecondaryContainer = Color(0xFFE6E0FF)
+val LightOnSecondaryContainer = Color(0xFF1B0060)
 
-val LightTertiary = Color(0xFF7C4DFF) // Violet accent léger pour créativité
+val LightTertiary = Color(0xFF006D52) // Vert doux pour états positifs
 val LightOnTertiary = Color(0xFFFFFFFF)
-val LightTertiaryContainer = Color(0xFFEDE7F6)
-val LightOnTertiaryContainer = Color(0xFF1C006B)
+val LightTertiaryContainer = Color(0xFFBDECE0)
+val LightOnTertiaryContainer = Color(0xFF002018)
 
-val LightError = Color(0xFFB3261E)
+val LightError = Color(0xFFBA1A1A)
 val LightOnError = Color(0xFFFFFFFF)
 
-val LightBackground = Color(0xFFFFFFFF) // Fond blanc pur pour contraste et propreté
+val LightBackground = Color(0xFFF7F8FF) // Fond légèrement bleuté
 val LightOnBackground = Color(0xFF1B1B1F)
 
-val LightSurface = Color(0xFFFFFFFF) // Fond carte blanc
+val LightSurface = Color(0xFFFFFFFF)
 val LightOnSurface = Color(0xFF1B1B1F)
-val LightSurfaceVariant = Color(0xFFF7F2F8) // Rosé très léger, utilisé sur cartes et dialogues
-val LightOnSurfaceVariant = Color(0xFF49454E)
-val LightSurfaceContainer = Color(0xFFF8F6F8) // Fond global légèrement teinté
-val LightOutline = Color(0xFFD0C6D6) // Bordures subtiles lavande-rosé
+val LightSurfaceVariant = Color(0xFFE1E2ED)
+val LightOnSurfaceVariant = Color(0xFF444559)
+val LightSurfaceContainer = Color(0xFFEAEAF6)
+val LightOutline = Color(0xFF7A8099)
 
 val LightColorScheme = lightColorScheme(
     primary = LightPrimary,

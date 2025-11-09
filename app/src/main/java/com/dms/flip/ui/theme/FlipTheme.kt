@@ -3,8 +3,12 @@ package com.dms.flip.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+
+val LocalFlipThemeIsDark = staticCompositionLocalOf { false }
 
 @Composable
 fun FlipTheme(
@@ -16,12 +20,14 @@ fun FlipTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        shapes = AppShapes,
-        content = content
-    )
+    CompositionLocalProvider(LocalFlipThemeIsDark provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content
+        )
+    }
 }
 
 object FlipGradient {
@@ -118,7 +124,8 @@ data class FlipGradients(
 )
 
 @Composable
-fun flipGradients(useDarkTheme: Boolean = isSystemInDarkTheme()): FlipGradients {
+fun flipGradients(): FlipGradients {
+    val useDarkTheme = LocalFlipThemeIsDark.current
     return FlipGradients(
         card = FlipGradient.cardGradient(useDarkTheme),
         actionButton = FlipGradient.actionButtonGradient(useDarkTheme),
