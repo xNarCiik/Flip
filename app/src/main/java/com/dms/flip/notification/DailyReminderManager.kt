@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.AlarmManagerCompat
 import java.util.Calendar
+import androidx.core.content.edit
 
 class DailyReminderManager(private val context: Context) {
 
@@ -15,14 +16,14 @@ class DailyReminderManager(private val context: Context) {
     fun schedule(time: String) {
         val (hour, minute) = parseTime(time)
         val normalizedTime = "%02d:%02d".format(hour, minute)
-        preferences.edit().putString(KEY_SCHEDULED_TIME, normalizedTime).apply()
+        preferences.edit { putString(KEY_SCHEDULED_TIME, normalizedTime) }
 
         val pendingIntent = createPendingIntent()
         alarmManager.cancel(pendingIntent)
 
         val triggerAtMillis = calculateTriggerTime(hour, minute)
 
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
+        AlarmManagerCompat.setAndAllowWhileIdle(
             alarmManager,
             AlarmManager.RTC_WAKEUP,
             triggerAtMillis,
@@ -38,7 +39,7 @@ class DailyReminderManager(private val context: Context) {
     fun cancel() {
         val pendingIntent = createPendingIntent()
         alarmManager.cancel(pendingIntent)
-        preferences.edit().remove(KEY_SCHEDULED_TIME).apply()
+        preferences.edit { remove(KEY_SCHEDULED_TIME) }
     }
 
     companion object {
