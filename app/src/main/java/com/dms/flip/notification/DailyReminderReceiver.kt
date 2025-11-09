@@ -33,6 +33,8 @@ class DailyReminderReceiver : BroadcastReceiver() {
             .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
+
+        DailyReminderManager(context).rescheduleSavedReminder()
     }
 
     companion object {
