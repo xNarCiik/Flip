@@ -152,6 +152,8 @@
     <string name="settings_app_version">Version de l\'application</string>
     <string name="settings_edit_profile">Modifier le profil</string>
     <string name="settings_delete_account">Supprimer mon compte</string>
+    <string name="settings_debug_title">Debug</string>
+    <string name="settings_use_mock_community_data">Utiliser les données mock de la communauté</string>
 
     <!-- Manage Pleasures Screen -->
     <string name="manage_pleasures_title">Gérer mes plaisirs</string>

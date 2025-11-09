@@ -12,4 +12,7 @@ interface SettingsRepository {
 
     val reminderTime: Flow<String>
     suspend fun setReminderTime(time: String)
+
+    val useMockCommunityData: Flow<Boolean>
+    suspend fun setUseMockCommunityData(enabled: Boolean)
 }

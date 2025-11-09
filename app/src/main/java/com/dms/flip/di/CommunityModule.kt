@@ -1,7 +1,5 @@
 package com.dms.flip.di
 
-import com.dms.flip.BuildConfig
-import com.dms.flip.data.firebase.source.FirestoreFeedSource
 import com.dms.flip.data.firebase.source.FirestoreProfileSource
 import com.dms.flip.data.firebase.source.FirestoreFriendsSource
 import com.dms.flip.data.firebase.source.FirestoreSearchSource
@@ -10,21 +8,16 @@ import com.dms.flip.data.firebase.source.FriendsSource
 import com.dms.flip.data.firebase.source.ProfileSource
 import com.dms.flip.data.firebase.source.SearchSource
 import com.dms.flip.data.firebase.source.SuggestionsSource
-import com.dms.flip.data.mock.community.MockFeedRepository
-import com.dms.flip.data.mock.community.MockFriendsRepository
-import com.dms.flip.data.mock.community.MockSearchRepository
-import com.dms.flip.data.mock.community.MockSuggestionsRepository
-import com.dms.flip.data.repository.community.FeedRepositoryImpl
-import com.dms.flip.data.repository.community.FriendsRepositoryImpl
-import com.dms.flip.data.repository.community.SearchRepositoryImpl
-import com.dms.flip.data.repository.community.SuggestionsRepositoryImpl
+import com.dms.flip.data.mock.community.MockableFeedRepository
+import com.dms.flip.data.mock.community.MockableFriendsRepository
+import com.dms.flip.data.mock.community.MockableSearchRepository
+import com.dms.flip.data.mock.community.MockableSuggestionsRepository
 import com.dms.flip.domain.repository.community.FeedRepository
 import com.dms.flip.domain.repository.community.FriendsRepository
 import com.dms.flip.domain.repository.community.SearchRepository
 import com.dms.flip.domain.repository.community.SuggestionsRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
-import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -59,33 +52,23 @@ object CommunityModule {
 
     @Provides
     @Singleton
-    fun provideFeedRepository(
-        impl: Lazy<FeedRepositoryImpl>,
-        mock: Lazy<MockFeedRepository>
-    ): FeedRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
+    fun provideFeedRepository(repository: MockableFeedRepository): FeedRepository = repository
 
     @Provides
     @Singleton
     fun provideSuggestionsRepository(
-        impl: Lazy<SuggestionsRepositoryImpl>,
-        mock: Lazy<MockSuggestionsRepository>
-    ): SuggestionsRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
+        repository: MockableSuggestionsRepository
+    ): SuggestionsRepository = repository
 
     @Provides
     @Singleton
     fun provideSearchRepository(
-        impl: Lazy<SearchRepositoryImpl>,
-        mock: Lazy<MockSearchRepository>
-    ): SearchRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
+        repository: MockableSearchRepository
+    ): SearchRepository = repository
 
     @Provides
     @Singleton
     fun provideRequestsRepository(
-        impl: Lazy<FriendsRepositoryImpl>,
-        mock: Lazy<MockFriendsRepository>
-    ): FriendsRepository =
-        if (BuildConfig.USE_MOCK_COMMUNITY_DATA) mock.get() else impl.get()
+        repository: MockableFriendsRepository
+    ): FriendsRepository = repository
 }

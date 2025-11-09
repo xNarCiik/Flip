@@ -21,6 +21,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val THEME = stringPreferencesKey("theme")
         val DAILY_REMINDER_ENABLED = booleanPreferencesKey("daily_reminder_enabled")
         val REMINDER_TIME = stringPreferencesKey("reminder_time")
+        val USE_MOCK_COMMUNITY_DATA = booleanPreferencesKey("use_mock_community_data")
     }
 
     override val theme: Flow<Theme> = dataStore.data
@@ -53,6 +54,17 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setReminderTime(time: String) {
         dataStore.edit {
             it[PreferencesKeys.REMINDER_TIME] = time
+        }
+    }
+
+    override val useMockCommunityData: Flow<Boolean> = dataStore.data
+        .map {
+            it[PreferencesKeys.USE_MOCK_COMMUNITY_DATA] ?: false
+        }
+
+    override suspend fun setUseMockCommunityData(enabled: Boolean) {
+        dataStore.edit {
+            it[PreferencesKeys.USE_MOCK_COMMUNITY_DATA] = enabled
         }
     }
 }
