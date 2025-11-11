@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Gavel
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.dms.flip.BuildConfig
 import com.dms.flip.R
 import com.dms.flip.domain.model.Theme
 import com.dms.flip.domain.model.UserInfo
@@ -346,6 +348,26 @@ fun SettingsScreen(
                                 title = stringResource(R.string.settings_theme_title),
                                 subtitle = themeLabel,
                                 onClick = { showThemeDialog = true }
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (BuildConfig.DEBUG) {
+                item {
+                    SettingsSection(title = stringResource(R.string.settings_debug_title)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            SettingsSwitchItem(
+                                icon = Icons.Outlined.BugReport,
+                                title = stringResource(R.string.settings_use_mock_community_data),
+                                checked = uiState.useMockCommunityData,
+                                onCheckedChange = { onEvent(SettingsEvent.OnUseMockCommunityDataChanged(it)) }
                             )
                         }
                     }

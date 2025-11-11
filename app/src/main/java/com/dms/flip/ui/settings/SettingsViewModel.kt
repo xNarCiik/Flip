@@ -14,6 +14,8 @@ import com.dms.flip.domain.usecase.settings.GetThemeUseCase
 import com.dms.flip.domain.usecase.settings.SetDailyReminderStateUseCase
 import com.dms.flip.domain.usecase.settings.SetReminderTimeUseCase
 import com.dms.flip.domain.usecase.settings.SetThemeUseCase
+import com.dms.flip.domain.usecase.settings.GetUseMockCommunityDataUseCase
+import com.dms.flip.domain.usecase.settings.SetUseMockCommunityDataUseCase
 import com.dms.flip.domain.usecase.storage.UploadAvatarUseCase
 import com.dms.flip.domain.usecase.user.GetUserInfoUseCase
 import com.dms.flip.notification.DailyReminderManager
@@ -37,6 +39,8 @@ class SettingsViewModel @Inject constructor(
     private val setDailyReminderStateUseCase: SetDailyReminderStateUseCase,
     private val getReminderTimeUseCase: GetReminderTimeUseCase,
     private val setReminderTimeUseCase: SetReminderTimeUseCase,
+    private val getUseMockCommunityDataUseCase: GetUseMockCommunityDataUseCase,
+    private val setUseMockCommunityDataUseCase: SetUseMockCommunityDataUseCase,
     private val getUserInfoUseCase: GetUserInfoUseCase,
     private val uploadAvatarUseCase: UploadAvatarUseCase,
 ) : ViewModel() {
@@ -61,12 +65,14 @@ class SettingsViewModel @Inject constructor(
         combine(
             getThemeUseCase(),
             getDailyReminderStateUseCase(),
-            getReminderTimeUseCase()
-        ) { theme, dailyReminderEnabled, reminderTime ->
+            getReminderTimeUseCase(),
+            getUseMockCommunityDataUseCase()
+        ) { theme, dailyReminderEnabled, reminderTime, useMockCommunityData ->
             _uiState.value.copy(
                 theme = theme,
                 dailyReminderEnabled = dailyReminderEnabled,
-                reminderTime = reminderTime
+                reminderTime = reminderTime,
+                useMockCommunityData = useMockCommunityData
             )
         }.collect { combinedState ->
             _uiState.value = combinedState
@@ -79,6 +85,7 @@ class SettingsViewModel @Inject constructor(
             is SettingsEvent.OnThemeChanged -> onThemeChange(event.theme)
             is SettingsEvent.OnDailyReminderEnabledChanged -> onDailyReminderEnabledChange(event.enabled)
             is SettingsEvent.OnReminderTimeChanged -> onReminderTimeChange(event.time)
+            is SettingsEvent.OnUseMockCommunityDataChanged -> onUseMockCommunityDataChanged(event.enabled)
             is SettingsEvent.OnSignOut -> signOut()
             is SettingsEvent.DeleteAccount -> deleteAccount()
         }
@@ -100,6 +107,10 @@ class SettingsViewModel @Inject constructor(
     private fun onReminderTimeChange(time: String) = viewModelScope.launch {
         setReminderTimeUseCase(time)
         dailyReminderManager.schedule(time)
+    }
+
+    private fun onUseMockCommunityDataChanged(enabled: Boolean) = viewModelScope.launch {
+        setUseMockCommunityDataUseCase(enabled)
     }
 
     fun onAvatarSelected(imageUri: Uri) {
